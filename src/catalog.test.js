@@ -5,8 +5,10 @@ const catalog = {
   generated: '2026-09-04',
   maxFeatures: 5000,
   objects: [
+    // Las claves de `ch` van desordenadas a propósito: con el orden
+    // natural, `Object.keys` habría pasado el test igual que CHILD_ORDER.
     { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires',
-      ch: { fracciones: 42, radios: 432, localidades: 1, vias: 1487 } },
+      ch: { vias: 1487, fracciones: 42, radios: 432, localidades: 1 } },
     { t: 'gl', c: '060840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires' },
     { t: 'loc', c: '06840010', n: 'Caseros', s: 'caseros', p: 'Buenos Aires', ch: { vias: 0 } },
   ],

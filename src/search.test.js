@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { normalize, search } from './search.js'
 
+// El `gl` va antes que el `dep` a propósito: `Array.prototype.sort` es
+// estable, así que con el orden natural el resultado esperado salía del
+// orden de inserción y el desempate por TYPE_ORDER no se ejercitaba.
 const objects = [
+  { t: 'gl', c: '060840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires' },
   { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires' },
   { t: 'loc', c: '06840010', n: 'Caseros', s: 'caseros', p: 'Buenos Aires' },
   { t: 'dep', c: '82084', n: 'Rosario', s: 'rosario', p: 'Santa Fe' },
   { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires', p: 'Buenos Aires' },
-  { t: 'gl', c: '060840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires' },
 ]
 
 describe('normalize', () => {
