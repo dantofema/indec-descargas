@@ -44,11 +44,15 @@ export async function showObject(obj) {
   }
 
   const res = await fetch(selfUrl(obj, 'application/json'))
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const geojson = await res.json()
 
   // Otra selección ganó de mano a ésta mientras viajaba la respuesta.
+  // El chequeo va antes de mirar el status: una petición superada que
+  // falla no tiene por qué pisar la línea de estado de una selección
+  // más nueva que sí se dibujó bien.
   if (request !== pending) return
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const geojson = await res.json()
 
   if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
 
