@@ -35,7 +35,17 @@ function typeOf(obj) {
   return type
 }
 
-function wfsUrl(typename, cql, format) {
+/**
+ * El atributo `download` del `<a>` sólo lo respeta el browser cuando el
+ * href es del mismo origen; para un href cross-origin —que es lo que son
+ * todas estas URLs— manda el `Content-Disposition` del servidor. Sin
+ * esto, todas las descargas llegan con el nombre de la capa y tres
+ * departamentos de radios son tres `radios_censales2.gpkg` iguales.
+ * GeoServer arma ese header desde `format_options=filename:...`.
+ */
+const GPKG = 'geopackage'
+
+function wfsUrl(typename, cql, format, downloadName) {
   const p = new URLSearchParams({
     service: 'WFS',
     version: '2.0.0',
@@ -45,21 +55,33 @@ function wfsUrl(typename, cql, format) {
     srsName: 'EPSG:4326',
     CQL_FILTER: cql,
   })
+  // Sólo en las descargas: el GeoJSON del mapa se lee en JS y no se guarda.
+  if (downloadName) p.set('format_options', `filename:${downloadName}`)
   return `${GEOSERVER}?${p}`
 }
 
 /** URL de descarga del objeto en sí. */
-export function selfUrl(obj, format = 'geopackage') {
+export function selfUrl(obj, format = GPKG) {
   const type = typeOf(obj)
-  return wfsUrl(type.layer, `${type.field}='${assertCode(obj.c)}'`, format)
+  return wfsUrl(
+    type.layer,
+    `${type.field}='${assertCode(obj.c)}'`,
+    format,
+    format === GPKG ? filename(obj) : null,
+  )
 }
 
 /** URL de descarga de una capa hija, filtrada por el campo del padre. */
-export function childUrl(obj, childKey, format = 'geopackage') {
+export function childUrl(obj, childKey, format = GPKG) {
   const type = typeOf(obj)
   const child = CHILD_LAYERS[childKey]
   if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
-  return wfsUrl(child.layer, `${type.field}='${assertCode(obj.c)}'`, format)
+  return wfsUrl(
+    child.layer,
+    `${type.field}='${assertCode(obj.c)}'`,
+    format,
+    format === GPKG ? filename(obj, childKey) : null,
+  )
 }
 
 /** El tope habilita si hay algo que bajar y no lo supera. */
@@ -67,8 +89,8 @@ export function canDownload(count, maxFeatures) {
   return Number.isFinite(count) && count > 0 && count <= maxFeatures
 }
 
-/** Nombre sugerido del archivo descargado. */
+/** Nombre del archivo descargado. Va en `format_options`, no en el `<a>`. */
 export function filename(obj, childKey) {
-  const base = TYPES[obj.t].layer.replace('geonode:', '')
+  const base = typeOf(obj).layer.replace('geonode:', '')
   return childKey ? `${childKey}-de-${base}-${obj.c}.gpkg` : `${base}-${obj.c}.gpkg`
 }

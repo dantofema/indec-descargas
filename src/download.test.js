@@ -33,6 +33,16 @@ describe('selfUrl', () => {
     expect(params(selfUrl(treFeb, 'application/json')).outputFormat).toBe('application/json')
   })
 
+  it('lleva el nombre del archivo en format_options', () => {
+    // El `download` del <a> no aplica cross-origin: el nombre lo fija el
+    // Content-Disposition que GeoServer arma desde format_options.
+    expect(params(selfUrl(treFeb)).format_options).toBe('filename:departamentos-06840.gpkg')
+  })
+
+  it('no pide nombre de archivo para el GeoJSON del mapa', () => {
+    expect(params(selfUrl(treFeb, 'application/json')).format_options).toBeUndefined()
+  })
+
   it('conserva los ceros a la izquierda del código', () => {
     expect(params(selfUrl(buenosAires)).CQL_FILTER).toBe("cpr='06'")
   })
@@ -54,6 +64,15 @@ describe('childUrl', () => {
   it('un aglomerado filtra sus localidades por codaglo', () => {
     const aglo = { t: 'aglo', c: '0043', n: 'San Francisco - Frontera', s: 'san francisco - frontera' }
     expect(params(childUrl(aglo, 'localidades')).CQL_FILTER).toBe("codaglo='0043'")
+  })
+
+  it('lleva el nombre del archivo de la capa hija en format_options', () => {
+    expect(params(childUrl(treFeb, 'radios')).format_options)
+      .toBe('filename:radios-de-departamentos-06840.gpkg')
+  })
+
+  it('no pide nombre de archivo cuando no es una descarga', () => {
+    expect(params(childUrl(treFeb, 'radios', 'application/json')).format_options).toBeUndefined()
   })
 
   it('rechaza una capa hija desconocida', () => {
@@ -101,5 +120,9 @@ describe('filename', () => {
 
   it('nombra la descarga de una capa hija', () => {
     expect(filename(treFeb, 'radios')).toBe('radios-de-departamentos-06840.gpkg')
+  })
+
+  it('rechaza un tipo desconocido igual que sus hermanas', () => {
+    expect(() => filename({ t: 'zzz', c: '06' })).toThrow(/tipo/i)
   })
 })
