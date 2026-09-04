@@ -39,6 +39,19 @@ describe('countBy', () => {
     expect(m.has('')).toBe(false)
     expect(m.get('7')).toBe(1)
   })
+
+  it("omite también '0000' cuando el campo es codaglo", () => {
+    // `vias_de_circulacion` escribe '0000' donde `localidades_censales`
+    // escribe 'N/A': el mismo "sin aglomerado" con dos centinelas.
+    const m = countBy([{ codaglo: '0000' }, { codaglo: NA }, { codaglo: '0001' }], 'codaglo')
+    expect(m.has('0000')).toBe(false)
+    expect(m.has(NA)).toBe(false)
+    expect(m.get('0001')).toBe(1)
+  })
+
+  it("'0000' sigue siendo un valor válido en cualquier otro campo", () => {
+    expect(countBy([{ clc: '0000' }], 'clc').get('0000')).toBe(1)
+  })
 })
 
 describe('buildCatalog', () => {
@@ -128,6 +141,12 @@ describe('buildCatalog: inconsistencias', () => {
     const vias = [...input.vias, { cpr: '06', cde: '06840', cmu: NA, clc: '06840010', codaglo: '7777' }]
     const { warnings } = buildCatalog({ ...input, vias })
     expect(warnings.join(' ')).toMatch(/7777/)
+  })
+
+  it("no advierte por el centinela '0000' de codaglo en vías", () => {
+    const vias = [...input.vias, { cpr: '06', cde: '06840', cmu: NA, clc: '06840010', codaglo: '0000' }]
+    const { warnings } = buildCatalog({ ...input, vias })
+    expect(warnings).toEqual([])
   })
 })
 

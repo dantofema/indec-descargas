@@ -3,12 +3,31 @@ import { normalize } from '../../src/search.js'
 /** El GeoServer usa esta cadena para "sin valor" en codaglo y cmu. */
 export const NA = 'N/A'
 
-/** Cuenta filas por valor de un campo, omitiendo vacíos y el centinela. */
+/**
+ * Centinelas de ausencia por campo. El INDEC escribe dos cadenas
+ * distintas para el mismo significado —"no pertenece a ningún
+ * aglomerado"— en dos capas distintas: `localidades_censales` usa 'N/A'
+ * y `vias_de_circulacion` usa '0000' (185.908 de sus 477.588 filas).
+ * Ninguno de los dos es un código de aglomerado real, así que los dos
+ * se omiten al contar.
+ */
+const ABSENT = {
+  codaglo: new Set([NA, '0000']),
+}
+
+const DEFAULT_ABSENT = new Set([NA])
+
+/** ¿Este valor es una ausencia y no un código? */
+export function isAbsent(field, value) {
+  return !value || (ABSENT[field] ?? DEFAULT_ABSENT).has(value)
+}
+
+/** Cuenta filas por valor de un campo, omitiendo vacíos y los centinelas. */
 export function countBy(rows, field) {
   const counts = new Map()
   for (const row of rows) {
     const key = row[field]
-    if (!key || key === NA) continue
+    if (isAbsent(field, key)) continue
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
   return counts
@@ -54,7 +73,7 @@ export function buildCatalog(input) {
   // aglomerado no trae `jur` y puede cruzar más de una provincia.
   const provsOfAglo = new Map()
   for (const loc of localidades) {
-    if (!loc.codaglo || loc.codaglo === NA) continue
+    if (isAbsent('codaglo', loc.codaglo)) continue
     if (!provsOfAglo.has(loc.codaglo)) provsOfAglo.set(loc.codaglo, new Set())
     provsOfAglo.get(loc.codaglo).add(loc.jur)
   }
