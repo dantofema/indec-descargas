@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Descargas del Marco Geoestadístico Nacional — INDEC</title>
+    <meta name="description" content="Descargá capas del Marco Geoestadístico Nacional del INDEC en GeoPackage: departamentos, radios y fracciones censales, localidades y vías de circulación." />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>Descargas del Marco Geoestadístico Nacional</h1>
+      <p class="subtitle">Buscá una provincia, departamento, localidad, municipio o aglomerado y descargalo en GeoPackage.</p>
+    </header>
+
+    <main>
+      <div class="search">
+        <input
+          id="q"
+          type="search"
+          autocomplete="off"
+          placeholder="Escribí un nombre. Por ejemplo: Tres de Febrero"
+          aria-label="Buscar un objeto geográfico"
+          aria-controls="results"
+        />
+        <ul id="results" class="results" role="listbox" hidden></ul>
+      </div>
+
+      <p id="status" class="status">Cargando el catálogo…</p>
+
+      <section id="detail" class="detail" hidden>
+        <div id="map" class="map"></div>
+        <div class="panel">
+          <h2 id="detail-name"></h2>
+          <p id="detail-meta" class="meta"></p>
+          <div id="detail-self"></div>
+          <h3 id="children-title" hidden>Capas de este objeto</h3>
+          <ul id="children" class="children"></ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Datos del <a href="https://www.indec.gob.ar/">INDEC</a>, servidos por
+        <a href="https://geonode.indec.gob.ar/geoserver">geonode.indec.gob.ar</a>.
+        Las descargas van de ese servidor a tu computadora: este sitio sólo arma el enlace.
+      </p>
+      <p class="warning">
+        Estos límites son para integración de información estadística. No son fuente oficial de
+        delimitación territorial ni sirven como prueba en controversias de límites.
+      </p>
+      <p id="generated" class="meta"></p>
+    </footer>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
