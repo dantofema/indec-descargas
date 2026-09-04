@@ -8,11 +8,6 @@ export async function loadCatalog(url = `${import.meta.env.BASE_URL}catalog.json
   return res.json()
 }
 
-/** Busca un objeto por tipo y código. */
-export function findByCode(catalog, t, c) {
-  return catalog.objects.find((o) => o.t === t && o.c === c)
-}
-
 /** Hijos de un objeto, en orden estable y con su conteo. */
 export function childrenOf(obj) {
   if (!obj?.ch) return []
