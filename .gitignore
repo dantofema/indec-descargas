@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.cache/
+*.local
+.DS_Store
+
+# volcados intermedios del build (grandes, regenerables)
+scripts/.cache/
