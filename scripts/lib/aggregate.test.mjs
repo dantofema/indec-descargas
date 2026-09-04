@@ -97,6 +97,24 @@ describe('buildCatalog', () => {
   it('no reporta advertencias con datos consistentes', () => {
     expect(warnings).toEqual([])
   })
+
+  it('un aglomerado de múltiples provincias junta sus provincias con " / "', () => {
+    const multiProv = {
+      ...input,
+      localidades: [
+        ...input.localidades,
+        { clc: '14000010', cde: '14000', nam: 'Frontera', jur: 'Córdoba', dpto: 'Capital', codaglo: '0002' },
+        { clc: '82000010', cde: '82000', nam: 'Otro Punto', jur: 'Santa Fe', dpto: 'Capital', codaglo: '0002' },
+      ],
+      aglomerados: [
+        ...input.aglomerados,
+        { codaglo: '0002', nam: 'San Francisco - Frontera' },
+      ],
+    }
+    const { catalog } = buildCatalog(multiProv)
+    const aglo = catalog.objects.find((o) => o.t === 'aglo' && o.c === '0002')
+    expect(aglo.p).toBe('Córdoba / Santa Fe')
+  })
 })
 
 describe('buildCatalog: inconsistencias', () => {
