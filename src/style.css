@@ -105,4 +105,8 @@ main, .site-header, .site-footer {
     --accent: #4b8bf5; --accent-fg: #0d0f12; --disabled: #21252b; --warn: #e0b050;
   }
   .results li:hover, .results li[aria-selected="true"] { background: #1c2230; }
+  /* #b32020 sobre este fondo mide 2,71:1, por debajo del 4,5:1 de WCAG AA,
+     justo en la única cadena que el usuario más necesita poder leer.
+     Este mide 6,53:1. */
+  .status.error { color: #ff6b6b; }
 }
