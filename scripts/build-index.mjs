@@ -20,6 +20,24 @@ const DUMPS = {
   vias:             { layer: 'vias_de_circulacion',   props: 'cpr,cde,cmu,clc,codaglo' },
 }
 
+/**
+ * Piso de filas por volcado. El guard de objetos totales no ve un volcado
+ * hijo truncado —los conteos de hijos salen de capas distintas que los
+ * objetos—, así que un corte por `maxFeatures` del lado del servidor o un
+ * write de caché interrumpido pasarían derecho y commitearían conteos
+ * mal. Estos números están holgados por debajo de los reales.
+ */
+const MIN_ROWS = {
+  jurisdicciones: 24,
+  departamentos: 500,
+  localidades: 3900,
+  gobiernosLocales: 2200,
+  aglomerados: 110,
+  fracciones: 6000,
+  radios: 60000,
+  vias: 450000,
+}
+
 function dumpUrl({ layer, props }) {
   const p = new URLSearchParams({
     service: 'WFS',
@@ -64,6 +82,13 @@ async function main() {
     // `columns: true` lee por nombre de encabezado: el GeoServer no
     // respeta el orden de propertyName y agrega FID/fid por su cuenta.
     rows[key] = parse(await fetchCsv(key, spec, useCache), { columns: true, skip_empty_lines: true })
+  }
+
+  for (const [key, min] of Object.entries(MIN_ROWS)) {
+    const n = rows[key].length
+    if (n < min) {
+      throw new Error(`volcado \`${key}\` truncado: ${n} filas, mínimo esperado ${min}. Abortando.`)
+    }
   }
 
   const { catalog, warnings } = buildCatalog({
