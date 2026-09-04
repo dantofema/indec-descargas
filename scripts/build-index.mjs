@@ -11,13 +11,13 @@ const OUT = new URL('../public/catalog.json', import.meta.url)
 /** Qué columnas se piden de cada capa. Menos columnas, menos bytes. */
 const DUMPS = {
   jurisdicciones:   { layer: 'jurisdicciones',        props: 'cpr,nam' },
-  departamentos:    { layer: 'departamentos',         props: 'cde,nam,jur' },
-  localidades:      { layer: 'localidades_censales',  props: 'clc,cde,nam,jur,dpto,codaglo' },
+  departamentos:    { layer: 'departamentos',         props: 'cpr,cde,nam,jur' },
+  localidades:      { layer: 'localidades_censales',  props: 'cpr,clc,cde,nam,jur,dpto,codaglo' },
   gobiernosLocales: { layer: 'gobiernos_locales4',    props: 'cmu,nam,jur' },
   aglomerados:      { layer: 'aglomerados',           props: 'codaglo,nam' },
-  fracciones:       { layer: 'fracciones_censales',   props: 'cde' },
-  radios:           { layer: 'radios_censales2',      props: 'cde' },
-  vias:             { layer: 'vias_de_circulacion',   props: 'cde,cmu,clc,codaglo' },
+  fracciones:       { layer: 'fracciones_censales',   props: 'cpr,cde' },
+  radios:           { layer: 'radios_censales2',      props: 'cpr,cde' },
+  vias:             { layer: 'vias_de_circulacion',   props: 'cpr,cde,cmu,clc,codaglo' },
 }
 
 function dumpUrl({ layer, props }) {

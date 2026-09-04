@@ -9,20 +9,20 @@ const input = {
     { cpr: '82', nam: 'Santa Fe' },
   ],
   departamentos: [
-    { cde: '06840', nam: 'Tres de Febrero', jur: 'Buenos Aires' },
-    { cde: '82084', nam: 'Rosario', jur: 'Santa Fe' },
+    { cpr: '06', cde: '06840', nam: 'Tres de Febrero', jur: 'Buenos Aires' },
+    { cpr: '82', cde: '82084', nam: 'Rosario', jur: 'Santa Fe' },
   ],
   localidades: [
-    { clc: '06840010', cde: '06840', nam: 'Caseros', jur: 'Buenos Aires', dpto: 'Tres de Febrero', codaglo: '0001' },
-    { clc: '82084010', cde: '82084', nam: 'Rosario', jur: 'Santa Fe', dpto: 'Rosario', codaglo: NA },
+    { cpr: '06', clc: '06840010', cde: '06840', nam: 'Caseros', jur: 'Buenos Aires', dpto: 'Tres de Febrero', codaglo: '0001' },
+    { cpr: '82', clc: '82084010', cde: '82084', nam: 'Rosario', jur: 'Santa Fe', dpto: 'Rosario', codaglo: NA },
   ],
   gobiernosLocales: [{ cmu: '060840', nam: 'Tres de Febrero', jur: 'Buenos Aires' }],
   aglomerados: [{ codaglo: '0001', nam: 'Gran Buenos Aires' }],
-  fracciones: [{ cde: '06840' }, { cde: '06840' }, { cde: '82084' }],
-  radios: [{ cde: '06840' }, { cde: '06840' }, { cde: '06840' }],
+  fracciones: [{ cpr: '06', cde: '06840' }, { cpr: '06', cde: '06840' }, { cpr: '82', cde: '82084' }],
+  radios: [{ cpr: '06', cde: '06840' }, { cpr: '06', cde: '06840' }, { cpr: '06', cde: '06840' }],
   vias: [
-    { cde: '06840', cmu: '060840', clc: '06840010', codaglo: '0001' },
-    { cde: '06840', cmu: NA, clc: '06840010', codaglo: NA },
+    { cpr: '06', cde: '06840', cmu: '060840', clc: '06840010', codaglo: '0001' },
+    { cpr: '06', cde: '06840', cmu: NA, clc: '06840010', codaglo: NA },
   ],
 }
 
@@ -103,8 +103,8 @@ describe('buildCatalog', () => {
       ...input,
       localidades: [
         ...input.localidades,
-        { clc: '14000010', cde: '14000', nam: 'Frontera', jur: 'Córdoba', dpto: 'Capital', codaglo: '0002' },
-        { clc: '82000010', cde: '82000', nam: 'Otro Punto', jur: 'Santa Fe', dpto: 'Capital', codaglo: '0002' },
+        { cpr: '14', clc: '14000010', cde: '14000', nam: 'Frontera', jur: 'Córdoba', dpto: 'Capital', codaglo: '0002' },
+        { cpr: '82', clc: '82000010', cde: '82000', nam: 'Otro Punto', jur: 'Santa Fe', dpto: 'Capital', codaglo: '0002' },
       ],
       aglomerados: [
         ...input.aglomerados,
@@ -119,14 +119,34 @@ describe('buildCatalog', () => {
 
 describe('buildCatalog: inconsistencias', () => {
   it('advierte por un código hijo sin padre', () => {
-    const { warnings } = buildCatalog({ ...input, radios: [...input.radios, { cde: '99999' }] })
+    const { warnings } = buildCatalog({ ...input, radios: [...input.radios, { cpr: '99', cde: '99999' }] })
     expect(warnings.join(' ')).toMatch(/99999/)
     expect(warnings.join(' ')).toMatch(/radios/)
   })
 
   it('advierte por un aglomerado que sólo aparece en vías', () => {
-    const vias = [...input.vias, { cde: '06840', cmu: NA, clc: '06840010', codaglo: '7777' }]
+    const vias = [...input.vias, { cpr: '06', cde: '06840', cmu: NA, clc: '06840010', codaglo: '7777' }]
     const { warnings } = buildCatalog({ ...input, vias })
     expect(warnings.join(' ')).toMatch(/7777/)
+  })
+})
+
+describe('buildCatalog: la provincia del hijo sale de cpr, no de cde', () => {
+  // Hay filas del INDEC donde las dos columnas discrepan: el radio
+  // fid 59896 lleva cpr=66 (Salta) y cde=105, y la localidad fid 2740
+  // lleva cpr=94 (Tierra del Fuego) y cde=06008. Contar por
+  // `cde.slice(0, 2)` mete a esas filas en una provincia distinta de la
+  // que después filtra la descarga, y el usuario ve un número que el
+  // archivo que recibe contradice.
+  const radios = [...input.radios, { cpr: '82', cde: '06999' }]
+  const { catalog } = buildCatalog({ ...input, radios })
+  const jur = (c) => catalog.objects.find((o) => o.t === 'jur' && o.c === c)
+
+  it('suma el hijo discrepante a la provincia de su cpr', () => {
+    expect(jur('82').ch.radios).toBe(1)
+  })
+
+  it('no lo suma a la provincia que dice su cde', () => {
+    expect(jur('06').ch.radios).toBe(3)
   })
 })

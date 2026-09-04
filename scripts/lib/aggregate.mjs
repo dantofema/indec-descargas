@@ -14,18 +14,6 @@ export function countBy(rows, field) {
   return counts
 }
 
-/** Cuenta filas cuyo `cde` empieza con el código de provincia. */
-function countByProvince(rows) {
-  const counts = new Map()
-  for (const row of rows) {
-    const cde = row.cde
-    if (!cde || cde === NA) continue
-    const cpr = cde.slice(0, 2)
-    counts.set(cpr, (counts.get(cpr) ?? 0) + 1)
-  }
-  return counts
-}
-
 const get = (map, key) => map.get(key) ?? 0
 
 /**
@@ -46,12 +34,16 @@ export function buildCatalog(input) {
   const locByDep = countBy(localidades, 'cde')
   const viasByDep = countBy(vias, 'cde')
 
-  // Conteos por provincia (primeros dos dígitos del cde).
-  const depByProv = countByProvince(departamentos)
-  const fracByProv = countByProvince(fracciones)
-  const radiosByProv = countByProvince(radios)
-  const locByProv = countByProvince(localidades)
-  const viasByProv = countByProvince(vias)
+  // Conteos por provincia (cpr). Es la misma columna con la que
+  // `childUrl` filtra la descarga de esa capa, así que el número que ve
+  // el usuario y el archivo que recibe no pueden discrepar. Derivarlo de
+  // `cde.slice(0, 2)` sí discrepa: hay filas con `cpr` de una provincia y
+  // `cde` de otra (radio fid 59896, localidad fid 2740).
+  const depByProv = countBy(departamentos, 'cpr')
+  const fracByProv = countBy(fracciones, 'cpr')
+  const radiosByProv = countBy(radios, 'cpr')
+  const locByProv = countBy(localidades, 'cpr')
+  const viasByProv = countBy(vias, 'cpr')
 
   // Conteos por aglomerado y por localidad.
   const locByAglo = countBy(localidades, 'codaglo')
