@@ -12,7 +12,10 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Un deploy de producción tiene que poder terminar: cancelar un
+  # `deploy-pages` en vuelo puede dejar el deployment trabado. Es lo que
+  # hace el starter workflow de Pages de GitHub, por lo mismo.
+  cancel-in-progress: false
 
 jobs:
   build:

@@ -12,7 +12,34 @@ Sitio estático: no hay backend. Los datos salen del GeoServer público del INDE
 
 ## Estado
 
-En diseño. Todavía no hay código.
+Funcionando. El sitio busca sobre un catálogo de 6.977 objetos (24 jurisdicciones, 529
+departamentos, 4.023 localidades censales, 2.282 gobiernos locales y 119 aglomerados),
+dibuja el objeto elegido sobre el basemap del IGN y arma los enlaces de descarga en GPKG,
+tanto del objeto en sí como de sus capas hijas. Si una capa hija supera el tope de features
+el botón queda deshabilitado con el conteo real, en vez de bajar un archivo recortado.
+
+## Cómo correrlo
+
+```sh
+npm install
+npm run dev      # servidor de desarrollo
+npm run build    # build de producción en dist/
+npm test         # suite completa (Vitest)
+```
+
+## Cómo regenerar el catálogo
+
+```sh
+npm run build:index             # usa la caché de scripts/.cache/
+npm run build:index -- --no-cache   # vuelve a bajar todo del GeoServer
+```
+
+Tarda entre uno y tres minutos: el volcado de vías son 477.588 filas y unos 27 MB.
+El script reporta en stderr las inconsistencias de los datos del INDEC (códigos hijos sin
+padre) y aborta si algún volcado llega truncado o si salen menos objetos de los esperados.
+
+`public/catalog.json` se commitea a propósito: así el deploy no depende de que el GeoServer
+del INDEC esté arriba, y cualquier cambio en los datos queda visible en el diff.
 
 ## Aviso
 
