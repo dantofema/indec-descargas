@@ -76,9 +76,6 @@ posible y sin embargo se resuelven distinto:
 `cde` es el código de 5 caracteres que ya incluye la provincia (`06840` = Tres de Febrero,
 Buenos Aires). Un departamento se filtra con `cde='06840'`, no con `cpr='06' AND cde='840'`.
 
-`cde` es el código de 5 caracteres que ya incluye la provincia (`06840` = Tres de Febrero,
-Buenos Aires). Un departamento se filtra con `cde='06840'`, no con `cpr='06' AND cde='840'`.
-
 ## Arquitectura: dos tiempos
 
 ### El problema que resuelve
