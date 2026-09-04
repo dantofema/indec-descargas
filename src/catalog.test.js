@@ -12,13 +12,26 @@ const catalog = {
   ],
 }
 
+// Separate fixture with a real code collision (same code, different type)
+const collisionCatalog = {
+  generated: '2026-09-04',
+  maxFeatures: 5000,
+  objects: [
+    { t: 'dep', c: '06840', n: 'Departamento Tres de Febrero', s: 'departamento', p: 'Buenos Aires' },
+    { t: 'gl', c: '06840', n: 'GL Tres de Febrero', s: 'gobierno local', p: 'Buenos Aires' },
+  ],
+}
+
 describe('findByCode', () => {
   it('encuentra por tipo y código', () => {
     expect(findByCode(catalog, 'dep', '06840').n).toBe('Tres de Febrero')
   })
 
   it('distingue objetos con el mismo código en tipos distintos', () => {
-    expect(findByCode(catalog, 'gl', '060840').t).toBe('gl')
+    const dep = findByCode(collisionCatalog, 'dep', '06840')
+    const gl = findByCode(collisionCatalog, 'gl', '06840')
+    expect(dep.t).toBe('dep')
+    expect(gl.t).toBe('gl')
   })
 
   it('devuelve undefined si no está', () => {
