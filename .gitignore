@@ -6,3 +6,6 @@ dist/
 
 # volcados intermedios del build (grandes, regenerables)
 scripts/.cache/
+
+# workspace de subagent-driven-development (scratch)
+.superpowers/
