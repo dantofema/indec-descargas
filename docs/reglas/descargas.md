@@ -8,6 +8,9 @@ Decisiones de producto sobre qué se puede descargar y con qué límite.
 
 `maxFeatures` vale 5000 y se aplica igual a toda capa. No hay topes por capa.
 
+La descarga del objeto en sí queda siempre por debajo del tope —es exactamente un feature—,
+así que no se la chequea contra él: el tope decide sólo sobre las capas hijas.
+
 **Por qué:** un solo número es explicable al usuario en una frase y calibra bien con los datos
 reales: ningún departamento supera 5000 radios (máximo 2069), y las tres provincias grandes
 quedan afuera, que es exactamente el comportamiento pedido.
