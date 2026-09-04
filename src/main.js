@@ -1,6 +1,7 @@
 import { search } from './search.js'
 import { loadCatalog, childrenOf } from './catalog.js'
 import { selfUrl, childUrl, canDownload, filename, TYPES, CHILD_LAYERS } from './download.js'
+import { initMap, showObject, onFeature } from './map.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -144,6 +145,24 @@ el.q.addEventListener('keydown', (e) => {
 
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.search')) el.results.hidden = true
+})
+
+initMap('map')
+
+onFeature((props) => {
+  // El GeoServer devuelve nombres largos y códigos que no están en el
+  // catálogo; se muestran tal cual vienen, sin traducir.
+  const interesting = ['fna', 'gna', 'cod_indec', 'sag']
+  const parts = interesting
+    .filter((k) => props[k] && props[k] !== 'N/A')
+    .map((k) => `${k}: ${props[k]}`)
+  if (parts.length) el.meta.textContent += ` · ${parts.join(' · ')}`
+})
+
+document.addEventListener('object:selected', (e) => {
+  showObject(e.detail).catch((err) => {
+    setStatus(`No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
+  })
 })
 
 loadCatalog()
