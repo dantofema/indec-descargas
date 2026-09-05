@@ -43,23 +43,27 @@ export async function showObject(obj) {
     layer = null
   }
 
-  const res = await fetch(selfUrl(obj, 'application/json'))
+  // Una petición superada no escribe nada: ni el mapa, ni la línea de
+  // estado. El chequeo va antes de mirar el status, y el try/catch cubre
+  // la otra puerta —que se caiga el fetch— porque con el GeoServer del
+  // INDEC el corte de conexión es más probable que un 500.
+  try {
+    const res = await fetch(selfUrl(obj, 'application/json'))
+    if (request !== pending) return
 
-  // Otra selección ganó de mano a ésta mientras viajaba la respuesta.
-  // El chequeo va antes de mirar el status: una petición superada que
-  // falla no tiene por qué pisar la línea de estado de una selección
-  // más nueva que sí se dibujó bien.
-  if (request !== pending) return
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const geojson = await res.json()
 
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const geojson = await res.json()
+    if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
 
-  if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
+    layer = L.geoJSON(geojson, {
+      style: { color: '#1f6feb', weight: 2, fillOpacity: 0.12 },
+    }).addTo(map)
 
-  layer = L.geoJSON(geojson, {
-    style: { color: '#1f6feb', weight: 2, fillOpacity: 0.12 },
-  }).addTo(map)
-
-  map.fitBounds(layer.getBounds(), { padding: [16, 16] })
-  featureCallback(geojson.features[0].properties)
+    map.fitBounds(layer.getBounds(), { padding: [16, 16] })
+    featureCallback(geojson.features[0].properties)
+  } catch (err) {
+    if (request !== pending) return
+    throw err
+  }
 }
