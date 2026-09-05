@@ -65,3 +65,25 @@ describe('contraste del resaltado de teclado', () => {
     expect(css).not.toMatch(/aria-selected[^{]*,\s*[^{]*:hover/)
   })
 })
+
+// Estas dos las encontró un browser de verdad sobre el sitio publicado, no
+// el suite: jsdom no reproduce ninguna de las dos —su cascada resuelve
+// `[hidden]` a `display: none` igual, y no tiene apilamiento ni pintura—.
+// Por eso el test mira la hoja, que es lo único que acá se puede afirmar.
+describe('reglas que el browser real desarma', () => {
+  it('el atributo hidden no lo puede pisar una regla nuestra', () => {
+    // `[hidden] { display: none }` viene de la hoja del browser con
+    // especificidad cero: `.detail { display: grid }` le ganaba y el panel
+    // vacío, con el mapa adentro, se veía desde que cargaba la página.
+    expect(css).toMatch(/\[hidden\]\s*\{[^}]*display:\s*none\s*!important/)
+  })
+
+  it('la lista de resultados se pinta por encima del mapa', () => {
+    // Leaflet apila sus paneles entre 200 y 700, y sus controles llegan a
+    // 1000. Con la ficha abierta, buscar de nuevo dejaba los nombres de los
+    // resultados atrás del mapa: sólo se leían las etiquetas de la derecha,
+    // que caen fuera del ancho del mapa.
+    const z = Number(css.match(/\.results\s*\{[^}]*z-index:\s*(\d+)/)[1])
+    expect(z).toBeGreaterThan(1000)
+  })
+})

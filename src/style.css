@@ -14,6 +14,12 @@
 
 * { box-sizing: border-box; }
 
+/* La hoja del browser aplica `[hidden] { display: none }` con especificidad
+   cero, así que cualquier regla nuestra que ponga `display` se lo come:
+   `.detail { display: grid }` dejaba el panel vacío —con el mapa adentro—
+   a la vista desde que cargaba la página. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -46,7 +52,10 @@ main, .site-header, .site-footer {
 
 .results {
   position: absolute;
-  z-index: 10;
+  /* Por encima de Leaflet, que apila sus paneles entre 200 y 700 y sus
+     controles hasta 1000: con la ficha abierta, el mapa se pintaba sobre
+     los nombres de los resultados. */
+  z-index: 1100;
   left: 0; right: 0;
   margin: .25rem 0 0;
   padding: 0;
