@@ -5,6 +5,8 @@
   --line: #e0e0e0;
   --accent: #1f6feb;
   --accent-fg: #ffffff;
+  --hl: #f5f8ff;
+  --hl-mark: var(--accent);
   --disabled: #f2f2f2;
   --warn: #8a5a00;
   --radius: 6px;
@@ -57,7 +59,15 @@ main, .site-header, .site-footer {
   box-shadow: 0 8px 24px rgb(0 0 0 / .10);
 }
 .results li { padding: .6rem 1rem; cursor: pointer; display: flex; justify-content: space-between; gap: 1rem; }
-.results li:hover, .results li[aria-selected="true"] { background: #f5f8ff; }
+.results li:hover { background: var(--hl); }
+/* El resaltado del teclado es el único indicador de dónde va a caer el
+   Enter, así que lleva contraste propio —WCAG 2.1 SC 1.4.11 pide 3:1 para
+   el indicador de estado de un componente— y no se confunde con el hover:
+   con el mouse sobre otra fila se veían dos filas idénticas resaltadas. */
+.results li[aria-selected="true"] {
+  background: var(--hl);
+  box-shadow: inset 3px 0 0 var(--hl-mark);
+}
 .results .kind { color: var(--muted); font-size: .85rem; white-space: nowrap; }
 
 .status { color: var(--muted); margin: 1rem 0; }
@@ -103,8 +113,8 @@ main, .site-header, .site-footer {
   :root {
     --bg: #14161a; --fg: #e8e8e8; --muted: #9aa0a6; --line: #2c3038;
     --accent: #4b8bf5; --accent-fg: #0d0f12; --disabled: #21252b; --warn: #e0b050;
+    --hl: #1c2230;
   }
-  .results li:hover, .results li[aria-selected="true"] { background: #1c2230; }
   /* #b32020 sobre este fondo mide 2,71:1, por debajo del 4,5:1 de WCAG AA,
      justo en la única cadena que el usuario más necesita poder leer.
      Este mide 6,53:1. */
