@@ -157,15 +157,33 @@ describe('buildCatalog: la provincia del hijo sale de cpr, no de cde', () => {
   // `cde.slice(0, 2)` mete a esas filas en una provincia distinta de la
   // que después filtra la descarga, y el usuario ve un número que el
   // archivo que recibe contradice.
-  const radios = [...input.radios, { cpr: '82', cde: '06999' }]
-  const { catalog } = buildCatalog({ ...input, radios })
-  const jur = (c) => catalog.objects.find((o) => o.t === 'jur' && o.c === c)
+  //
+  // Las cinco capas se cuentan por separado en `buildCatalog`, así que
+  // las cinco necesitan su propia fila discrepante: con una sola, las
+  // otras cuatro líneas se pueden revertir a `cde.slice(0, 2)` sin que
+  // el suite diga nada.
+  const discrepante = {
+    departamentos: { cpr: '82', cde: '06999', nam: 'Discrepante', jur: 'Santa Fe' },
+    fracciones:    { cpr: '82', cde: '06999' },
+    radios:        { cpr: '82', cde: '06999' },
+    localidades:   { cpr: '82', clc: '82999010', cde: '06999', nam: 'Discrepante', jur: 'Santa Fe', dpto: 'Discrepante', codaglo: NA },
+    vias:          { cpr: '82', cde: '06999', cmu: NA, clc: '82999010', codaglo: NA },
+  }
 
-  it('suma el hijo discrepante a la provincia de su cpr', () => {
-    expect(jur('82').ch.radios).toBe(1)
-  })
+  const jurDe = (catalog, c) => catalog.objects.find((o) => o.t === 'jur' && o.c === c)
+  const base = buildCatalog(input).catalog
 
-  it('no lo suma a la provincia que dice su cde', () => {
-    expect(jur('06').ch.radios).toBe(3)
-  })
+  for (const [capa, fila] of Object.entries(discrepante)) {
+    describe(capa, () => {
+      const { catalog } = buildCatalog({ ...input, [capa]: [...input[capa], fila] })
+
+      it('suma la fila discrepante a la provincia de su cpr', () => {
+        expect(jurDe(catalog, '82').ch[capa]).toBe(jurDe(base, '82').ch[capa] + 1)
+      })
+
+      it('no la suma a la provincia que dice su cde', () => {
+        expect(jurDe(catalog, '06').ch[capa]).toBe(jurDe(base, '06').ch[capa])
+      })
+    })
+  }
 })
