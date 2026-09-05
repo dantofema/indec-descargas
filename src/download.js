@@ -35,14 +35,6 @@ function typeOf(obj) {
   return type
 }
 
-/**
- * El atributo `download` del `<a>` sólo lo respeta el browser cuando el
- * href es del mismo origen; para un href cross-origin —que es lo que son
- * todas estas URLs— manda el `Content-Disposition` del servidor. Sin
- * esto, todas las descargas llegan con el nombre de la capa y tres
- * departamentos de radios son tres `radios_censales2.gpkg` iguales.
- * GeoServer arma ese header desde `format_options=filename:...`.
- */
 const GPKG = 'geopackage'
 
 function wfsUrl(typename, cql, format, downloadName) {
@@ -55,6 +47,11 @@ function wfsUrl(typename, cql, format, downloadName) {
     srsName: 'EPSG:4326',
     CQL_FILTER: cql,
   })
+  // El atributo `download` del `<a>` sólo lo respeta el browser cuando el
+  // href es del mismo origen; para un href cross-origin —que es lo que son
+  // todas estas URLs— manda el `Content-Disposition` del servidor, y
+  // GeoServer lo arma desde `format_options`. Sin esto, tres departamentos
+  // de radios llegan como tres `radios_censales2.gpkg` iguales.
   // Sólo en las descargas: el GeoJSON del mapa se lee en JS y no se guarda.
   if (downloadName) p.set('format_options', `filename:${downloadName}`)
   return `${GEOSERVER}?${p}`

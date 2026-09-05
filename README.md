@@ -34,7 +34,8 @@ npm run build:index             # usa la caché de scripts/.cache/
 npm run build:index -- --no-cache   # vuelve a bajar todo del GeoServer
 ```
 
-Tarda entre uno y tres minutos: el volcado de vías son 477.588 filas y unos 27 MB.
+Con caché tarda un par de segundos. Con `--no-cache`, entre uno y tres minutos: el
+volcado de vías son 477.588 filas y unos 27 MB.
 El script reporta en stderr las inconsistencias de los datos del INDEC (códigos hijos sin
 padre) y aborta si algún volcado llega truncado o si salen menos objetos de los esperados.
 

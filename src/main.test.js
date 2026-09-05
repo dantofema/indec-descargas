@@ -1,0 +1,124 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+// El cableado: que el `index.html` real, el catálogo y los módulos encajen.
+// Leaflet va mockeado —necesita un browser de verdad para medir—, todo lo
+// demás es el código que se publica.
+vi.mock('leaflet', () => ({
+  default: {
+    map: () => ({ invalidateSize: () => {}, fitBounds: () => {} }),
+    tileLayer: () => ({ addTo: () => {} }),
+    geoJSON: () => ({ addTo() { return this }, getBounds: () => 'bounds', remove: () => {} }),
+  },
+}))
+
+const catalogo = {
+  generated: '2026-09-04',
+  maxFeatures: 5000,
+  objects: [
+    { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires',
+      ch: { fracciones: 42, radios: 432, localidades: 1, vias: 1487 } },
+    { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires', p: 'Buenos Aires',
+      ch: { departamentos: 135, radios: 23901 } },
+  ],
+}
+
+// En jsdom `import.meta.url` es una URL http del server de vitest, no un
+// archivo: la raíz del proyecto se toma del cwd.
+const html = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8')
+const body = html.match(/<body>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '')
+
+const $ = (sel) => document.querySelector(sel)
+
+/** Escribe en el buscador como lo haría una persona. */
+function buscar(texto) {
+  $('#q').value = texto
+  $('#q').dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+beforeEach(async () => {
+  vi.resetModules()
+  document.body.innerHTML = body
+  Element.prototype.scrollIntoView = () => {}
+  global.fetch = vi.fn(async (url) => String(url).includes('catalog.json')
+    ? { ok: true, json: async () => catalogo }
+    : { ok: true, status: 200, json: async () => ({ features: [{ properties: {} }] }) })
+  await import('./main.js')
+  await vi.waitFor(() => expect($('#generated').textContent).not.toBe(''))
+})
+
+describe('el recorrido completo', () => {
+  it('arranca con el catálogo cargado y la ficha oculta', () => {
+    expect($('#generated').textContent).toContain('2 objetos')
+    expect($('#generated').textContent).toContain('máximo 5.000')
+    expect($('#generated').textContent).toContain('2026-09-04')
+    expect($('#detail').hidden).toBe(true)
+    expect($('#status').hidden).toBe(true)
+    // El foco arranca en el buscador: no hace falta ir a buscarlo.
+    expect(document.activeElement.id).toBe('q')
+  })
+
+  it('buscar muestra los resultados con su tipo', () => {
+    buscar('tres')
+    expect($('#results').hidden).toBe(false)
+    expect($('#results').children).toHaveLength(1)
+    expect($('#results').textContent).toContain('Tres de Febrero')
+    expect($('#results').textContent).toContain('Departamento')
+  })
+
+  it('elegir un resultado abre la ficha con su descarga y sus capas', () => {
+    buscar('tres')
+    $('#results').children[0].click()
+
+    expect($('#detail').hidden).toBe(false)
+    expect($('#results').hidden).toBe(true)
+    expect($('#q').value).toBe('Tres de Febrero')
+    expect($('#detail-name').textContent).toBe('Tres de Febrero')
+    expect($('#detail-meta').textContent).toContain('código 06840')
+
+    const propia = $('#detail-self a.btn')
+    expect(propia.getAttribute('href')).toContain('CQL_FILTER=cde%3D%2706840%27')
+    expect(propia.getAttribute('href')).toContain('outputFormat=geopackage')
+
+    expect($('#children').children).toHaveLength(4)
+    expect($('#children-title').hidden).toBe(false)
+    expect($('#children').querySelectorAll('a.btn')).toHaveLength(4)
+  })
+
+  it('elegir con el teclado hace lo mismo que con el mouse', () => {
+    buscar('tres')
+    $('#q').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+    $('#q').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+    expect($('#detail').hidden).toBe(false)
+    expect($('#detail-name').textContent).toBe('Tres de Febrero')
+  })
+
+  // La provincia grande es el ejemplo del dueño: 23.901 radios, arriba del
+  // tope, tiene que quedar deshabilitada con el número real (DES-R2).
+  it('la capa que supera el tope queda deshabilitada con su conteo', () => {
+    buscar('buenos')
+    $('#results').children[0].click()
+
+    const filas = [...$('#children').children]
+    const radios = filas.find((li) => li.textContent.includes('Radios'))
+    expect(radios.querySelector('a')).toBe(null)
+    expect(radios.querySelector('[aria-disabled="true"]')).not.toBe(null)
+    expect(radios.textContent).toContain('23.901')
+    expect(radios.textContent).toContain('5.000')
+
+    const deps = filas.find((li) => li.textContent.includes('Departamentos'))
+    expect(deps.querySelector('a.btn')).not.toBe(null)
+  })
+
+  it('avisa si el catálogo no carga', async () => {
+    vi.resetModules()
+    document.body.innerHTML = body
+    global.fetch = vi.fn(async () => ({ ok: false, status: 503 }))
+    await import('./main.js')
+    await vi.waitFor(() => expect($('#status').hidden).toBe(false))
+    expect($('#status').className).toContain('error')
+    expect($('#status').textContent).toMatch(/503/)
+  })
+})
