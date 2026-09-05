@@ -4,6 +4,7 @@ import { selfUrl, TYPES } from './download.js'
 import { initMap, showObject, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
 import { childRows } from './children.js'
+import { createCombobox } from './combobox.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -20,70 +21,10 @@ const el = {
 
 let catalog = null
 
-/** Resultados en pantalla y cuál está resaltado (-1 = ninguno). */
-let items = []
-let highlighted = -1
-
 function setStatus(text, isError = false) {
   el.status.textContent = text
   el.status.classList.toggle('error', isError)
   el.status.hidden = !text
-}
-
-/** Abre o cierra la lista manteniendo el estado ARIA del combobox. */
-function showResults(open) {
-  el.results.hidden = !open
-  el.q.setAttribute('aria-expanded', String(open))
-  if (!open) setHighlight(-1)
-}
-
-/** Resalta un resultado para el teclado y para el lector de pantalla. */
-function setHighlight(i) {
-  const lis = el.results.children
-  if (highlighted >= 0 && lis[highlighted]) lis[highlighted].removeAttribute('aria-selected')
-  highlighted = i
-  if (i < 0 || !lis[i]) {
-    el.q.removeAttribute('aria-activedescendant')
-    return
-  }
-  lis[i].setAttribute('aria-selected', 'true')
-  el.q.setAttribute('aria-activedescendant', lis[i].id)
-  // La lista scrollea: el resaltado tiene que quedar a la vista.
-  lis[i].scrollIntoView({ block: 'nearest' })
-}
-
-/** Mueve el resaltado con las flechas, dando la vuelta en los extremos. */
-function moveHighlight(delta) {
-  if (el.results.hidden || !items.length) return
-  const n = items.length
-  setHighlight(highlighted < 0 ? (delta > 0 ? 0 : n - 1) : (highlighted + delta + n) % n)
-}
-
-function renderResults(objs) {
-  items = objs
-  highlighted = -1
-  el.q.removeAttribute('aria-activedescendant')
-  el.results.replaceChildren()
-  if (!objs.length) {
-    showResults(false)
-    return
-  }
-  objs.forEach((obj, i) => {
-    const li = document.createElement('li')
-    li.setAttribute('role', 'option')
-    li.id = `result-${i}`
-    const name = document.createElement('span')
-    name.textContent = obj.n
-    const kind = document.createElement('span')
-    kind.className = 'kind'
-    kind.textContent = obj.p && obj.p !== obj.n
-      ? `${TYPES[obj.t].label} · ${obj.p}`
-      : TYPES[obj.t].label
-    li.append(name, kind)
-    li.addEventListener('click', () => selectObject(obj))
-    el.results.append(li)
-  })
-  showResults(true)
 }
 
 function renderChildren(obj) {
@@ -93,7 +34,6 @@ function renderChildren(obj) {
 }
 
 function selectObject(obj) {
-  showResults(false)
   el.q.value = obj.n
   setStatus('')
 
@@ -111,25 +51,30 @@ function selectObject(obj) {
   document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
 }
 
+/** Cada resultado muestra el nombre y, al lado, de qué tipo es. */
+function renderOption(obj) {
+  const frag = document.createDocumentFragment()
+  const name = document.createElement('span')
+  name.textContent = obj.n
+  const kind = document.createElement('span')
+  kind.className = 'kind'
+  kind.textContent = obj.p && obj.p !== obj.n
+    ? `${TYPES[obj.t].label} · ${obj.p}`
+    : TYPES[obj.t].label
+  frag.append(name, kind)
+  return frag
+}
+
+const combo = createCombobox({
+  input: el.q,
+  list: el.results,
+  renderOption,
+  onSelect: selectObject,
+})
+
 el.q.addEventListener('input', () => {
   if (!catalog) return
-  renderResults(search(catalog.objects, el.q.value))
-})
-
-el.q.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    showResults(false)
-  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-    e.preventDefault() // si no, las flechas mueven el cursor dentro del input
-    moveHighlight(e.key === 'ArrowDown' ? 1 : -1)
-  } else if (e.key === 'Enter' && !el.results.hidden && highlighted >= 0) {
-    e.preventDefault()
-    selectObject(items[highlighted])
-  }
-})
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.search')) showResults(false)
+  combo.render(search(catalog.objects, el.q.value))
 })
 
 initMap('map')
