@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { writeFile, mkdir, readFile, access } from 'node:fs/promises'
+import { writeFile, mkdir, readFile, access, rename } from 'node:fs/promises'
 import { parse } from 'csv-parse/sync'
 import { buildCatalog } from './lib/aggregate.mjs'
+import { assertMinRows } from './lib/dump.mjs'
 
 const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
 const MAX_FEATURES = 5000
@@ -20,13 +21,7 @@ const DUMPS = {
   vias:             { layer: 'vias_de_circulacion',   props: 'cpr,cde,cmu,clc,codaglo' },
 }
 
-/**
- * Piso de filas por volcado. El guard de objetos totales no ve un volcado
- * hijo truncado —los conteos de hijos salen de capas distintas que los
- * objetos—, así que un corte por `maxFeatures` del lado del servidor o un
- * write de caché interrumpido pasarían derecho y commitearían conteos
- * mal. Estos números están holgados por debajo de los reales.
- */
+/** Piso de filas por volcado, holgado por debajo de los reales. */
 const MIN_ROWS = {
   jurisdicciones: 24,
   departamentos: 500,
@@ -66,7 +61,12 @@ async function fetchCsv(key, spec, useCache) {
   const res = await fetch(dumpUrl(spec), { signal: AbortSignal.timeout(300_000) })
   if (!res.ok) throw new Error(`${key}: HTTP ${res.status} ${res.statusText}`)
   const text = await res.text()
-  await writeFile(cached, text)
+  // Temp + rename: un write interrumpido deja el `.tmp` a medio escribir,
+  // nunca un `.csv` truncado que la próxima corrida leería como bueno.
+  // El rename dentro del mismo directorio es atómico.
+  const tmp = new URL(`${key}.csv.tmp`, CACHE_DIR)
+  await writeFile(tmp, text)
+  await rename(tmp, cached)
   console.error(`  ${key}: ${text.length} bytes en ${((Date.now() - started) / 1000).toFixed(1)}s`)
   return text
 }
@@ -84,12 +84,7 @@ async function main() {
     rows[key] = parse(await fetchCsv(key, spec, useCache), { columns: true, skip_empty_lines: true })
   }
 
-  for (const [key, min] of Object.entries(MIN_ROWS)) {
-    const n = rows[key].length
-    if (n < min) {
-      throw new Error(`volcado \`${key}\` truncado: ${n} filas, mínimo esperado ${min}. Abortando.`)
-    }
-  }
+  assertMinRows(rows, MIN_ROWS)
 
   const { catalog, warnings } = buildCatalog({
     generated: new Date().toISOString().slice(0, 10),
