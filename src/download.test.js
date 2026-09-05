@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selfUrl, childUrl, canDownload, filename, GEOSERVER } from './download.js'
+import { selfUrl, childUrl, canDownload, filename, GEOSERVER, TYPES } from './download.js'
 
 const treFeb = { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero' }
 const buenosAires = { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires' }
@@ -110,6 +110,20 @@ describe('canDownload', () => {
 
   it('bloquea si el conteo falta', () => {
     expect(canDownload(undefined, 5000)).toBe(false)
+  })
+})
+
+describe('TYPES', () => {
+  // Sin `det`, la interfaz escribe "Descargar undefined aglomerado".
+  it('cada tipo trae el determinante que le corresponde', () => {
+    for (const [t, tipo] of Object.entries(TYPES)) {
+      expect(['este', 'esta'], `tipo ${t}`).toContain(tipo.det)
+    }
+  })
+
+  it('los dos tipos femeninos llevan esta', () => {
+    expect(TYPES.jur.det).toBe('esta')
+    expect(TYPES.loc.det).toBe('esta')
   })
 })
 

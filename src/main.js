@@ -43,7 +43,7 @@ function selectObject(obj) {
     : `${TYPES[obj.t].label} · código ${obj.c}`
 
   el.self.replaceChildren(
-    downloadButton(selfUrl(obj), `Descargar este ${TYPES[obj.t].label.toLowerCase()}`),
+    downloadButton(selfUrl(obj), `Descargar ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()}`),
   )
 
   renderChildren(obj)

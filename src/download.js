@@ -1,12 +1,16 @@
 export const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
 
-/** Capa propia y campo de filtro de cada tipo de objeto buscable. */
+/**
+ * Capa propia y campo de filtro de cada tipo de objeto buscable. `det` es
+ * el determinante que le corresponde al `label`: la interfaz está en
+ * castellano y dos de los cinco tipos son femeninos.
+ */
 export const TYPES = {
-  jur:  { layer: 'geonode:jurisdicciones',        field: 'cpr',     label: 'Jurisdicción' },
-  dep:  { layer: 'geonode:departamentos',         field: 'cde',     label: 'Departamento' },
-  loc:  { layer: 'geonode:localidades_censales',  field: 'clc',     label: 'Localidad censal' },
-  gl:   { layer: 'geonode:gobiernos_locales4',    field: 'cmu',     label: 'Gobierno local' },
-  aglo: { layer: 'geonode:aglomerados',           field: 'codaglo', label: 'Aglomerado' },
+  jur:  { layer: 'geonode:jurisdicciones',        field: 'cpr',     label: 'Jurisdicción',     det: 'esta' },
+  dep:  { layer: 'geonode:departamentos',         field: 'cde',     label: 'Departamento',     det: 'este' },
+  loc:  { layer: 'geonode:localidades_censales',  field: 'clc',     label: 'Localidad censal', det: 'esta' },
+  gl:   { layer: 'geonode:gobiernos_locales4',    field: 'cmu',     label: 'Gobierno local',   det: 'este' },
+  aglo: { layer: 'geonode:aglomerados',           field: 'codaglo', label: 'Aglomerado',       det: 'este' },
 }
 
 /** Capas que un objeto puede ofrecer como hijas. */

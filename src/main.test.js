@@ -87,6 +87,18 @@ describe('el recorrido completo', () => {
     expect($('#children').querySelectorAll('a.btn')).toHaveLength(4)
   })
 
+  // "Descargar este jurisdicción" se leía en el sitio publicado: el texto
+  // se armaba con `este` fijo y dos de los cinco tipos son femeninos.
+  it('el botón de descarga propia concuerda en género', () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    expect($('#detail-self a.btn').textContent).toBe('Descargar este departamento')
+
+    buscar('buenos')
+    $('#results').children[0].click()
+    expect($('#detail-self a.btn').textContent).toBe('Descargar esta jurisdicción')
+  })
+
   it('elegir con el teclado hace lo mismo que con el mouse', () => {
     buscar('tres')
     $('#q').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
