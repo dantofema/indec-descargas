@@ -1,7 +1,9 @@
 import { search } from './search.js'
-import { loadCatalog, childrenOf } from './catalog.js'
-import { selfUrl, childUrl, canDownload, filename, TYPES, CHILD_LAYERS } from './download.js'
+import { loadCatalog } from './catalog.js'
+import { selfUrl, TYPES } from './download.js'
 import { initMap, showObject, onFeature } from './map.js'
+import { fmt, downloadButton } from './ui.js'
+import { childRows } from './children.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -22,36 +24,10 @@ let catalog = null
 let items = []
 let highlighted = -1
 
-/** Formatea un entero con separador de miles en castellano. */
-const fmt = (n) => n.toLocaleString('es-AR')
-
 function setStatus(text, isError = false) {
   el.status.textContent = text
   el.status.classList.toggle('error', isError)
   el.status.hidden = !text
-}
-
-/** Botón de descarga: enlace real si el tope habilita, botón muerto si no. */
-function downloadButton(href, name, label) {
-  const a = document.createElement('a')
-  a.className = 'btn'
-  a.href = href
-  a.download = name
-  a.textContent = label
-  return a
-}
-
-function disabledButton(label, reason) {
-  const wrap = document.createElement('div')
-  const span = document.createElement('span')
-  span.className = 'btn is-disabled'
-  span.textContent = label
-  span.setAttribute('aria-disabled', 'true')
-  const note = document.createElement('p')
-  note.className = 'note'
-  note.textContent = reason
-  wrap.append(span, note)
-  return wrap
 }
 
 /** Abre o cierra la lista manteniendo el estado ARIA del combobox. */
@@ -111,45 +87,9 @@ function renderResults(objs) {
 }
 
 function renderChildren(obj) {
-  const children = childrenOf(obj)
-  el.children.replaceChildren()
-  el.childrenTitle.hidden = children.length === 0
-  if (!children.length) return
-
-  for (const { key, count } of children) {
-    const li = document.createElement('li')
-    const left = document.createElement('div')
-    const label = document.createElement('div')
-    label.textContent = CHILD_LAYERS[key].label
-    const n = document.createElement('div')
-    n.className = 'count'
-    n.textContent = count === 1 ? '1 objeto' : `${fmt(count)} objetos`
-    left.append(label, n)
-
-    let right
-    if (count === 0) {
-      right = disabledButton('Descargar', 'No hay objetos de esta capa acá.')
-    } else if (!canDownload(count, catalog.maxFeatures)) {
-      right = disabledButton(
-        'Descargar',
-        `Son ${fmt(count)} objetos y el máximo por descarga es ${fmt(catalog.maxFeatures)}. ` +
-        'Probá con un objeto más chico.',
-      )
-    } else {
-      right = downloadButton(childUrl(obj, key), filename(obj, key), 'Descargar')
-      if (key === 'vias') {
-        const wrap = document.createElement('div')
-        const note = document.createElement('p')
-        note.className = 'note'
-        note.textContent = 'Las vías tardan: el servidor del INDEC puede demorar un minuto o más en responder.'
-        wrap.append(right, note)
-        right = wrap
-      }
-    }
-
-    li.append(left, right)
-    el.children.append(li)
-  }
+  const rows = childRows(obj, catalog.maxFeatures)
+  el.childrenTitle.hidden = rows.length === 0
+  el.children.replaceChildren(...rows)
 }
 
 function selectObject(obj) {
@@ -163,7 +103,7 @@ function selectObject(obj) {
     : `${TYPES[obj.t].label} · código ${obj.c}`
 
   el.self.replaceChildren(
-    downloadButton(selfUrl(obj), filename(obj), `Descargar este ${TYPES[obj.t].label.toLowerCase()}`),
+    downloadButton(selfUrl(obj), `Descargar este ${TYPES[obj.t].label.toLowerCase()}`),
   )
 
   renderChildren(obj)
