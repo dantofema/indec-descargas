@@ -125,4 +125,11 @@ describe('filename', () => {
   it('rechaza un tipo desconocido igual que sus hermanas', () => {
     expect(() => filename({ t: 'zzz', c: '06' })).toThrow(/tipo/i)
   })
+
+  // El nombre ya no es un atributo `download` inerte: viaja en
+  // `format_options`, donde `;` separa pares. Un código sin validar
+  // inyecta opciones en la URL de descarga.
+  it('rechaza un código inválido igual que sus hermanas', () => {
+    expect(() => filename({ t: 'dep', c: '06840;filename:otro' })).toThrow(/código/i)
+  })
 })

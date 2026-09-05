@@ -92,5 +92,8 @@ export function canDownload(count, maxFeatures) {
 /** Nombre del archivo descargado. Va en `format_options`, no en el `<a>`. */
 export function filename(obj, childKey) {
   const base = typeOf(obj).layer.replace('geonode:', '')
-  return childKey ? `${childKey}-de-${base}-${obj.c}.gpkg` : `${base}-${obj.c}.gpkg`
+  // El nombre viaja en `format_options`, donde `;` separa pares: un
+  // código sin validar inyecta opciones en la URL de descarga.
+  const code = assertCode(obj.c)
+  return childKey ? `${childKey}-de-${base}-${code}.gpkg` : `${base}-${code}.gpkg`
 }
