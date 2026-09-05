@@ -68,7 +68,12 @@ main, .site-header, .site-footer {
   box-shadow: 0 8px 24px rgb(0 0 0 / .10);
 }
 .results li { padding: .6rem 1rem; cursor: pointer; display: flex; justify-content: space-between; gap: 1rem; }
-.results li:hover { background: var(--hl); }
+/* Sólo donde hay un puntero que flota de verdad: en táctil el `:hover`
+   queda pegado después del tap y la fila tocada sigue tintada, como una
+   selección que no existe. */
+@media (hover: hover) {
+  .results li:hover { background: var(--hl); }
+}
 /* El resaltado del teclado es el único indicador de dónde va a caer el
    Enter, así que lleva contraste propio —WCAG 2.1 SC 1.4.11 pide 3:1 para
    el indicador de estado de un componente— y no se confunde con el hover:

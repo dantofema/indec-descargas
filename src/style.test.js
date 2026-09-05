@@ -37,6 +37,19 @@ const rule = (selector) => {
   return [...css.matchAll(re)].map((m) => m[1])
 }
 
+
+/** Contenido de un bloque `@media`, contando llaves. */
+function media(consulta) {
+  const inicio = css.indexOf(`@media ${consulta}`)
+  if (inicio === -1) return null
+  let i = css.indexOf('{', inicio), nivel = 0
+  for (let j = i; j < css.length; j++) {
+    if (css[j] === '{') nivel++
+    else if (css[j] === '}' && --nivel === 0) return css.slice(i + 1, j)
+  }
+  return null
+}
+
 describe('contraste del resaltado de teclado', () => {
   // El resaltado es el único indicador de dónde va a caer el Enter. WCAG
   // 2.1 SC 1.4.11 pide 3:1 para el indicador de estado de un componente.
@@ -85,5 +98,17 @@ describe('reglas que el browser real desarma', () => {
     // que caen fuera del ancho del mapa.
     const z = Number(css.match(/\.results\s*\{[^}]*z-index:\s*(\d+)/)[1])
     expect(z).toBeGreaterThan(1000)
+  })
+})
+
+describe('lo que cambia sin mouse', () => {
+  // En una pantalla táctil el `:hover` queda pegado después del tap: en el
+  // iPhone la fila tocada seguía tintada, sin estar elegida, y parecía una
+  // selección que no existía. `(hover: hover)` da false en táctil, así que
+  // la regla no tiene por qué llegar ahí.
+  it('el hover no se pega en pantallas táctiles', () => {
+    const bloque = media('(hover: hover)')
+    expect(bloque).not.toBe(null)
+    expect(bloque).toMatch(/\.results li:hover/)
   })
 })
