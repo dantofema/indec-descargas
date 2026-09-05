@@ -91,6 +91,14 @@ main, .site-header, .site-footer {
 @media (max-width: 48rem) { .detail { grid-template-columns: 1fr; } }
 
 .map { height: 24rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--disabled); }
+/* Leaflet pinta la placa de atribución al 80% de opacidad, así que el fondo
+   real de ese texto es la tesela que haya debajo: su enlace pasa de 4,94:1
+   sobre blanco a 3,64:1 sobre el gris del contenedor. Opaca, el número no
+   depende de lo que se haya cargado atrás.
+   Va por #map: Leaflet trae la suya con la misma especificidad
+   (`.leaflet-container .leaflet-control-attribution`) y queda después en el
+   bundle, así que empatar no alcanza. */
+#map .leaflet-control-attribution { background: #fff; }
 .panel h2 { margin: 0 0 .25rem; font-size: 1.25rem; }
 .meta { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
 

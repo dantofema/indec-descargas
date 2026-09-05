@@ -101,6 +101,19 @@ describe('reglas que el browser real desarma', () => {
   })
 })
 
+describe('la atribución del mapa', () => {
+  // Leaflet pinta su placa con `rgba(255,255,255,.8)`, así que el fondo real
+  // del texto es la tesela que haya debajo. Su enlace, #0078A8, mide 4,94:1
+  // sobre blanco pero 3,64:1 sobre el gris del contenedor: el contraste
+  // dependía de qué se hubiera cargado atrás. Con la placa opaca es siempre
+  // el número bueno, sin pelearle a la paleta de Leaflet.
+  it('la placa es opaca, así el contraste no depende de la tesela', () => {
+    const regla = rule('#map .leaflet-control-attribution')
+    expect(regla.length).toBe(1)
+    expect(regla[0]).toMatch(/background:\s*#fff\b/)
+  })
+})
+
 describe('lo que cambia sin mouse', () => {
   // En una pantalla táctil el `:hover` queda pegado después del tap: en el
   // iPhone la fila tocada seguía tintada, sin estar elegida, y parecía una
