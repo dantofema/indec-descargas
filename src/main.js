@@ -1,11 +1,13 @@
 import { search, TYPE_ORDER } from './search.js'
-import { loadCatalog } from './catalog.js'
-import { selfUrl, TYPES } from './download.js'
-import { initMap, showObject, onFeature } from './map.js'
+import { loadCatalog, childrenOf } from './catalog.js'
+import { selfUrl, TYPES, CHILD_LAYERS } from './download.js'
+import { initMap, showObject, showFeature, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
 import { childRows } from './children.js'
 import { createCombobox } from './combobox.js'
 import { codeIndex, parentsOf } from './parents.js'
+import { createBrowser } from './browser.js'
+import { specOf } from './columns.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -38,6 +40,21 @@ function renderChildren(obj) {
   const rows = childRows(obj)
   el.children.replaceChildren(...rows)
 }
+
+/**
+ * La fila 3: recorrer de a una página los objetos hijos y verlos en el
+ * mapa. `onView` ya recibe la fila y de qué pestaña salió (ver table.js),
+ * así que no hace falta que main.js lleve la cuenta de la pestaña activa.
+ */
+const browser = createBrowser({
+  container: el.browse,
+  onView: (row, key) => {
+    const spec = specOf(key)
+    showFeature(CHILD_LAYERS[key].layer, spec.idField, String(row[spec.idField]))
+      .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
+  },
+  onError: () => {},
+})
 
 /** Una fila por padre: quién es y su descarga. */
 function parentRow(parent) {
@@ -74,6 +91,8 @@ function selectObject(obj) {
 
   renderParents(obj)
   renderChildren(obj)
+  browser.show(obj)
+  el.rowBrowse.hidden = childrenOf(obj).length === 0
   el.detail.hidden = false
   document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
 }

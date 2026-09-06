@@ -44,13 +44,23 @@ function filtrar(tipo) {
   $('#type').dispatchEvent(new Event('change', { bubbles: true }))
 }
 
+// Una fila con propiedades de verdad: `cod_indec`/`cde`/`clc` son los
+// `idField` de las cinco capas hijas, y tienen que ser dígitos —pasan por
+// `assertCode`—. Sirve tanto para la geometría del objeto elegido (fila 1)
+// como para la página que carga la fila 3 y el "Ver" que dibuja una fila.
+const filaDeVerdad = {
+  cod_indec: '068400101', cde: '06840', clc: '068401',
+  cfn: '01', cro: '01', tro: 'U', nam: 'Nombre de prueba', gna: 'Tipo',
+  aglomerado: 'Gran Buenos Aires', fna: 'Avenida de prueba', sag: 'S',
+}
+
 beforeEach(async () => {
   vi.resetModules()
   document.body.innerHTML = body
   Element.prototype.scrollIntoView = () => {}
   global.fetch = vi.fn(async (url) => String(url).includes('catalog.json')
     ? { ok: true, json: async () => catalogo }
-    : { ok: true, status: 200, json: async () => ({ features: [{ properties: {} }] }) })
+    : { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties: filaDeVerdad }] }) })
   await import('./main.js')
   await vi.waitFor(() => expect($('#generated').textContent).not.toBe(''))
 })
@@ -199,5 +209,54 @@ describe('la fila de padres', () => {
     buscar('buenos')
     $('#results').children[0].click()
     expect($('#row-parents').hidden).toBe(true)
+  })
+})
+
+// La fila 3: recorrer los hijos paginados y descargarlos o verlos en el
+// mapa. Las pestañas y la tabla ya tienen su propio suite en
+// browser.test.js; acá sólo se prueba que el cableado real —el `index.html`
+// publicado, con el catálogo de verdad— las enciende.
+describe('recorrer los hijos', () => {
+  it('abre la pestaña, lista la página y descarga una fila', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    expect($('#row-browse').hidden).toBe(false)
+    // fracciones, radios, localidades y vías: las cuatro que trae el catálogo.
+    expect(document.querySelectorAll('#browse [role="tab"]')).toHaveLength(4)
+
+    const href = $('#browse tbody tr a.btn').getAttribute('href')
+    expect(href).toContain('outputFormat=geopackage')
+  })
+
+  // Corrección 2 al brief: la pestaña de vías no se auto-carga, tampoco
+  // cableada en la app completa —no sólo en el test unitario de browser.js—.
+  it('la pestaña de vías pide confirmación en vez de cargar sola', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    const llamadasAntes = global.fetch.mock.calls.length
+
+    const tabVias = [...document.querySelectorAll('#browse [role="tab"]')]
+      .find((tab) => tab.textContent.includes('Vías'))
+    tabVias.click()
+
+    expect(global.fetch).toHaveBeenCalledTimes(llamadasAntes)
+    expect($('#browse').textContent).toMatch(/99 segundos/)
+  })
+
+  // Corrección 3 al brief: Ver deja la fila marcada, sin romper el resto
+  // de la ficha si el dibujo en el mapa sale bien.
+  it('Ver dibuja la fila en el mapa y la deja marcada', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+
+    const fila = $('#browse tbody tr')
+    fila.querySelector('button').click()
+    expect(fila.getAttribute('aria-selected')).toBe('true')
+
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#status').hidden).toBe(true)
   })
 })
