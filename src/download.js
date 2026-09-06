@@ -29,7 +29,7 @@ export const CHILD_LAYERS = {
  * Los códigos del INDEC son siempre dígitos con ceros a la izquierda.
  * Validarlos acá evita interpolar cualquier otra cosa dentro del CQL.
  */
-function assertCode(code) {
+export function assertCode(code) {
   if (typeof code !== 'string' || !/^\d+$/.test(code)) {
     throw new Error(`código inválido: ${JSON.stringify(code)}`)
   }
