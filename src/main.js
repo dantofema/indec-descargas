@@ -1,6 +1,6 @@
 import { search, TYPE_ORDER } from './search.js'
 import { loadCatalog } from './catalog.js'
-import { selfUrl, TYPES, CHILD_LAYERS } from './download.js'
+import { selfUrl, TYPES, childOf } from './download.js'
 import { initMap, showObject, showFeature, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
 import { childRows } from './children.js'
@@ -56,7 +56,7 @@ const browser = createBrowser({
   // markRow en browser.js; en vías tarda ~12 s medidos).
   onView: (row, key) => {
     const spec = specOf(key)
-    return showFeature(CHILD_LAYERS[key].layer, spec.idField, String(row[spec.idField]))
+    return showFeature(childOf(key).layer, spec.idField, String(row[spec.idField]))
       .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
   },
   onError: () => {},

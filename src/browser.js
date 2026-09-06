@@ -2,7 +2,7 @@ import { createTabs } from './tabs.js'
 import { fetchPage } from './features.js'
 import { renderTable, renderPager } from './table.js'
 import { nonEmptyChildrenOf } from './catalog.js'
-import { CHILD_LAYERS } from './download.js'
+import { childOf } from './download.js'
 import { fmt } from './ui.js'
 
 /**
@@ -113,7 +113,7 @@ export function createBrowser({ container, onView, onError }) {
     createTabs({
       container: tabsBox,
       items: kids.map(({ key, count }) => ({
-        key, label: CHILD_LAYERS[key].label, badge: fmt(count),
+        key, label: childOf(key).label, badge: fmt(count),
       })),
       onSelect: (key) => {
         active = key

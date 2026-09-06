@@ -1,4 +1,4 @@
-import { childUrl, CHILD_LAYERS } from './download.js'
+import { childUrl, childOf } from './download.js'
 import { childrenOf } from './catalog.js'
 import { fmt, downloadButton, disabledButton } from './ui.js'
 
@@ -51,10 +51,11 @@ export function weightNotice(childKey, count) {
 /** Una fila por capa hija, con su conteo y su descarga. */
 export function childRows(obj) {
   return childrenOf(obj).map(({ key, count }) => {
+    const child = childOf(key)
     const li = document.createElement('li')
     const who = document.createElement('span')
     who.className = 'who'
-    who.textContent = CHILD_LAYERS[key].label
+    who.textContent = child.label
 
     const cuenta = document.createElement('span')
     cuenta.className = 'count'
@@ -62,7 +63,7 @@ export function childRows(obj) {
     who.append(cuenta)
 
     if (count === 0) {
-      li.append(who, disabledButton('Descargar', `No hay ${CHILD_LAYERS[key].label.toLowerCase()} en este objeto.`))
+      li.append(who, disabledButton('Descargar', `No hay ${child.label.toLowerCase()} en este objeto.`))
       return li
     }
 
