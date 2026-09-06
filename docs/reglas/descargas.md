@@ -53,10 +53,14 @@ problema de los `.shp` en varios archivos ni su límite de 10 caracteres por nom
 **Muerta:** murió junto con el tope de features. DES-R1 y DES-R2 dejaron de depender de un
 número, así que no hay política que guardar en el catálogo.
 
-El campo `maxFeatures` sigue escribiéndose en `catalog.json` porque el build todavía lo genera
-(`scripts/build-index.mjs`, `scripts/lib/aggregate.mjs`) y queda también en fixtures de test,
-aunque ya no lo lea ningún código de `src/`. Se saca del build en otra tarea; hasta entonces el
-campo queda en el JSON como dato muerto, no como comportamiento vigente.
+El campo `maxFeatures` ya no existe en ninguna parte: el build dejó de generarlo y el catálogo
+dejó de tenerlo el 2026-09-06 (commit `916c39c`), junto con la constante `MAX_FEATURES` y su
+rastro en las fixtures de test. `catalog.json` tiene hoy exactamente dos claves, `generated` y
+`objects`.
+
+La única mención que queda en el repo es un comentario de `scripts/lib/dump.mjs`, y no habla de
+este campo: habla del corte que puede aplicar el GeoServer del lado del servidor, que es un
+riesgo del protocolo WFS y sigue vigente.
 
 ### DES-R6 — El catálogo se regenera a mano y se versiona
 
