@@ -122,7 +122,7 @@ loadCatalog()
   .then((c) => {
     catalog = c
     setStatus('')
-    el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos · máximo ${fmt(c.maxFeatures)} por descarga.`
+    el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
     el.q.focus()
   })
   .catch((err) => {

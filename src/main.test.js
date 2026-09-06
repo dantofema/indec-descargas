@@ -58,8 +58,9 @@ beforeEach(async () => {
 describe('el recorrido completo', () => {
   it('arranca con el catálogo cargado y la ficha oculta', () => {
     expect($('#generated').textContent).toContain('2 objetos')
-    expect($('#generated').textContent).toContain('máximo 5.000')
     expect($('#generated').textContent).toContain('2026-09-04')
+    // Ya no hay tope de descarga: el pie de página no debe mentir sobre uno.
+    expect($('#generated').textContent).not.toContain('máximo')
     expect($('#detail').hidden).toBe(true)
     expect($('#status').hidden).toBe(true)
     // El foco arranca en el buscador: no hace falta ir a buscarlo.

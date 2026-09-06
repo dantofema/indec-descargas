@@ -39,6 +39,28 @@ describe('weightNotice', () => {
   })
 })
 
+describe('childRows: la demora fija de las vías', () => {
+  // Medido contra el GeoServer: 1.487 vías tardan 21,3 s y 4.260 tardan
+  // 19,5 s — la demora es del servidor, no del tamaño del pedido, así que
+  // el aviso va incondicional y no depende de weightNotice/estimateSeconds.
+  it('avisa la demora aunque la capa de vías sea chica, sin aviso de peso', () => {
+    const filas = childRows({ t: 'dep', c: '06840', n: 'Tres de Febrero', ch: { vias: 1487 } })
+    expect(filas[0].textContent).toMatch(/20 segundos/)
+    expect(filas[0].textContent).not.toMatch(/MB/)
+  })
+
+  it('una capa de vías enorme trae los dos avisos, el de demora y el de peso', () => {
+    const filas = childRows({ t: 'jur', c: '06', n: 'Buenos Aires', ch: { vias: 179029 } })
+    expect(filas[0].textContent).toMatch(/20 segundos/)
+    expect(filas[0].textContent).toMatch(/MB/)
+  })
+
+  it('ninguna otra capa trae el aviso de demora', () => {
+    const filas = childRows({ t: 'jur', c: '06', n: 'Buenos Aires', ch: { radios: 23901, localidades: 621 } })
+    for (const li of filas) expect(li.textContent).not.toMatch(/20 segundos/)
+  })
+})
+
 describe('childRows', () => {
   const obj = { t: 'jur', c: '06', n: 'Buenos Aires', ch: { radios: 23901, localidades: 621 } }
 

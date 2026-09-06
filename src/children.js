@@ -19,6 +19,16 @@ const BYTES_PER_SECOND = 2 * 1024 * 1024
  */
 const NOTICE_THRESHOLD = 10 * 1024 * 1024
 
+/**
+ * La capa de vías tiene ~20 s de demora fija del servidor, sin relación
+ * con el tamaño del pedido: 1.487 vías (795 KB) tardan 21,3 s, 4.260
+ * (4,3 MB) tardan 19,5 s y las 179.029 del peor caso (74 MB) tardan 37 s.
+ * `estimateSeconds` calcula por bytes y para el pedido chico da 0,4 s, 50
+ * veces menos que la realidad: este aviso es incondicional y no usa esa
+ * cuenta.
+ */
+const LATENCY_NOTICE = 'El servidor del INDEC tarda unos 20 segundos en empezar a responder esta capa, aun para pocas vías.'
+
 export function estimateBytes(childKey, count) {
   return (BYTES_PER_FEATURE[childKey] ?? BYTES_DEFAULT) * count
 }
@@ -54,6 +64,13 @@ export function childRows(obj) {
     if (count === 0) {
       li.append(who, disabledButton('Descargar', `No hay ${CHILD_LAYERS[key].label.toLowerCase()} en este objeto.`))
       return li
+    }
+
+    if (key === 'vias') {
+      const demora = document.createElement('span')
+      demora.className = 'heavy'
+      demora.textContent = LATENCY_NOTICE
+      who.append(demora)
     }
 
     const aviso = weightNotice(key, count)
