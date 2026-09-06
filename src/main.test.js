@@ -21,6 +21,10 @@ const catalogo = {
       ch: { fracciones: 42, radios: 432, localidades: 1, vias: 1487 } },
     { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires', p: 'Buenos Aires',
       ch: { departamentos: 135, radios: 23901 } },
+    // Existe en el catálogo real, con ese conteo: es uno de los 11 pares
+    // (objeto, capa) con cero, y los 11 caen en capas que tienen nota.
+    { t: 'loc', c: '94021040', n: 'Grytviken', s: 'grytviken', p: 'Tierra del Fuego',
+      ch: { vias: 0 } },
   ],
 }
 
@@ -66,7 +70,7 @@ beforeEach(async () => {
 
 describe('el recorrido completo', () => {
   it('arranca con el catálogo cargado y la ficha oculta', () => {
-    expect($('#generated').textContent).toContain('2 objetos')
+    expect($('#generated').textContent).toContain('3 objetos')
     expect($('#generated').textContent).toContain('2026-09-04')
     // Ya no hay tope de descarga: el pie de página no debe mentir sobre uno.
     expect($('#generated').textContent).not.toContain('máximo')
@@ -297,4 +301,30 @@ it('la fila de notas aparece con las notas que corresponden', () => {
   $('#results').children[0].click()
   expect($('#row-notes').hidden).toBe(false)
   expect($('#notes').textContent).toMatch(/tramos/)
+})
+
+// Fix round 3, hallazgo 3: las tres filas de la misma ficha se
+// contradecían con conteo cero. La 2 decía bien que no hay vías; la 3
+// ofrecía recorrerlas igual, con el panel de costo y un botón que dispara
+// un pedido de 17 s que vuelve vacío; y la 4 explicaba la trampa de una
+// capa que este objeto no tiene.
+describe('un objeto con una capa hija en cero', () => {
+  it('lo dice una sola vez, en la fila 2, y no ofrece recorrer ni anotar nada', async () => {
+    buscar('grytviken')
+    $('#results').children[0].click()
+
+    const vias = [...$('#children').children][0]
+    expect(vias.querySelector('a.btn')).toBe(null)
+    expect(vias.textContent).toMatch(/no hay vías de circulación en este objeto/i)
+
+    expect($('#row-browse').hidden).toBe(true)
+    expect($('#row-notes').hidden).toBe(true)
+    expect($('#browse').children).toHaveLength(0)
+    expect($('#notes').children).toHaveLength(0)
+
+    // Y no se le pide nada al GeoServer por una capa que sabemos vacía.
+    await new Promise((r) => setTimeout(r, 0))
+    const pedidos = global.fetch.mock.calls.map(([url]) => String(url))
+    expect(pedidos.filter((u) => u.includes('vias_de_circulacion'))).toEqual([])
+  })
 })

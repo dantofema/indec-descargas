@@ -1,5 +1,5 @@
 import { search, TYPE_ORDER } from './search.js'
-import { loadCatalog, childrenOf } from './catalog.js'
+import { loadCatalog } from './catalog.js'
 import { selfUrl, TYPES, CHILD_LAYERS } from './download.js'
 import { initMap, showObject, showFeature, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
@@ -127,8 +127,10 @@ function selectObject(obj) {
   renderParents(obj)
   renderChildren(obj)
   renderNotes(obj)
-  browser.show(obj)
-  el.rowBrowse.hidden = childrenOf(obj).length === 0
+  // La visibilidad de la fila la decide quien la dibuja, como las filas 2 y
+  // 4: recalcular acá el mismo predicado es cómo divergen y queda una fila
+  // visible y vacía.
+  el.rowBrowse.hidden = !browser.show(obj)
   el.detail.hidden = false
   document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
 }

@@ -1,7 +1,7 @@
 import { createTabs } from './tabs.js'
 import { fetchPage } from './features.js'
 import { renderTable, renderPager } from './table.js'
-import { childrenOf } from './catalog.js'
+import { nonEmptyChildrenOf } from './catalog.js'
 import { CHILD_LAYERS } from './download.js'
 import { fmt } from './ui.js'
 
@@ -64,6 +64,10 @@ const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geomet
  * se esté mirando. Guarda qué pestaña está activa, en qué página va cada una
  * y cuál fue el último pedido, para que una respuesta lenta de una pestaña
  * abandonada no pise a la que el usuario está mirando.
+ *
+ * `show` devuelve si dibujó algo: quién puede recorrerse lo decide esta
+ * fila, no quien la cablea. Duplicar la decisión afuera es cómo aparece una
+ * fila visible y vacía.
  */
 export function createBrowser({ container, onView, onError }) {
   let obj = null
@@ -95,8 +99,11 @@ export function createBrowser({ container, onView, onError }) {
     token += 1
     container.replaceChildren()
 
-    const kids = childrenOf(obj)
-    if (!kids.length) return
+    // Sin los ceros: una pestaña "Vías de circulación 0" ofrece recorrer lo
+    // que no existe, y su panel de costo cobra 17 s medidos por una página
+    // vacía (ver `nonEmptyChildrenOf`).
+    const kids = nonEmptyChildrenOf(obj)
+    if (!kids.length) return false
 
     const tabsBox = document.createElement('div')
     body = document.createElement('div')
@@ -117,6 +124,7 @@ export function createBrowser({ container, onView, onError }) {
         load(key, pages.get(key) ?? 0)
       },
     })
+    return true
   }
 
   /** El costo medido y el botón para cargar la página igual. */
@@ -238,5 +246,5 @@ export function createBrowser({ container, onView, onError }) {
     return wrap
   }
 
-  return { show, clear: () => container.replaceChildren() }
+  return { show }
 }

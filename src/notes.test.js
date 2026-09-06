@@ -40,4 +40,17 @@ describe('notesFor', () => {
   it('un objeto sin hijos no trae ninguna', () => {
     expect(notesFor({ t: 'gl', c: '060840' })).toEqual([])
   })
+
+  // Fix round 3, hallazgo 3: Grytviken existe en el catálogo con
+  // `ch: {vias: 0}`. Explicarle que la capa lista tramos y no calles, para
+  // un objeto que no tiene ninguna, es prosa sobre la nada. Los 11 pares
+  // (objeto, capa) con conteo cero del catálogo caen todos en capas con nota.
+  it('una capa con conteo cero no trae su nota', () => {
+    expect(notesFor({ t: 'loc', c: '94021040', n: 'Grytviken', ch: { vias: 0 } })).toEqual([])
+  })
+
+  it('el cero de una capa no se lleva puesta la nota de otra que sí tiene objetos', () => {
+    const dep = { t: 'dep', c: '94028', ch: { localidades: 3, vias: 0 } }
+    expect(notesFor(dep).map((n) => n.key)).toEqual(['localidades'])
+  })
 })

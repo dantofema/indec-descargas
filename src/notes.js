@@ -1,4 +1,4 @@
-import { childrenOf } from './catalog.js'
+import { nonEmptyChildrenOf } from './catalog.js'
 
 /**
  * Aclaraciones sobre la cartografía del INDEC, atadas a la capa donde
@@ -28,8 +28,12 @@ export const NOTES = [
   },
 ]
 
-/** Las notas que le corresponden a un objeto, por las capas que tiene. */
+/**
+ * Las notas que le corresponden a un objeto, por las capas que tiene con
+ * objetos adentro: una capa en cero no se anota, porque la nota explica una
+ * trampa de algo que este objeto no tiene (ver `nonEmptyChildrenOf`).
+ */
 export function notesFor(obj) {
-  const keys = new Set(childrenOf(obj).map((c) => c.key))
+  const keys = new Set(nonEmptyChildrenOf(obj).map((c) => c.key))
   return NOTES.filter((n) => keys.has(n.key))
 }

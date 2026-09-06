@@ -53,9 +53,11 @@ NAV-R8, y por otro motivo (la conexión, no la pintura).
 Sin notas para ninguna de sus capas hijas, la fila no se renderiza.
 
 **Por qué:** una sección vacía enseña a ignorarla. Medido contra el catálogo: de los 6.977
-objetos, 4.695 tienen alguna capa con nota y 2.282 no tienen ninguna. Los 2.282 son todos
-gobiernos locales, coherente con DES-R7 (el gobierno local no ofrece capas hijas). Sin
-ocultarla, la fila de notas aparecería vacía en un tercio de las fichas del sitio.
+objetos, 4.686 tienen alguna capa con nota y 2.291 no tienen ninguna. De esos 2.291, 2.282 son
+gobiernos locales —coherente con DES-R7, que no les da capas hijas— y los 9 restantes son
+objetos cuyas capas con nota están en cero (NAV-R9): las ocho localidades de las Islas del
+Atlántico Sur y el departamento Antártida Argentina. Sin ocultarla, la fila de notas aparecería
+vacía en un tercio de las fichas del sitio.
 
 ### NAV-R7 — Vías no auto-carga: muestra el costo medido y un botón para cargar igual
 
@@ -102,3 +104,22 @@ que no lo vea.
 Abortar, además de descartar, es por la conexión y no por la pintura: un pedido abandonado sigue
 ocupando una de las ~6 que el browser permite por origen, y el mapa pide al mismo origen. Con unos
 pocos pedidos de vías colgados, la fila 1 deja de dibujar por culpa de la fila 3.
+
+### NAV-R9 — Una capa hija en cero no se recorre ni se anota
+
+Una capa con conteo cero no abre pestaña en la fila 3 ni trae su nota en la fila 4. Aparece sólo
+en la fila 2, con el botón deshabilitado y el motivo (DES-R3). Si todas las capas de un objeto
+están en cero, la fila 3 no se muestra.
+
+**Por qué:** las tres filas decían cosas distintas sobre el mismo dato. Grytviken —una de las 11
+combinaciones (objeto, capa) del catálogo con conteo cero— decía bien en la fila 2 que no hay
+vías, y abría igual en la fila 3 una pestaña «Vías de circulación 0» con el panel de costo
+avisando 88 a 99 segundos y un botón para cargar igual. Medido el 2026-09-06, ese pedido tarda 17
+segundos y vuelve con `totalFeatures: 0`: el usuario paga la espera entera para no recibir nada
+que la fila 2 no le dijera gratis. La fila 4, mientras tanto, le explicaba la trampa de una capa
+que ese objeto no tiene.
+
+El conteo cero sigue llegando entero a la fila 2 —DES-R3 lo necesita para dibujar el botón muerto
+con su motivo, y es el único lugar del sitio donde el cero se explica—, así que el filtro es una
+pregunta aparte y no un recorte en la fuente. Las 11 combinaciones con cero caen todas en capas
+que tienen nota, así que la fila 4 era el otro lugar donde se notaba.

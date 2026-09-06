@@ -77,9 +77,14 @@ describe('childRows', () => {
     expect(filas.find((li) => li.textContent.includes('Localidades')).textContent).not.toMatch(/MB/)
   })
 
-  it('la capa con cero objetos sigue deshabilitada', () => {
+  // DES-R3 pide las dos mitades: el botón deshabilitado **y** que diga que
+  // no hay nada de esa capa. Sin la segunda aserción, el test se conforma
+  // con la mitad de la regla —y la fila 2 es el único lugar del sitio donde
+  // el conteo cero se explica, porque las filas 3 y 4 lo filtran.
+  it('la capa con cero objetos sigue deshabilitada, y dice por qué', () => {
     const filas = childRows({ t: 'loc', c: '06840010', n: 'x', ch: { vias: 0 } })
     expect(filas[0].querySelector('a.btn')).toBe(null)
     expect(filas[0].querySelector('[aria-disabled="true"]')).not.toBe(null)
+    expect(filas[0].textContent).toMatch(/no hay vías de circulación en este objeto/i)
   })
 })

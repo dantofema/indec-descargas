@@ -8,4 +8,4 @@ documento mienta.
 |---|---|
 | [buscador](buscador.md) | BUS-R1 … BUS-R4 |
 | [descargas](descargas.md) | DES-R1 … DES-R10 |
-| [navegacion](navegacion.md) | NAV-R1 … NAV-R8 |
+| [navegacion](navegacion.md) | NAV-R1 … NAV-R9 |

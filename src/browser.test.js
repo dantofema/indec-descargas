@@ -510,4 +510,41 @@ describe('createBrowser', () => {
       expect(señales()[0].aborted).toBe(true)
     })
   })
+
+  // Fix round 3, hallazgo 3: con `ch: {vias: 0}` —11 pares (objeto, capa)
+  // del catálogo, Grytviken entre ellos— la fila 3 abría igual una pestaña
+  // "Vías de circulación 0", con el panel de costo avisando 88-99 segundos
+  // y un botón "Cargar igual" que disparaba un pedido real. Medido: ese
+  // pedido tarda 17 s y vuelve con totalFeatures 0. El usuario paga la
+  // espera entera para no recibir nada que la fila 2 no le diga gratis.
+  describe('una capa con conteo cero no se recorre', () => {
+    const grytviken = { t: 'loc', c: '94021040', n: 'Grytviken', ch: { vias: 0 } }
+
+    it('no dibuja nada ni pide nada si todas sus capas están vacías', () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(grytviken)
+
+      expect(container.children).toHaveLength(0)
+      expect(global.fetch).not.toHaveBeenCalled()
+    })
+
+    it('avisa que no dibujó nada, para que la fila entera se pueda ocultar', () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      expect(b.show(grytviken)).toBe(false)
+      expect(b.show(dep)).toBe(true)
+    })
+
+    it('saca sólo la pestaña vacía, y deja las que tienen objetos', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show({ t: 'dep', c: '94028', n: 'Antártida Argentina', ch: { fracciones: 3, localidades: 0, vias: 0 } })
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      const pestañas = [...container.querySelectorAll('[role="tab"]')]
+      expect(pestañas).toHaveLength(1)
+      expect(pestañas[0].textContent).toContain('Fracciones')
+    })
+  })
 })
