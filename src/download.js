@@ -36,10 +36,16 @@ export function assertCode(code) {
   return code
 }
 
-function typeOf(obj) {
+export function typeOf(obj) {
   const type = TYPES[obj?.t]
   if (!type) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
   return type
+}
+
+export function childOf(childKey) {
+  const child = CHILD_LAYERS[childKey]
+  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  return child
 }
 
 const GPKG = 'geopackage'
@@ -78,8 +84,7 @@ export function selfUrl(obj, format = GPKG) {
 /** URL de descarga de una capa hija, filtrada por el campo del padre. */
 export function childUrl(obj, childKey, format = GPKG) {
   const type = typeOf(obj)
-  const child = CHILD_LAYERS[childKey]
-  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  const child = childOf(childKey)
   return wfsUrl(
     child.layer,
     `${type.field}='${assertCode(obj.c)}'`,
@@ -94,8 +99,7 @@ export function childUrl(obj, childKey, format = GPKG) {
  * entera, no el tramo de la fila.
  */
 export function featureUrl(childKey, code, format = GPKG) {
-  const child = CHILD_LAYERS[childKey]
-  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  const child = childOf(childKey)
   const base = child.layer.replace('geonode:', '')
   return wfsUrl(
     child.layer,

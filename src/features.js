@@ -1,4 +1,4 @@
-import { GEOSERVER, CHILD_LAYERS, TYPES, assertCode } from './download.js'
+import { GEOSERVER, assertCode, childOf, typeOf } from './download.js'
 import { specOf, queryFields } from './columns.js'
 
 /**
@@ -13,10 +13,8 @@ import { specOf, queryFields } from './columns.js'
 export const PAGE_SIZE = 20
 
 export function pageUrl(obj, childKey, page) {
-  const child = CHILD_LAYERS[childKey]
-  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
-  const parent = TYPES[obj?.t]
-  if (!parent) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
+  const child = childOf(childKey)
+  const parent = typeOf(obj)
 
   const p = new URLSearchParams({
     service: 'WFS',
