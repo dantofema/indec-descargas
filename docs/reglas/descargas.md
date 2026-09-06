@@ -4,10 +4,11 @@ Decisiones de producto sobre qué se puede descargar y con qué límite.
 
 ## ✅ Reglas
 
-### DES-R1 — No hay tope de features: la descarga se ofrece siempre
+### DES-R1 — No hay tope superior de features
 
-Ninguna capa hija deshabilita su botón de descarga por cantidad de objetos, sea cual sea el
-conteo.
+Ninguna capa hija deshabilita su botón de descarga por **superar** una cantidad de objetos. El
+piso es otra historia: el conteo cero sigue deshabilitando el botón, eso lo decide DES-R3, no
+esta regla.
 
 La descarga del objeto en sí queda siempre por debajo de cualquier tope pensable —es
 exactamente un feature—, así que nunca estuvo en juego: esta regla es sobre las capas hijas.

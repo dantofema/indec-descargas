@@ -15,10 +15,10 @@ Sitio estático: no hay backend. Los datos salen del GeoServer público del INDE
 Funcionando. El sitio busca sobre un catálogo de 6.977 objetos (24 jurisdicciones, 529
 departamentos, 4.023 localidades censales, 2.282 gobiernos locales y 119 aglomerados),
 dibuja el objeto elegido sobre el basemap del IGN y arma los enlaces de descarga en GPKG,
-tanto del objeto en sí como de sus capas hijas y de sus padres. No hay tope de features: toda
-descarga se ofrece habilitada, y superar los 10 MB estimados sólo agrega un aviso de peso y de
-espera al lado del botón. Las reglas están en
-[`docs/reglas/descargas.md`](docs/reglas/descargas.md).
+tanto del objeto en sí como de sus capas hijas y de sus padres. No hay tope superior de
+features: ninguna capa hija se deshabilita por tener muchos objetos, sólo por tener cero, y
+superar los 10 MB estimados agrega un aviso de peso y de espera al lado del botón, que sigue
+habilitado. Las reglas están en [`docs/reglas/descargas.md`](docs/reglas/descargas.md).
 
 Cada capa hija también se puede recorrer de a una fila, paginada contra el GeoServer del INDEC.
 Vías es la excepción: no carga sola al abrir su pestaña, porque es una tabla de 477.588 filas

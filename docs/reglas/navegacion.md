@@ -49,7 +49,10 @@ el síntoma es la tabla equivocada bajo la pestaña correcta.
 
 Sin notas para ninguna de sus capas hijas, la fila no se renderiza.
 
-**Por qué:** una sección vacía enseña a ignorarla.
+**Por qué:** una sección vacía enseña a ignorarla. Medido contra el catálogo: de los 6.977
+objetos, 4.695 tienen alguna capa con nota y 2.282 no tienen ninguna. Los 2.282 son todos
+gobiernos locales, coherente con DES-R7 (el gobierno local no ofrece capas hijas). Sin
+ocultarla, la fila de notas aparecería vacía en un tercio de las fichas del sitio.
 
 ### NAV-R7 — Vías no auto-carga: muestra el costo medido y un botón para cargar igual
 
