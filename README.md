@@ -18,6 +18,11 @@ dibuja el objeto elegido sobre el basemap del IGN y arma los enlaces de descarga
 tanto del objeto en sí como de sus capas hijas. Si una capa hija supera el tope de features
 el botón queda deshabilitado con el conteo real, en vez de bajar un archivo recortado.
 
+La búsqueda se puede acotar a un tipo de objeto, acepta las palabras del nombre sueltas y en
+cualquier orden, y toma la provincia como término extra para desambiguar homónimos: `caseros
+entre rios` separa los dos Caseros del país. Las reglas están en
+[`docs/reglas/buscador.md`](docs/reglas/buscador.md).
+
 ## Cómo correrlo
 
 ```sh

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { childrenOf } from './catalog.js'
+import { describe, it, expect, vi } from 'vitest'
+import { childrenOf, loadCatalog } from './catalog.js'
 
 const catalog = {
   generated: '2026-09-04',
@@ -30,5 +30,30 @@ describe('childrenOf', () => {
 
   it('conserva los hijos con conteo cero', () => {
     expect(childrenOf(catalog.objects[2])).toEqual([{ key: 'vias', count: 0 }])
+  })
+})
+
+// BUS-R3: la búsqueda mira también la provincia, y la compara normalizada.
+// La clave se deriva al cargar y no en el build: `p` ya viaja en el JSON, y
+// precalcularla ahí le sumaría mas de 100 KB al catalogo commiteado.
+describe('loadCatalog', () => {
+  const responder = (objects) => vi.fn(async () => ({ ok: true, json: async () => ({ objects }) }))
+
+  it('agrega la clave normalizada de la provincia', async () => {
+    global.fetch = responder([{ t: 'loc', n: 'Caseros', s: 'caseros', p: 'Buenos Aires' }])
+    const c = await loadCatalog('/catalog.json')
+    expect(c.objects[0].sp).toBe('buenos aires')
+  })
+
+  it('le saca los acentos igual que al nombre', async () => {
+    global.fetch = responder([{ t: 'loc', n: 'Centenario', s: 'centenario', p: 'Neuqu\u00e9n' }])
+    const c = await loadCatalog('/catalog.json')
+    expect(c.objects[0].sp).toBe('neuquen')
+  })
+
+  it('deja la clave vacía si el objeto no trae provincia', async () => {
+    global.fetch = responder([{ t: 'jur', n: 'Santa Fe', s: 'santa fe' }])
+    const c = await loadCatalog('/catalog.json')
+    expect(c.objects[0].sp).toBe('')
   })
 })

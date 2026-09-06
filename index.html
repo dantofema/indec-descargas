@@ -15,17 +15,22 @@
 
     <main>
       <div class="search">
-        <input
-          id="q"
-          type="search"
-          autocomplete="off"
-          placeholder="Escribí un nombre. Por ejemplo: Tres de Febrero"
-          aria-label="Buscar un objeto geográfico"
-          role="combobox"
-          aria-autocomplete="list"
-          aria-controls="results"
-          aria-expanded="false"
-        />
+        <div class="search-row">
+          <!-- Las opciones las llena main.js desde TYPE_ORDER y TYPES: el
+               orden y las etiquetas tienen una sola fuente. -->
+          <select id="type" aria-label="Tipo de objeto"></select>
+          <input
+            id="q"
+            type="search"
+            autocomplete="off"
+            placeholder="Escribí un nombre. Por ejemplo: Tres de Febrero"
+            aria-label="Buscar un objeto geográfico"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="results"
+            aria-expanded="false"
+          />
+        </div>
         <ul id="results" class="results" role="listbox" hidden></ul>
       </div>
 

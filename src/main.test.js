@@ -38,6 +38,12 @@ function buscar(texto) {
   $('#q').dispatchEvent(new Event('input', { bubbles: true }))
 }
 
+/** Elige un tipo en el filtro, como lo haría una persona. */
+function filtrar(tipo) {
+  $('#type').value = tipo
+  $('#type').dispatchEvent(new Event('change', { bubbles: true }))
+}
+
 beforeEach(async () => {
   vi.resetModules()
   document.body.innerHTML = body
@@ -132,5 +138,46 @@ describe('el recorrido completo', () => {
     await vi.waitFor(() => expect($('#status').hidden).toBe(false))
     expect($('#status').className).toContain('error')
     expect($('#status').textContent).toMatch(/503/)
+  })
+})
+
+// BUS-R1: el filtro acota sobre qué tipo de objeto se busca, y arranca en
+// todos para que no haya que elegir nada antes de escribir.
+describe('el filtro por tipo', () => {
+  it('arranca en todos y ofrece los cinco tipos en orden', () => {
+    expect($('#type')).not.toBe(null)
+    expect($('#type').value).toBe('')
+    expect([...$('#type').options].map((o) => o.value))
+      .toEqual(['', 'jur', 'dep', 'loc', 'gl', 'aglo'])
+    expect([...$('#type').options].map((o) => o.textContent)).toEqual([
+      'Todos los tipos', 'Jurisdicciones', 'Departamentos',
+      'Localidades censales', 'Gobiernos locales', 'Aglomerados',
+    ])
+  })
+
+  it('acota la búsqueda al tipo elegido', () => {
+    filtrar('jur')
+    buscar('tres')
+    expect($('#results').children).toHaveLength(0)
+    expect($('#results').hidden).toBe(true)
+  })
+
+  it('vuelve a buscar al cambiar de tipo, sin retipear', () => {
+    buscar('tres')
+    expect($('#results').children).toHaveLength(1)
+    filtrar('jur')
+    expect($('#results').children).toHaveLength(0)
+    filtrar('dep')
+    expect($('#results').children).toHaveLength(1)
+  })
+})
+
+// BUS-R3: la clave de la provincia la agrega `loadCatalog`, no el build,
+// así que sólo el cableado completo prueba que llega hasta la búsqueda.
+describe('la provincia como término extra', () => {
+  it('encuentra el departamento nombrando su provincia', () => {
+    buscar('febrero buenos aires')
+    expect($('#results').children).toHaveLength(1)
+    expect($('#results').textContent).toContain('Tres de Febrero')
   })
 })

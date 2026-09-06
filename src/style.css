@@ -39,8 +39,11 @@ main, .site-header, .site-footer {
 
 .search { position: relative; }
 
-#q {
-  width: 100%;
+/* El filtro y el campo comparten fila mientras entren; si no, el campo baja
+   y ocupa el ancho entero en vez de espicharse. */
+.search-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+#type, #q {
   padding: .75rem 1rem;
   font-size: 1.05rem;
   border: 1px solid var(--line);
@@ -48,7 +51,9 @@ main, .site-header, .site-footer {
   background: var(--bg);
   color: var(--fg);
 }
-#q:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+#type { flex: 0 0 auto; }
+#q { flex: 1 1 16rem; min-width: 0; }
+#type:focus, #q:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .results {
   position: absolute;

@@ -1,4 +1,4 @@
-import { search } from './search.js'
+import { search, TYPE_ORDER } from './search.js'
 import { loadCatalog } from './catalog.js'
 import { selfUrl, TYPES } from './download.js'
 import { initMap, showObject, onFeature } from './map.js'
@@ -8,6 +8,7 @@ import { createCombobox } from './combobox.js'
 
 const el = {
   q: document.querySelector('#q'),
+  type: document.querySelector('#type'),
   results: document.querySelector('#results'),
   status: document.querySelector('#status'),
   detail: document.querySelector('#detail'),
@@ -72,10 +73,32 @@ const combo = createCombobox({
   onSelect: selectObject,
 })
 
-el.q.addEventListener('input', () => {
+/**
+ * Las opciones del filtro salen de TYPE_ORDER y TYPES, no del HTML: el
+ * orden y las etiquetas quedan en un solo lugar. El valor vacío es
+ * "todos", que es donde arranca (BUS-R1).
+ */
+function typeOption(value, label) {
+  const option = document.createElement('option')
+  option.value = value
+  option.textContent = label
+  return option
+}
+
+el.type.append(
+  typeOption('', 'Todos los tipos'),
+  ...TYPE_ORDER.map((t) => typeOption(t, TYPES[t].plural)),
+)
+
+function runSearch() {
   if (!catalog) return
-  combo.render(search(catalog.objects, el.q.value))
-})
+  combo.render(search(catalog.objects, el.q.value, { type: el.type.value }))
+}
+
+// El `change` también busca: cambiar de tipo tiene que acotar lo que ya
+// está escrito, sin obligar a volver a tipear.
+el.q.addEventListener('input', runSearch)
+el.type.addEventListener('change', runSearch)
 
 initMap('map')
 
