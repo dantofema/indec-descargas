@@ -174,6 +174,56 @@ describe('showFeature', () => {
   })
 })
 
+// Fix round 3, hallazgo 4: el diseño dice textualmente que «"Ver" que falla
+// deja el mapa como estaba y avisa». `beginRequest` borraba la capa de
+// entrada, así que un showFeature que responde 503 dejaba el mapa vacío —y
+// en vías lo dejaba vacío los ~12 s de espera aun cuando iba a salir bien—.
+describe('lo dibujado no se borra hasta que hay con qué reemplazarlo', () => {
+  it('un Ver que falla deja el mapa como estaba', async () => {
+    const dibujo = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await dibujo
+
+    const falla = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
+    pendientes[1].resolve({ ok: false, status: 503 })
+    await expect(falla).rejects.toThrow(/503/)
+    expect(capa.remove).not.toHaveBeenCalled()
+  })
+
+  it('una respuesta sin geometría tampoco borra lo que había', async () => {
+    const dibujo = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await dibujo
+
+    const vacia = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
+    pendientes[1].resolve(respuesta({ features: [] }))
+    await expect(vacia).rejects.toThrow(/geometría/)
+    expect(capa.remove).not.toHaveBeenCalled()
+  })
+
+  it('mientras el pedido está en vuelo, lo dibujado sigue ahí', async () => {
+    const dibujo = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await dibujo
+
+    showFeature('geonode:vias_de_circulacion', 'cod_indec', '068400101')
+    await Promise.resolve()
+    expect(capa.remove).not.toHaveBeenCalled()
+  })
+
+  it('un dibujo que sale bien sí reemplaza al anterior', async () => {
+    const dibujo = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await dibujo
+
+    const otroDibujo = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
+    pendientes[1].resolve(respuesta())
+    await otroDibujo
+    expect(capa.remove).toHaveBeenCalledTimes(1)
+    expect(geoJSON).toHaveBeenCalledTimes(2)
+  })
+})
+
 // Fix round 1, hallazgo 1 (importante): la línea de metadatos de la fila 1
 // describe el objeto de la ficha, siempre, y nunca acumula. Antes,
 // showFeature disparaba el mismo callback que showObject y cada "Ver"

@@ -49,16 +49,15 @@ function featureQueryUrl(layerName, field, code) {
 }
 
 /** El mapa se creó con `#detail` oculto: Leaflet midió altura cero y hay
- * que avisarle recién ahora que ya es visible. También limpia lo dibujado
- * antes, y arranca la marca de carrera que comparten showObject y
- * showFeature —son la misma pelea por "quién es la última selección"—. */
+ * que avisarle recién ahora que ya es visible. También arranca la marca de
+ * carrera que comparten showObject y showFeature —son la misma pelea por
+ * "quién es la última selección"—.
+ *
+ * Lo que había dibujado no se toca acá: se borra recién cuando hay con qué
+ * reemplazarlo (ver drawFromUrl). */
 function beginRequest() {
   const request = ++pending
   map.invalidateSize()
-  if (layer) {
-    layer.remove()
-    layer = null
-  }
   return request
 }
 
@@ -73,6 +72,10 @@ function beginRequest() {
  * estado. El chequeo va antes de mirar el status, y el try/catch cubre
  * la otra puerta —que se caiga el fetch— porque con el GeoServer del
  * INDEC el corte de conexión es más probable que un 500.
+ *
+ * Por eso mismo borrar lo dibujado es lo último que pasa antes de dibujar,
+ * y no lo primero: hasta que la geometría nueva no está en la mano, lo que
+ * el mapa muestra sigue siendo cierto.
  */
 async function drawFromUrl(request, url) {
   try {
@@ -83,6 +86,14 @@ async function drawFromUrl(request, url) {
     const geojson = await res.json()
 
     if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
+
+    // Recién acá: un "Ver" que falla deja el mapa como estaba, y uno que
+    // tarda —12,4 s medidos en vías— lo deja como estaba mientras tanto,
+    // en vez de mostrar un mapa vacío que parece un error.
+    if (layer) {
+      layer.remove()
+      layer = null
+    }
 
     layer = L.geoJSON(geojson, {
       style: { color: '#1f6feb', weight: 2, fillOpacity: 0.12 },
