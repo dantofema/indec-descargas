@@ -7,10 +7,13 @@ export const fmt = (n) => n.toLocaleString('es-AR')
  * Enlace de descarga. No lleva atributo `download`: el href siempre es
  * cross-origin y el browser lo ignora ahí. El nombre del archivo lo pone
  * el `Content-Disposition` que arma `format_options` (ver download.js).
+ *
+ * `extra` es para variantes de tamaño o énfasis (p.ej. `mini`, en las
+ * filas de una tabla) sin duplicar esta función.
  */
-export function downloadButton(href, label) {
+export function downloadButton(href, label, extra = '') {
   const a = document.createElement('a')
-  a.className = 'btn'
+  a.className = extra ? `btn ${extra}` : 'btn'
   a.href = href
   a.textContent = label
   return a

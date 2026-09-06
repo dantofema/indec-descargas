@@ -130,6 +130,12 @@ main, .site-header, .site-footer {
 .rel .heavy { color: var(--warn); font-size: .8rem; display: block; }
 
 .btn {
+  /* La tabla de hijos usa `.btn` también en un `<button>` (acción "Ver"):
+     sin este reset, el botón trae su chrome nativo debajo del borde y el
+     fondo propios y su tipografía no hereda la del sitio. */
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
   display: inline-block;
   padding: .45rem .9rem;
   border-radius: var(--radius);
@@ -149,6 +155,98 @@ main, .site-header, .site-footer {
   pointer-events: none;
 }
 .note { color: var(--warn); font-size: .85rem; margin: .25rem 0 0; }
+
+/* Variante chica y de bajo énfasis del botón, para las acciones de fila de
+   la tabla de hijos: al lado de "Descargar" en cada fila, un `.btn` de
+   tamaño completo compite por atención con el de la capa entera. */
+.btn.ghost { background: none; color: var(--accent); }
+.btn.ghost:hover { background: var(--hl); filter: none; }
+.btn.mini { padding: .25rem .55rem; font-size: .8rem; }
+
+/* Pestañas de capas hijas: patrón tablist de WAI-ARIA (ver tabs.js). */
+.tabs {
+  display: flex;
+  gap: .25rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 1rem;
+}
+.tab {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: .9rem;
+  padding: .6rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab .n { color: inherit; }
+.tab[aria-selected="true"] {
+  color: var(--fg);
+  background: var(--bg);
+  border-color: var(--line);
+  /* Se solapa un pixel con el borde del contenedor para "coser" la pestaña
+     activa con el panel de abajo, como en cualquier tablist con solapas. */
+  margin-bottom: -1px;
+}
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Tabla de una página de hijos. `.table-scroll` es el contenedor que
+   scrollea: vías tiene 21 columnas y no entra en el ancho del sitio. */
+.table-scroll { overflow-x: auto; margin: 0 0 .75rem; }
+
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th, td {
+  padding: .5rem .6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+thead th {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+td.code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.acts { white-space: nowrap; }
+td.acts .btn + .btn { margin-left: .4rem; }
+
+/* Sólo vías (`table.wide`) fija la primera columna: con 21 campos hay que
+   scrollear para ver el resto, y sin una columna ancla se pierde a qué
+   tramo corresponde la fila que se está mirando. El fondo propio evita que
+   el contenido de las columnas que van pasando por detrás se transparente;
+   el segundo, que se note el corte con el resto de la fila cuando está
+   seleccionada. */
+table.wide th:first-child, table.wide td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+}
+table.wide tbody tr[aria-selected="true"] td:first-child { background: var(--hl); }
+tbody tr[aria-selected="true"] { background: var(--hl); }
+
+/* Anterior / dónde estoy / siguiente, debajo de la tabla. */
+.pager { display: flex; align-items: center; gap: 1rem; margin: .75rem 0 0; }
+.pager button {
+  padding: .4rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .85rem;
+  cursor: pointer;
+}
+.pager button:hover:not(:disabled) { background: var(--hl); }
+.pager button:disabled { color: var(--muted); cursor: not-allowed; opacity: .5; }
+.pager button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pager .where { color: var(--muted); font-size: .85rem; }
 
 .site-footer { border-top: 1px solid var(--line); padding-top: 1rem; padding-bottom: 3rem; color: var(--muted); font-size: .85rem; }
 .site-footer a { color: inherit; }
