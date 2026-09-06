@@ -122,6 +122,13 @@ export function createBrowser({ container, onView, onError }) {
    * —puede devolver una promesa; si no devuelve nada, se restaura en el
    * siguiente microtask—. En vías es la única forma de que el usuario sepa
    * que los ~12 s medidos están corriendo y no que la interfaz se colgó.
+   *
+   * `onView` es una interfaz pública genérica: no podemos asumir que quien
+   * la implementa ya capturó sus propios errores (hoy `main.js` sí lo hace,
+   * pero no es parte del contrato). Un rechazo sin `.catch` acá quedaría
+   * como Unhandled Rejection. `onError` ya existe para justo esto —avisar
+   * un fallo sin cortar el resto de la ficha—, así que lo reusamos en vez
+   * de tragarnos el error con un `.catch(() => {})` mudo.
    */
   function markRow(tableEl, rows, row, childKey) {
     const idx = rows.indexOf(row)
@@ -140,13 +147,15 @@ export function createBrowser({ container, onView, onError }) {
       }
     }
 
-    Promise.resolve(onView(row, childKey)).finally(() => {
-      if (button) {
-        button.disabled = false
-        button.textContent = 'Ver'
-      }
-      notice?.remove()
-    })
+    Promise.resolve(onView(row, childKey))
+      .catch(onError)
+      .finally(() => {
+        if (button) {
+          button.disabled = false
+          button.textContent = 'Ver'
+        }
+        notice?.remove()
+      })
   }
 
   function metaParagraph(texto) {

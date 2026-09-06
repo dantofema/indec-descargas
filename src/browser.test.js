@@ -200,6 +200,38 @@ describe('createBrowser', () => {
       expect(button.textContent).toBe('Ver')
     })
 
+    // Fix round 2, hallazgo abierto: `Promise.resolve(onView(...)).finally(...)`
+    // sin `.catch` deja el rechazo sin capturar —el botón se restaura igual
+    // porque `.finally()` corre pase lo que pase, pero la promesa rechazada
+    // queda como Unhandled Rejection—. `createBrowser` recibe `onError` para
+    // justo esto: un consumidor de `onView` puede no capturar sus propios
+    // errores (la interfaz no lo exige), y acá se enruta en vez de tragarlo.
+    it('un onView que rechaza no deja una promesa sin capturar, y el botón se restaura igual', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const falla = new Error('el mapa no se pudo dibujar')
+      const onView = vi.fn(() => Promise.reject(falla))
+      const onError = vi.fn()
+      const b = createBrowser({ container, onView, onError })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      let rechazoSinCapturar = null
+      const detectar = (razon) => { rechazoSinCapturar = razon }
+      process.on('unhandledRejection', detectar)
+
+      const button = container.querySelectorAll('tbody tr button')[0]
+      button.click()
+      // Una vuelta de macrotask: es cuando Node ya barrió los microtasks
+      // pendientes y, si nadie enganchó un `.catch`, dispara el evento.
+      await new Promise((r) => setTimeout(r, 0))
+      process.off('unhandledRejection', detectar)
+
+      expect(rechazoSinCapturar).toBe(null)
+      expect(onError).toHaveBeenCalledWith(falla)
+      expect(button.disabled).toBe(false)
+      expect(button.textContent).toBe('Ver')
+    })
+
     it('si onView no devuelve una promesa, igual se restaura solo', async () => {
       global.fetch = vi.fn(async () => paginaOk())
       const b = createBrowser({ container, onView: () => {}, onError: () => {} })
