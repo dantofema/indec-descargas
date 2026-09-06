@@ -292,3 +292,10 @@ describe('recorrer los hijos', () => {
     expect($('#detail-meta').textContent).toBe(metaBase)
   })
 })
+
+it('la fila de notas aparece con las notas que corresponden', () => {
+  buscar('tres')
+  $('#results').children[0].click()
+  expect($('#row-notes').hidden).toBe(false)
+  expect($('#notes').textContent).toMatch(/tramos/)
+})
