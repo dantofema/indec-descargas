@@ -86,11 +86,6 @@ export function childUrl(obj, childKey, format = GPKG) {
   )
 }
 
-/** El tope habilita si hay algo que bajar y no lo supera. */
-export function canDownload(count, maxFeatures) {
-  return Number.isFinite(count) && count > 0 && count <= maxFeatures
-}
-
 /** Nombre del archivo descargado. Va en `format_options`, no en el `<a>`. */
 export function filename(obj, childKey) {
   const base = typeOf(obj).layer.replace('geonode:', '')

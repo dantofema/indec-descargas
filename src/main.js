@@ -29,7 +29,7 @@ function setStatus(text, isError = false) {
 }
 
 function renderChildren(obj) {
-  const rows = childRows(obj, catalog.maxFeatures)
+  const rows = childRows(obj)
   el.childrenTitle.hidden = rows.length === 0
   el.children.replaceChildren(...rows)
 }

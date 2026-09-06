@@ -1,105 +1,63 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
-import { childRows } from './children.js'
+import { estimateBytes, estimateSeconds, weightNotice, childRows } from './children.js'
 
-const MAX = 5000
+const MB = 1024 * 1024
 
-/** Tres de Febrero, con una capa de cada situación posible. */
-const dep = {
-  t: 'dep',
-  c: '06840',
-  n: 'Tres de Febrero',
-  ch: { fracciones: 42, radios: 432, localidades: 1, vias: 1487 },
-}
+describe('estimateBytes', () => {
+  it('usa la constante de líneas para vías', () => {
+    expect(estimateBytes('vias', 1000)).toBe(420 * 1000)
+  })
 
-const rowsOf = (obj, max = MAX) => childRows(obj, max)
-const label = (li) => li.querySelector('div div').textContent
-const nota = (li) => li.querySelector('.note')?.textContent ?? ''
+  it('usa la constante de polígonos para el resto', () => {
+    expect(estimateBytes('radios', 1000)).toBe(973 * 1000)
+    expect(estimateBytes('fracciones', 1000)).toBe(973 * 1000)
+  })
+})
+
+describe('weightNotice', () => {
+  it('calla por debajo del umbral', () => {
+    expect(weightNotice('radios', 432)).toBe(null)
+  })
+
+  it('avisa por encima del umbral, con tamaño y espera', () => {
+    const aviso = weightNotice('radios', 23901)
+    expect(aviso).toMatch(/22 MB/)
+    expect(aviso).toMatch(/segundos/)
+  })
+
+  // El peor caso medido: 179.029 vías de Buenos Aires, 74 MB reales.
+  it('estima el peor caso del catálogo en el orden correcto', () => {
+    const aviso = weightNotice('vias', 179029)
+    expect(aviso).toMatch(/7[0-9] MB/)
+  })
+
+  it('en el borde exacto del umbral todavía calla', () => {
+    const justo = Math.floor((10 * MB) / 973)
+    expect(weightNotice('radios', justo)).toBe(null)
+    expect(weightNotice('radios', justo + 1)).not.toBe(null)
+  })
+})
 
 describe('childRows', () => {
-  it('devuelve una fila por capa hija, en el orden declarado', () => {
-    expect(rowsOf(dep).map(label)).toEqual([
-      'Fracciones censales', 'Radios censales', 'Localidades censales', 'Vías de circulación',
-    ])
+  const obj = { t: 'jur', c: '06', n: 'Buenos Aires', ch: { radios: 23901, localidades: 621 } }
+
+  it('da un enlace de descarga vivo aunque la capa sea enorme', () => {
+    const filas = childRows(obj)
+    const radios = filas.find((li) => li.textContent.includes('Radios'))
+    expect(radios.querySelector('a.btn')).not.toBe(null)
+    expect(radios.querySelector('[aria-disabled="true"]')).toBe(null)
   })
 
-  it('no devuelve filas para un objeto sin capas hijas', () => {
-    expect(rowsOf({ t: 'gl', c: '060840', n: 'Tres de Febrero' })).toEqual([])
+  it('pone el aviso de peso sólo donde hace falta', () => {
+    const filas = childRows(obj)
+    expect(filas.find((li) => li.textContent.includes('Radios')).textContent).toMatch(/MB/)
+    expect(filas.find((li) => li.textContent.includes('Localidades')).textContent).not.toMatch(/MB/)
   })
 
-  it('escribe el conteo con separador de miles', () => {
-    expect(rowsOf(dep)[3].textContent).toContain('1.487 objetos')
-  })
-
-  it('escribe el singular cuando hay un solo objeto', () => {
-    expect(rowsOf(dep)[2].textContent).toContain('1 objeto')
-    expect(rowsOf(dep)[2].textContent).not.toContain('1 objetos')
-  })
-})
-
-describe('childRows: el tope habilita (DES-R1)', () => {
-  it('la capa que no supera el tope trae un enlace de descarga real', () => {
-    const a = rowsOf(dep)[1].querySelector('a.btn')
-    expect(a.getAttribute('href')).toContain('typenames=geonode%3Aradios_censales2')
-    expect(a.getAttribute('href')).toContain('CQL_FILTER=cde%3D%2706840%27')
-    expect(a.textContent).toBe('Descargar')
-  })
-
-  it('el enlace pide gpkg en 4326 y nombra el archivo (DES-R4)', () => {
-    const href = rowsOf(dep)[1].querySelector('a.btn').getAttribute('href')
-    expect(href).toContain('outputFormat=geopackage')
-    expect(href).toContain('srsName=EPSG%3A4326')
-    expect(href).toContain('format_options=filename%3Aradios-de-departamentos-06840.gpkg')
-  })
-})
-
-describe('childRows: superar el tope deshabilita, no recorta (DES-R2)', () => {
-  const grande = { t: 'jur', c: '06', n: 'Buenos Aires', ch: { radios: 23901 } }
-
-  it('no ofrece ningún enlace de descarga', () => {
-    expect(rowsOf(grande)[0].querySelector('a')).toBe(null)
-  })
-
-  it('deja el botón deshabilitado para el lector de pantalla', () => {
-    expect(rowsOf(grande)[0].querySelector('[aria-disabled="true"]').textContent).toBe('Descargar')
-  })
-
-  it('dice el conteo real y el máximo, los dos con separador de miles', () => {
-    expect(nota(rowsOf(grande)[0])).toContain('23.901')
-    expect(nota(rowsOf(grande)[0])).toContain('5.000')
-  })
-
-  it('el tope sale del catálogo, no de una constante del código (DES-R5)', () => {
-    expect(rowsOf(grande, 30000)[0].querySelector('a.btn')).not.toBe(null)
-    expect(nota(rowsOf(grande, 20000)[0])).toContain('20.000')
-  })
-
-  it('el límite exacto todavía descarga', () => {
-    const justo = { t: 'jur', c: '06', n: 'Buenos Aires', ch: { radios: MAX } }
-    expect(rowsOf(justo)[0].querySelector('a.btn')).not.toBe(null)
-  })
-})
-
-describe('childRows: conteo cero también deshabilita (DES-R3)', () => {
-  const vacio = { t: 'jur', c: '94', n: 'Tierra del Fuego', ch: { radios: 0 } }
-
-  it('no ofrece un enlace que bajaría un archivo vacío', () => {
-    expect(rowsOf(vacio)[0].querySelector('a')).toBe(null)
-    expect(rowsOf(vacio)[0].querySelector('[aria-disabled="true"]')).not.toBe(null)
-  })
-
-  it('dice que no hay nada de esa capa, sin hablar del tope', () => {
-    expect(nota(rowsOf(vacio)[0])).toMatch(/no hay/i)
-    expect(nota(rowsOf(vacio)[0])).not.toMatch(/máximo/i)
-  })
-})
-
-describe('childRows: la advertencia de las vías', () => {
-  it('avisa que las vías tardan', () => {
-    expect(nota(rowsOf(dep)[3])).toMatch(/tardan/i)
-  })
-
-  it('no se la pone a las demás capas', () => {
-    expect(nota(rowsOf(dep)[1])).toBe('')
+  it('la capa con cero objetos sigue deshabilitada', () => {
+    const filas = childRows({ t: 'loc', c: '06840010', n: 'x', ch: { vias: 0 } })
+    expect(filas[0].querySelector('a.btn')).toBe(null)
+    expect(filas[0].querySelector('[aria-disabled="true"]')).not.toBe(null)
   })
 })

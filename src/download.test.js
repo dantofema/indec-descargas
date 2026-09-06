@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selfUrl, childUrl, canDownload, filename, GEOSERVER, TYPES } from './download.js'
+import { selfUrl, childUrl, filename, GEOSERVER, TYPES } from './download.js'
 
 const treFeb = { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero' }
 const buenosAires = { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires' }
@@ -88,28 +88,6 @@ describe('validación de códigos', () => {
 
   it('rechaza un tipo desconocido', () => {
     expect(() => selfUrl({ t: 'zzz', c: '06', n: 'x', s: 'x' })).toThrow(/tipo/i)
-  })
-})
-
-describe('canDownload', () => {
-  it('habilita por debajo del tope', () => {
-    expect(canDownload(4999, 5000)).toBe(true)
-  })
-
-  it('habilita justo en el tope', () => {
-    expect(canDownload(5000, 5000)).toBe(true)
-  })
-
-  it('bloquea por encima del tope', () => {
-    expect(canDownload(5001, 5000)).toBe(false)
-  })
-
-  it('bloquea cuando no hay nada que bajar', () => {
-    expect(canDownload(0, 5000)).toBe(false)
-  })
-
-  it('bloquea si el conteo falta', () => {
-    expect(canDownload(undefined, 5000)).toBe(false)
   })
 })
 

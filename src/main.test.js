@@ -113,21 +113,22 @@ describe('el recorrido completo', () => {
     expect($('#detail-name').textContent).toBe('Tres de Febrero')
   })
 
-  // La provincia grande es el ejemplo del dueño: 23.901 radios, arriba del
-  // tope, tiene que quedar deshabilitada con el número real (DES-R2).
-  it('la capa que supera el tope queda deshabilitada con su conteo', () => {
+  // La provincia grande es el ejemplo del dueño: sus 23.901 radios ya no
+  // tienen tope que los bloquee, pero sí un aviso de peso antes del clic.
+  it('la capa que antes superaba el tope ahora descarga con su aviso de peso', () => {
     buscar('buenos')
     $('#results').children[0].click()
 
     const filas = [...$('#children').children]
     const radios = filas.find((li) => li.textContent.includes('Radios'))
-    expect(radios.querySelector('a')).toBe(null)
-    expect(radios.querySelector('[aria-disabled="true"]')).not.toBe(null)
+    expect(radios.querySelector('a.btn')).not.toBe(null)
+    expect(radios.querySelector('[aria-disabled="true"]')).toBe(null)
     expect(radios.textContent).toContain('23.901')
-    expect(radios.textContent).toContain('5.000')
+    expect(radios.textContent).toMatch(/MB/)
 
     const deps = filas.find((li) => li.textContent.includes('Departamentos'))
     expect(deps.querySelector('a.btn')).not.toBe(null)
+    expect(deps.textContent).not.toMatch(/MB/)
   })
 
   it('avisa si el catálogo no carga', async () => {
