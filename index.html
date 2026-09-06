@@ -37,13 +37,34 @@
       <p id="status" class="status">Cargando el catálogo…</p>
 
       <section id="detail" class="detail" hidden>
-        <div id="map" class="map"></div>
-        <div class="panel">
-          <h2 id="detail-name"></h2>
-          <p id="detail-meta" class="meta"></p>
-          <div id="detail-self"></div>
-          <h3 id="children-title" hidden>Capas de este objeto</h3>
-          <ul id="children" class="children"></ul>
+        <div class="row row-identity">
+          <div id="map" class="map"></div>
+          <div class="identity">
+            <h2 id="detail-name"></h2>
+            <p id="detail-meta" class="meta"></p>
+            <div id="detail-self"></div>
+          </div>
+        </div>
+
+        <div class="row row-bulk">
+          <div id="row-parents" hidden>
+            <p class="block-title">De qué forma parte</p>
+            <ul id="parents" class="rel"></ul>
+          </div>
+          <div>
+            <p class="block-title">Qué contiene, capa entera</p>
+            <ul id="children" class="rel"></ul>
+          </div>
+        </div>
+
+        <div class="row" id="row-browse" hidden>
+          <p class="block-title">Recorrer y descargar de a uno</p>
+          <div id="browse"></div>
+        </div>
+
+        <div class="row" id="row-notes" hidden>
+          <p class="block-title">Notas</p>
+          <div id="notes"></div>
         </div>
       </section>
     </main>

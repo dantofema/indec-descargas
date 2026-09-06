@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { selfUrl } from './download.js'
+import { GEOSERVER, assertCode, selfUrl } from './download.js'
 
 /**
  * Basemap del IGN. Es TMS, que numera el eje Y al revés que XYZ:
@@ -30,40 +30,101 @@ export function onFeature(callback) {
   featureCallback = callback
 }
 
-export async function showObject(obj) {
-  if (!map) return
+/**
+ * Arma la URL de un GetFeature en GeoJSON a partir de capa, campo y código
+ * sueltos —lo que necesita dibujar una fila cualquiera de una capa hija—.
+ * El código pasa por `assertCode`: es lo único que se interpola en el CQL.
+ */
+function featureQueryUrl(layerName, field, code) {
+  const p = new URLSearchParams({
+    service: 'WFS',
+    version: '2.0.0',
+    request: 'GetFeature',
+    typenames: layerName,
+    outputFormat: 'application/json',
+    srsName: 'EPSG:4326',
+    CQL_FILTER: `${field}='${assertCode(code)}'`,
+  })
+  return `${GEOSERVER}?${p}`
+}
+
+/** El mapa se creó con `#detail` oculto: Leaflet midió altura cero y hay
+ * que avisarle recién ahora que ya es visible. También arranca la marca de
+ * carrera que comparten showObject y showFeature —son la misma pelea por
+ * "quién es la última selección"—.
+ *
+ * Lo que había dibujado no se toca acá: se borra recién cuando hay con qué
+ * reemplazarlo (ver drawFromUrl). */
+function beginRequest() {
   const request = ++pending
-
-  // El mapa se creó con `#detail` oculto, así que Leaflet midió un
-  // contenedor de altura cero. Ahora ya es visible: hay que avisarle.
   map.invalidateSize()
+  return request
+}
 
-  if (layer) {
-    layer.remove()
-    layer = null
-  }
-
-  // Una petición superada no escribe nada: ni el mapa, ni la línea de
-  // estado. El chequeo va antes de mirar el status, y el try/catch cubre
-  // la otra puerta —que se caiga el fetch— porque con el GeoServer del
-  // INDEC el corte de conexión es más probable que un 500.
+/**
+ * Pide el GeoJSON de `url`, lo dibuja si para cuando llega sigue siendo la
+ * petición vigente, y devuelve las propiedades del feature —quien llama
+ * decide qué hacer con ellas, ver más abajo por qué—. Es la parte que
+ * showObject y showFeature comparten entera: sólo cambia de dónde sale la
+ * URL, no qué se hace con ella.
+ *
+ * Una petición superada no escribe nada: ni el mapa, ni la línea de
+ * estado. El chequeo va antes de mirar el status, y el try/catch cubre
+ * la otra puerta —que se caiga el fetch— porque con el GeoServer del
+ * INDEC el corte de conexión es más probable que un 500.
+ *
+ * Por eso mismo borrar lo dibujado es lo último que pasa antes de dibujar,
+ * y no lo primero: hasta que la geometría nueva no está en la mano, lo que
+ * el mapa muestra sigue siendo cierto.
+ */
+async function drawFromUrl(request, url) {
   try {
-    const res = await fetch(selfUrl(obj, 'application/json'))
-    if (request !== pending) return
+    const res = await fetch(url)
+    if (request !== pending) return undefined
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const geojson = await res.json()
 
     if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
 
+    // Recién acá: un "Ver" que falla deja el mapa como estaba, y uno que
+    // tarda —12,4 s medidos en vías— lo deja como estaba mientras tanto,
+    // en vez de mostrar un mapa vacío que parece un error.
+    if (layer) {
+      layer.remove()
+      layer = null
+    }
+
     layer = L.geoJSON(geojson, {
       style: { color: '#1f6feb', weight: 2, fillOpacity: 0.12 },
     }).addTo(map)
 
     map.fitBounds(layer.getBounds(), { padding: [16, 16] })
-    featureCallback(geojson.features[0].properties)
+    return geojson.features[0].properties
   } catch (err) {
-    if (request !== pending) return
+    if (request !== pending) return undefined
     throw err
   }
+}
+
+export async function showObject(obj) {
+  if (!map) return
+  // Sólo el objeto de la búsqueda avisa sus propiedades: esa línea describe
+  // la ficha, y una petición superada devuelve `undefined` (ver arriba).
+  const props = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
+  if (props) featureCallback(props)
+}
+
+/**
+ * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
+ * desde la tabla de la fila 3, no el objeto de la búsqueda. A propósito no
+ * avisa al callback de `onFeature`: esa línea describe la identidad del
+ * objeto de la ficha y no tiene que cambiar con cada "Ver" —mirar una fila
+ * ya se señala marcándola en la tabla, no reescribiendo el nombre de al
+ * lado del mapa—. Antes lo hacía, y cada "Ver" le pegaba otro tramo de
+ * texto sin límite a `#detail-meta`.
+ */
+export async function showFeature(layerName, field, code) {
+  if (!map) return
+  await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
 }

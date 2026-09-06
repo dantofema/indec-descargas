@@ -22,3 +22,19 @@ export function childrenOf(obj) {
     .filter((key) => key in obj.ch)
     .map((key) => ({ key, count: obj.ch[key] }))
 }
+
+/**
+ * Los hijos que tienen algo adentro. El cero tiene dos lectores con
+ * necesidades opuestas y por eso son dos preguntas y no una: la fila 2 lo
+ * necesita para dibujar el botón muerto con su motivo (DES-R3), y las
+ * filas 3 y 4 no tienen nada que ofrecer sobre una capa vacía —recorrerla
+ * cuesta un pedido de 17 s que vuelve con `totalFeatures: 0`, y anotarla es
+ * explicar la trampa de una capa que este objeto no tiene—.
+ *
+ * Vive acá y no repetido en cada consumidor para que los dos filtren por lo
+ * mismo: si divergen, la ficha vuelve a contradecirse consigo misma.
+ * Son 11 pares (objeto, capa) del catálogo, y los 11 caen en capas con nota.
+ */
+export function nonEmptyChildrenOf(obj) {
+  return childrenOf(obj).filter(({ count }) => count > 0)
+}

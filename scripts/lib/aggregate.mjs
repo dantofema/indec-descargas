@@ -42,7 +42,7 @@ const get = (map, key) => map.get(key) ?? 0
  */
 export function buildCatalog(input) {
   const {
-    generated, maxFeatures,
+    generated,
     jurisdicciones, departamentos, localidades, gobiernosLocales, aglomerados,
     fracciones, radios, vias,
   } = input
@@ -108,6 +108,10 @@ export function buildCatalog(input) {
   for (const row of localidades) {
     objects.push({
       t: 'loc', c: row.clc, n: row.nam, s: normalize(row.nam), p: row.jur,
+      // El aglomerado no se deduce del código: `clc` no lo contiene. Se
+      // guarda para que una tarea posterior pueda armar con él la cadena
+      // de padres de la localidad.
+      ...(isAbsent('codaglo', row.codaglo) ? {} : { ag: row.codaglo }),
       ch: { vias: get(viasByLoc, row.clc) },
     })
   }
@@ -152,5 +156,5 @@ export function buildCatalog(input) {
   orphans(viasByAglo, knownAglo, 'vias por codaglo')
   orphans(viasByLoc, knownLoc, 'vias por clc')
 
-  return { catalog: { generated, maxFeatures, objects }, warnings }
+  return { catalog: { generated, objects }, warnings }
 }

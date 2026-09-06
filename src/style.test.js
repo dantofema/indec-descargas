@@ -3,14 +3,37 @@ import { readFileSync } from 'node:fs'
 
 const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8')
 
-/** Los dos bloques `:root`: el primero es el claro, el segundo el oscuro. */
+const roots = (texto) => [...texto.matchAll(/:root\s*\{([^}]*)\}/g)].map((m) => m[1])
+
+const readTokens = (block) => Object.fromEntries(
+  [...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]),
+)
+
+/**
+ * Las dos paletas, ubicadas por dónde viven y no por el orden en que
+ * aparecen: la clara es el `:root` de afuera de todo `@media` y la oscura el
+ * de adentro de `(prefers-color-scheme: dark)`.
+ *
+ * Antes tomaba el primer `:root` como el claro y el segundo como el oscuro.
+ * Con un tercer bloque, o con los dos al revés, el suite auditaba la paleta
+ * equivocada **en verde**: era el único test del archivo que podía pasar
+ * estando mal. Ahora, si esos supuestos dejan de valer, esto tira.
+ */
 function palettes() {
-  const blocks = [...css.matchAll(/:root\s*\{([^}]*)\}/g)].map((m) => m[1])
-  const read = (block) => Object.fromEntries(
-    [...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]),
-  )
-  const light = read(blocks[0])
-  return { light, dark: { ...light, ...read(blocks[1] ?? '') } }
+  const oscuro = media('(prefers-color-scheme: dark)')
+  if (oscuro === null) {
+    throw new Error('la hoja ya no trae un @media (prefers-color-scheme: dark): ¿dónde está la paleta oscura?')
+  }
+  const claros = roots(css.replace(oscuro, ''))
+  const oscuros = roots(oscuro)
+  if (claros.length !== 1) {
+    throw new Error(`se esperaba un solo :root fuera de @media (la paleta clara) y hay ${claros.length}`)
+  }
+  if (oscuros.length !== 1) {
+    throw new Error(`se esperaba un solo :root dentro del @media oscuro y hay ${oscuros.length}`)
+  }
+  const light = readTokens(claros[0])
+  return { light, dark: { ...light, ...readTokens(oscuros[0]) } }
 }
 
 /** Resuelve las indirecciones `var(--x)` hasta llegar al color. */
@@ -49,6 +72,23 @@ function media(consulta) {
   }
   return null
 }
+
+// El resto de este archivo audita colores contra `palettes()`, así que
+// primero se verifica que `palettes()` esté mirando las paletas que dice.
+describe('de dónde salen las paletas que se auditan', () => {
+  it('hay exactamente una paleta clara y una oscura, y están donde se las busca', () => {
+    expect(() => palettes()).not.toThrow()
+  })
+
+  // El chequeo estructural no alcanza: dos bloques bien ubicados pero con
+  // los valores cambiados de lugar lo pasarían igual. Esto mira el color.
+  it('la clara es clara y la oscura es oscura, no al revés', () => {
+    const { light, dark } = palettes()
+    expect(luminance(resolve('--bg', light))).toBeGreaterThan(luminance(resolve('--fg', light)))
+    expect(luminance(resolve('--bg', dark))).toBeLessThan(luminance(resolve('--fg', dark)))
+    expect(luminance(resolve('--bg', dark))).toBeLessThan(luminance(resolve('--bg', light)))
+  })
+})
 
 describe('contraste del resaltado de teclado', () => {
   // El resaltado es el único indicador de dónde va a caer el Enter. WCAG

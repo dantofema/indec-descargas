@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selfUrl, childUrl, canDownload, filename, GEOSERVER, TYPES } from './download.js'
+import { selfUrl, childUrl, filename, featureUrl, GEOSERVER, TYPES } from './download.js'
 
 const treFeb = { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero' }
 const buenosAires = { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires' }
@@ -91,28 +91,6 @@ describe('validación de códigos', () => {
   })
 })
 
-describe('canDownload', () => {
-  it('habilita por debajo del tope', () => {
-    expect(canDownload(4999, 5000)).toBe(true)
-  })
-
-  it('habilita justo en el tope', () => {
-    expect(canDownload(5000, 5000)).toBe(true)
-  })
-
-  it('bloquea por encima del tope', () => {
-    expect(canDownload(5001, 5000)).toBe(false)
-  })
-
-  it('bloquea cuando no hay nada que bajar', () => {
-    expect(canDownload(0, 5000)).toBe(false)
-  })
-
-  it('bloquea si el conteo falta', () => {
-    expect(canDownload(undefined, 5000)).toBe(false)
-  })
-})
-
 describe('TYPES', () => {
   // Sin `det`, la interfaz escribe "Descargar undefined aglomerado".
   it('cada tipo trae el determinante que le corresponde', () => {
@@ -124,6 +102,38 @@ describe('TYPES', () => {
   it('los dos tipos femeninos llevan esta', () => {
     expect(TYPES.jur.det).toBe('esta')
     expect(TYPES.loc.det).toBe('esta')
+  })
+})
+
+describe('featureUrl', () => {
+  it('filtra por el campo identificador de la capa', () => {
+    const url = featureUrl('radios', '068400101')
+    expect(url).toContain('typenames=geonode%3Aradios_censales2')
+    expect(url).toContain('CQL_FILTER=cod_indec%3D%27068400101%27')
+    expect(url).toContain('outputFormat=geopackage')
+    expect(url).toContain('srsName=EPSG%3A4326')
+  })
+
+  it('usa clc para una localidad censal', () => {
+    expect(featureUrl('localidades', '06840010')).toContain('CQL_FILTER=clc%3D%2706840010%27')
+  })
+
+  // Una calle se parte en tramos que comparten cod_indec: filtrar por el
+  // código baja la calle entera, que es lo que se quiere.
+  it('en vías filtra por cod_indec, no por tramo', () => {
+    expect(featureUrl('vias', '0684001000010')).toContain('CQL_FILTER=cod_indec%3D%270684001000010%27')
+  })
+
+  it('nombra el archivo con la capa y el código', () => {
+    expect(featureUrl('radios', '068400101')).toContain('filename%3Aradios_censales2-068400101.gpkg')
+  })
+
+  it('rechaza un código que no sea de dígitos', () => {
+    expect(() => featureUrl('radios', "1' OR '1")).toThrow(/inválido/)
+  })
+
+  it('tira con una capa que no existe', () => {
+    expect(() => featureUrl('parcelas', '1')).toThrow(/parcelas/)
   })
 })
 

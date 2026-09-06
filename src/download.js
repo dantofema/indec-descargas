@@ -1,3 +1,5 @@
+import { specOf } from './columns.js'
+
 export const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
 
 /**
@@ -26,18 +28,28 @@ export const CHILD_LAYERS = {
 /**
  * Los códigos del INDEC son siempre dígitos con ceros a la izquierda.
  * Validarlos acá evita interpolar cualquier otra cosa dentro del CQL.
+ *
+ * `isCode` es la misma pregunta sin explotar, para quien puede ofrecer otra
+ * cosa en vez de la descarga: una fila del GeoServer sin código no es un
+ * error de programa, es un dato que el INDEC no publicó (DES-R8).
  */
-function assertCode(code) {
-  if (typeof code !== 'string' || !/^\d+$/.test(code)) {
-    throw new Error(`código inválido: ${JSON.stringify(code)}`)
-  }
+export const isCode = (code) => typeof code === 'string' && /^\d+$/.test(code)
+
+export function assertCode(code) {
+  if (!isCode(code)) throw new Error(`código inválido: ${JSON.stringify(code)}`)
   return code
 }
 
-function typeOf(obj) {
+export function typeOf(obj) {
   const type = TYPES[obj?.t]
   if (!type) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
   return type
+}
+
+export function childOf(childKey) {
+  const child = CHILD_LAYERS[childKey]
+  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  return child
 }
 
 const GPKG = 'geopackage'
@@ -76,8 +88,7 @@ export function selfUrl(obj, format = GPKG) {
 /** URL de descarga de una capa hija, filtrada por el campo del padre. */
 export function childUrl(obj, childKey, format = GPKG) {
   const type = typeOf(obj)
-  const child = CHILD_LAYERS[childKey]
-  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  const child = childOf(childKey)
   return wfsUrl(
     child.layer,
     `${type.field}='${assertCode(obj.c)}'`,
@@ -86,9 +97,20 @@ export function childUrl(obj, childKey, format = GPKG) {
   )
 }
 
-/** El tope habilita si hay algo que bajar y no lo supera. */
-export function canDownload(count, maxFeatures) {
-  return Number.isFinite(count) && count > 0 && count <= maxFeatures
+/**
+ * URL de descarga de un objeto hijo suelto. En vías el filtro es por
+ * `cod_indec`, que agrupa todos los tramos de una calle: se baja la calle
+ * entera, no el tramo de la fila.
+ */
+export function featureUrl(childKey, code, format = GPKG) {
+  const child = childOf(childKey)
+  const base = child.layer.replace('geonode:', '')
+  return wfsUrl(
+    child.layer,
+    `${specOf(childKey).idField}='${assertCode(code)}'`,
+    format,
+    format === GPKG ? `${base}-${assertCode(code)}.gpkg` : null,
+  )
 }
 
 /** Nombre del archivo descargado. Va en `format_options`, no en el `<a>`. */

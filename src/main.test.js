@@ -16,12 +16,15 @@ vi.mock('leaflet', () => ({
 
 const catalogo = {
   generated: '2026-09-04',
-  maxFeatures: 5000,
   objects: [
     { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires',
       ch: { fracciones: 42, radios: 432, localidades: 1, vias: 1487 } },
     { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires', p: 'Buenos Aires',
       ch: { departamentos: 135, radios: 23901 } },
+    // Existe en el catálogo real, con ese conteo: es uno de los 11 pares
+    // (objeto, capa) con cero, y los 11 caen en capas que tienen nota.
+    { t: 'loc', c: '94021040', n: 'Grytviken', s: 'grytviken', p: 'Tierra del Fuego',
+      ch: { vias: 0 } },
   ],
 }
 
@@ -44,22 +47,33 @@ function filtrar(tipo) {
   $('#type').dispatchEvent(new Event('change', { bubbles: true }))
 }
 
+// Una fila con propiedades de verdad: `cod_indec`/`cde`/`clc` son los
+// `idField` de las cinco capas hijas, y tienen que ser dígitos —pasan por
+// `assertCode`—. Sirve tanto para la geometría del objeto elegido (fila 1)
+// como para la página que carga la fila 3 y el "Ver" que dibuja una fila.
+const filaDeVerdad = {
+  cod_indec: '068400101', cde: '06840', clc: '068401',
+  cfn: '01', cro: '01', tro: 'U', nam: 'Nombre de prueba', gna: 'Tipo',
+  aglomerado: 'Gran Buenos Aires', fna: 'Avenida de prueba', sag: 'S',
+}
+
 beforeEach(async () => {
   vi.resetModules()
   document.body.innerHTML = body
   Element.prototype.scrollIntoView = () => {}
   global.fetch = vi.fn(async (url) => String(url).includes('catalog.json')
     ? { ok: true, json: async () => catalogo }
-    : { ok: true, status: 200, json: async () => ({ features: [{ properties: {} }] }) })
+    : { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties: filaDeVerdad }] }) })
   await import('./main.js')
   await vi.waitFor(() => expect($('#generated').textContent).not.toBe(''))
 })
 
 describe('el recorrido completo', () => {
   it('arranca con el catálogo cargado y la ficha oculta', () => {
-    expect($('#generated').textContent).toContain('2 objetos')
-    expect($('#generated').textContent).toContain('máximo 5.000')
+    expect($('#generated').textContent).toContain('3 objetos')
     expect($('#generated').textContent).toContain('2026-09-04')
+    // Ya no hay tope de descarga: el pie de página no debe mentir sobre uno.
+    expect($('#generated').textContent).not.toContain('máximo')
     expect($('#detail').hidden).toBe(true)
     expect($('#status').hidden).toBe(true)
     // El foco arranca en el buscador: no hace falta ir a buscarlo.
@@ -89,7 +103,6 @@ describe('el recorrido completo', () => {
     expect(propia.getAttribute('href')).toContain('outputFormat=geopackage')
 
     expect($('#children').children).toHaveLength(4)
-    expect($('#children-title').hidden).toBe(false)
     expect($('#children').querySelectorAll('a.btn')).toHaveLength(4)
   })
 
@@ -113,21 +126,22 @@ describe('el recorrido completo', () => {
     expect($('#detail-name').textContent).toBe('Tres de Febrero')
   })
 
-  // La provincia grande es el ejemplo del dueño: 23.901 radios, arriba del
-  // tope, tiene que quedar deshabilitada con el número real (DES-R2).
-  it('la capa que supera el tope queda deshabilitada con su conteo', () => {
+  // La provincia grande es el ejemplo del dueño: sus 23.901 radios ya no
+  // tienen tope que los bloquee, pero sí un aviso de peso antes del clic.
+  it('la capa que antes superaba el tope ahora descarga con su aviso de peso', () => {
     buscar('buenos')
     $('#results').children[0].click()
 
     const filas = [...$('#children').children]
     const radios = filas.find((li) => li.textContent.includes('Radios'))
-    expect(radios.querySelector('a')).toBe(null)
-    expect(radios.querySelector('[aria-disabled="true"]')).not.toBe(null)
+    expect(radios.querySelector('a.btn')).not.toBe(null)
+    expect(radios.querySelector('[aria-disabled="true"]')).toBe(null)
     expect(radios.textContent).toContain('23.901')
-    expect(radios.textContent).toContain('5.000')
+    expect(radios.textContent).toMatch(/MB/)
 
     const deps = filas.find((li) => li.textContent.includes('Departamentos'))
     expect(deps.querySelector('a.btn')).not.toBe(null)
+    expect(deps.textContent).not.toMatch(/MB/)
   })
 
   it('avisa si el catálogo no carga', async () => {
@@ -179,5 +193,138 @@ describe('la provincia como término extra', () => {
     buscar('febrero buenos aires')
     expect($('#results').children).toHaveLength(1)
     expect($('#results').textContent).toContain('Tres de Febrero')
+  })
+})
+
+// La cadena de padres es lo único que la fila 2 agrega al recorrido de hoy.
+describe('la fila de padres', () => {
+  it('ofrece la jurisdicción de un departamento', () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    const filas = [...$('#parents').children]
+    expect(filas).toHaveLength(1)
+    expect(filas[0].textContent).toContain('Buenos Aires')
+    expect(filas[0].textContent).toContain('Jurisdicción')
+    expect(filas[0].querySelector('a.btn').getAttribute('href')).toContain('cpr%3D%2706%27')
+  })
+
+  it('la jurisdicción no muestra la fila, porque no tiene padres', () => {
+    buscar('buenos')
+    $('#results').children[0].click()
+    expect($('#row-parents').hidden).toBe(true)
+  })
+})
+
+// La fila 3: recorrer los hijos paginados y descargarlos o verlos en el
+// mapa. Las pestañas y la tabla ya tienen su propio suite en
+// browser.test.js; acá sólo se prueba que el cableado real —el `index.html`
+// publicado, con el catálogo de verdad— las enciende.
+describe('recorrer los hijos', () => {
+  it('abre la pestaña, lista la página y descarga una fila', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    expect($('#row-browse').hidden).toBe(false)
+    // fracciones, radios, localidades y vías: las cuatro que trae el catálogo.
+    expect(document.querySelectorAll('#browse [role="tab"]')).toHaveLength(4)
+
+    const href = $('#browse tbody tr a.btn').getAttribute('href')
+    expect(href).toContain('outputFormat=geopackage')
+  })
+
+  // Corrección 2 al brief: la pestaña de vías no se auto-carga, tampoco
+  // cableada en la app completa —no sólo en el test unitario de browser.js—.
+  it('la pestaña de vías pide confirmación en vez de cargar sola', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    const llamadasAntes = global.fetch.mock.calls.length
+
+    const tabVias = [...document.querySelectorAll('#browse [role="tab"]')]
+      .find((tab) => tab.textContent.includes('Vías'))
+    tabVias.click()
+
+    expect(global.fetch).toHaveBeenCalledTimes(llamadasAntes)
+    expect($('#browse').textContent).toMatch(/99 segundos/)
+  })
+
+  // Corrección 3 al brief: Ver deja la fila marcada, sin romper el resto
+  // de la ficha si el dibujo en el mapa sale bien.
+  it('Ver dibuja la fila en el mapa y la deja marcada', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+
+    const fila = $('#browse tbody tr')
+    fila.querySelector('button').click()
+    expect(fila.getAttribute('aria-selected')).toBe('true')
+
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#status').hidden).toBe(true)
+  })
+
+  // Fix round 1, hallazgo 1 (importante): `el.meta.textContent += ...` en
+  // el handler de onFeature acumulaba con cada "Ver", incluso repetido
+  // sobre la misma fila. La línea de metadatos describe el objeto de la
+  // ficha, siempre, y nunca acumula —mirar una fila ya se señala marcando
+  // la fila en la tabla, no reescribiendo el nombre de al lado del mapa—.
+  it('dos Ver seguidos no acumulan ni repiten la línea de identidad del objeto', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    // Deja asentar el onFeature que dispara el showObject del departamento.
+    await new Promise((r) => setTimeout(r, 0))
+
+    const metaBase = $('#detail-meta').textContent
+    const ocurrencias = (texto) => metaBase.split(texto).length - 1
+    // Prueba que el aviso de onFeature sí llegó a pegarse una vez —si no,
+    // el test siguiente pasaría aunque nadie hubiera arreglado nada—.
+    expect(metaBase).toContain('cod_indec: 068400101')
+    expect(ocurrencias('cod_indec')).toBe(1)
+
+    // El mock de este archivo sólo trae una fila (`totalFeatures: 1`): dos
+    // "Ver" seguidos sobre la misma fila alcanzan para probar que no
+    // acumula —de hecho es un caso más exigente que dos filas distintas—.
+    const fila = $('#browse tbody tr')
+    fila.querySelector('button').click()
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#detail-meta').textContent).toBe(metaBase)
+
+    fila.querySelector('button').click()
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#detail-meta').textContent).toBe(metaBase)
+  })
+})
+
+it('la fila de notas aparece con las notas que corresponden', () => {
+  buscar('tres')
+  $('#results').children[0].click()
+  expect($('#row-notes').hidden).toBe(false)
+  expect($('#notes').textContent).toMatch(/tramos/)
+})
+
+// Fix round 3, hallazgo 3: las tres filas de la misma ficha se
+// contradecían con conteo cero. La 2 decía bien que no hay vías; la 3
+// ofrecía recorrerlas igual, con el panel de costo y un botón que dispara
+// un pedido de 17 s que vuelve vacío; y la 4 explicaba la trampa de una
+// capa que este objeto no tiene.
+describe('un objeto con una capa hija en cero', () => {
+  it('lo dice una sola vez, en la fila 2, y no ofrece recorrer ni anotar nada', async () => {
+    buscar('grytviken')
+    $('#results').children[0].click()
+
+    const vias = [...$('#children').children][0]
+    expect(vias.querySelector('a.btn')).toBe(null)
+    expect(vias.textContent).toMatch(/no hay vías de circulación en este objeto/i)
+
+    expect($('#row-browse').hidden).toBe(true)
+    expect($('#row-notes').hidden).toBe(true)
+    expect($('#browse').children).toHaveLength(0)
+    expect($('#notes').children).toHaveLength(0)
+
+    // Y no se le pide nada al GeoServer por una capa que sabemos vacía.
+    await new Promise((r) => setTimeout(r, 0))
+    const pedidos = global.fetch.mock.calls.map(([url]) => String(url))
+    expect(pedidos.filter((u) => u.includes('vias_de_circulacion'))).toEqual([])
   })
 })

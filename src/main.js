@@ -1,10 +1,15 @@
 import { search, TYPE_ORDER } from './search.js'
 import { loadCatalog } from './catalog.js'
-import { selfUrl, TYPES } from './download.js'
-import { initMap, showObject, onFeature } from './map.js'
+import { selfUrl, TYPES, childOf } from './download.js'
+import { initMap, showObject, showFeature, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
 import { childRows } from './children.js'
 import { createCombobox } from './combobox.js'
+import { codeIndex, parentsOf } from './parents.js'
+import { createBrowser } from './browser.js'
+import { specOf } from './columns.js'
+import { createTabs } from './tabs.js'
+import { notesFor } from './notes.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -15,12 +20,18 @@ const el = {
   name: document.querySelector('#detail-name'),
   meta: document.querySelector('#detail-meta'),
   self: document.querySelector('#detail-self'),
-  childrenTitle: document.querySelector('#children-title'),
+  parents: document.querySelector('#parents'),
+  rowParents: document.querySelector('#row-parents'),
+  rowBrowse: document.querySelector('#row-browse'),
+  rowNotes: document.querySelector('#row-notes'),
+  browse: document.querySelector('#browse'),
+  notes: document.querySelector('#notes'),
   children: document.querySelector('#children'),
   generated: document.querySelector('#generated'),
 }
 
 let catalog = null
+let index = null   // se llena junto con `catalog`
 
 function setStatus(text, isError = false) {
   el.status.textContent = text
@@ -29,9 +40,75 @@ function setStatus(text, isError = false) {
 }
 
 function renderChildren(obj) {
-  const rows = childRows(obj, catalog.maxFeatures)
-  el.childrenTitle.hidden = rows.length === 0
+  const rows = childRows(obj)
   el.children.replaceChildren(...rows)
+}
+
+/**
+ * La fila 3: recorrer de a una página los objetos hijos y verlos en el
+ * mapa. `onView` ya recibe la fila y de qué pestaña salió (ver table.js),
+ * así que no hace falta que main.js lleve la cuenta de la pestaña activa.
+ */
+const browser = createBrowser({
+  container: el.browse,
+  // Devuelve la promesa: es lo que usa browser.js para dejar el botón
+  // "Ver" en estado de carga mientras el GeoServer contesta (ver
+  // markRow en browser.js; en vías tarda ~12 s medidos).
+  onView: (row, key) => {
+    const spec = specOf(key)
+    return showFeature(childOf(key).layer, spec.idField, String(row[spec.idField]))
+      .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
+  },
+  onError: () => {},
+})
+
+/** Una fila por padre: quién es y su descarga. */
+function parentRow(parent) {
+  const li = document.createElement('li')
+  const who = document.createElement('span')
+  who.className = 'who'
+  who.textContent = parent.n
+  const kind = document.createElement('span')
+  kind.className = 'count'
+  kind.textContent = ` · ${TYPES[parent.t].label} · ${parent.c}`
+  who.append(kind)
+  li.append(who, downloadButton(selfUrl(parent), 'Descargar'))
+  return li
+}
+
+function renderParents(obj) {
+  const rows = parentsOf(obj, index).map(parentRow)
+  el.rowParents.hidden = rows.length === 0
+  el.parents.replaceChildren(...rows)
+}
+
+/**
+ * La fila 4: aclaraciones sobre las trampas de la capa, sin badge porque no
+ * hay una cantidad que mostrar al lado del nombre de la nota.
+ */
+function renderNotes(obj) {
+  const notes = notesFor(obj)
+  el.rowNotes.hidden = notes.length === 0
+  el.notes.replaceChildren()
+  if (!notes.length) return
+
+  const tabsBox = document.createElement('div')
+  const body = document.createElement('div')
+  body.className = 'pane nota-body'
+  el.notes.append(tabsBox, body)
+
+  createTabs({
+    container: tabsBox,
+    items: notes.map((n) => ({ key: n.key, label: n.label })),
+    onSelect: (key) => {
+      const nota = notes.find((n) => n.key === key)
+      body.replaceChildren(...nota.paragraphs.map((t) => {
+        const p = document.createElement('p')
+        p.textContent = t
+        return p
+      }))
+    },
+  })
 }
 
 function selectObject(obj) {
@@ -47,7 +124,13 @@ function selectObject(obj) {
     downloadButton(selfUrl(obj), `Descargar ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()}`),
   )
 
+  renderParents(obj)
   renderChildren(obj)
+  renderNotes(obj)
+  // La visibilidad de la fila la decide quien la dibuja, como las filas 2 y
+  // 4: recalcular acá el mismo predicado es cómo divergen y queda una fila
+  // visible y vacía.
+  el.rowBrowse.hidden = !browser.show(obj)
   el.detail.hidden = false
   document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
 }
@@ -121,8 +204,9 @@ document.addEventListener('object:selected', (e) => {
 loadCatalog()
   .then((c) => {
     catalog = c
+    index = codeIndex(c.objects)
     setStatus('')
-    el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos · máximo ${fmt(c.maxFeatures)} por descarga.`
+    el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
     el.q.focus()
   })
   .catch((err) => {

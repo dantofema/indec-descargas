@@ -15,8 +15,16 @@ Sitio estático: no hay backend. Los datos salen del GeoServer público del INDE
 Funcionando. El sitio busca sobre un catálogo de 6.977 objetos (24 jurisdicciones, 529
 departamentos, 4.023 localidades censales, 2.282 gobiernos locales y 119 aglomerados),
 dibuja el objeto elegido sobre el basemap del IGN y arma los enlaces de descarga en GPKG,
-tanto del objeto en sí como de sus capas hijas. Si una capa hija supera el tope de features
-el botón queda deshabilitado con el conteo real, en vez de bajar un archivo recortado.
+tanto del objeto en sí como de sus capas hijas y de sus padres. No hay tope superior de
+features: ninguna capa hija se deshabilita por tener muchos objetos, sólo por tener cero, y
+superar los 10 MB estimados agrega un aviso de peso y de espera al lado del botón, que sigue
+habilitado. Las reglas están en [`docs/reglas/descargas.md`](docs/reglas/descargas.md).
+
+Cada capa hija también se puede recorrer de a una fila, paginada contra el GeoServer del INDEC.
+Vías es la excepción: no carga sola al abrir su pestaña, porque es una tabla de 477.588 filas
+sin índice útil y cualquier pedido contra ella tarda entre varios segundos y casi dos minutos;
+muestra el costo medido y un botón para cargar igual, y lista por tramo, no por calle. Las
+reglas están en [`docs/reglas/navegacion.md`](docs/reglas/navegacion.md).
 
 La búsqueda se puede acotar a un tipo de objeto, acepta las palabras del nombre sueltas y en
 cualquier orden, y toma la provincia como término extra para desambiguar homónimos: `caseros
