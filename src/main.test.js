@@ -259,4 +259,36 @@ describe('recorrer los hijos', () => {
     await new Promise((r) => setTimeout(r, 0))
     expect($('#status').hidden).toBe(true)
   })
+
+  // Fix round 1, hallazgo 1 (importante): `el.meta.textContent += ...` en
+  // el handler de onFeature acumulaba con cada "Ver", incluso repetido
+  // sobre la misma fila. La línea de metadatos describe el objeto de la
+  // ficha, siempre, y nunca acumula —mirar una fila ya se señala marcando
+  // la fila en la tabla, no reescribiendo el nombre de al lado del mapa—.
+  it('dos Ver seguidos no acumulan ni repiten la línea de identidad del objeto', async () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    // Deja asentar el onFeature que dispara el showObject del departamento.
+    await new Promise((r) => setTimeout(r, 0))
+
+    const metaBase = $('#detail-meta').textContent
+    const ocurrencias = (texto) => metaBase.split(texto).length - 1
+    // Prueba que el aviso de onFeature sí llegó a pegarse una vez —si no,
+    // el test siguiente pasaría aunque nadie hubiera arreglado nada—.
+    expect(metaBase).toContain('cod_indec: 068400101')
+    expect(ocurrencias('cod_indec')).toBe(1)
+
+    // El mock de este archivo sólo trae una fila (`totalFeatures: 1`): dos
+    // "Ver" seguidos sobre la misma fila alcanzan para probar que no
+    // acumula —de hecho es un caso más exigente que dos filas distintas—.
+    const fila = $('#browse tbody tr')
+    fila.querySelector('button').click()
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#detail-meta').textContent).toBe(metaBase)
+
+    fila.querySelector('button').click()
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#detail-meta').textContent).toBe(metaBase)
+  })
 })

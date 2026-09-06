@@ -71,6 +71,57 @@ describe('createBrowser', () => {
     expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
   })
 
+  // Segundo escenario de carrera (fix round 1, hallazgo 2): pasar de página
+  // con un pedido en vuelo. Con vías tardando hasta 99 s, un doble clic en
+  // "Siguiente" antes de que responda el primero no es hipotético.
+  it('pasar de página con un pedido en vuelo: la vieja no pisa la nueva', async () => {
+    let resolverPrimerClic
+    global.fetch = vi.fn()
+      .mockImplementationOnce(async () => paginaOk(42, 20)) // carga inicial: página 0
+      .mockImplementationOnce(() => new Promise((r) => { resolverPrimerClic = r })) // 1er clic en Siguiente
+      .mockImplementationOnce(async () => ({ ok: true, json: async () => ({ totalFeatures: 42, features: [{ properties: { cod_indec: '555', cfn: '02' } }] }) })) // 2do clic
+
+    const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+    b.show(dep)
+    await vi.waitFor(() => expect(container.querySelector('.pager')).not.toBe(null))
+
+    // La misma referencia del botón: sus listeners siguen vivos aunque el
+    // `replaceChildren` de la carga la haya desconectado del documento.
+    const siguiente = container.querySelectorAll('.pager button')[1]
+    siguiente.click() // pide la página 1: queda colgada
+    siguiente.click() // el usuario clickea de nuevo antes de que responda
+
+    await vi.waitFor(() => expect(container.textContent).toContain('555'))
+
+    resolverPrimerClic({ ok: true, json: async () => ({ totalFeatures: 42, features: filas(20, 20).map((p) => ({ properties: p })) }) })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(container.textContent).toContain('555')
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
+  })
+
+  // Tercer escenario de carrera (fix round 1, hallazgo 2): elegir otro
+  // objeto en el buscador con un pedido en vuelo. Las dos capas coinciden
+  // en clave ('fracciones') a propósito: si el guardia dependiera sólo de
+  // comparar la pestaña activa, esto lo pasaría igual.
+  it('elegir otro objeto con un pedido en vuelo descarta la respuesta vieja', async () => {
+    let resolverPrimero
+    global.fetch = vi.fn()
+      .mockImplementationOnce(() => new Promise((r) => { resolverPrimero = r })) // fracciones de `dep`
+      .mockImplementationOnce(async () => ({ ok: true, json: async () => ({ totalFeatures: 1, features: [{ properties: { cod_indec: '777', cfn: '01' } }] }) })) // fracciones de `otroDep`
+
+    const otroDep = { t: 'dep', c: '82084', n: 'Rosario', ch: { fracciones: 10 } }
+    const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+    b.show(dep) // pide fracciones de `dep`: queda colgada
+    b.show(otroDep) // el usuario elige otro objeto antes de que responda
+
+    await vi.waitFor(() => expect(container.textContent).toContain('777'))
+
+    resolverPrimero({ ok: true, json: async () => ({ totalFeatures: 42, features: filas(20).map((p) => ({ properties: p })) }) })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(container.textContent).toContain('777')
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
+  })
+
   it('un error del GeoServer se muestra en el lugar de la tabla, con reintento', async () => {
     global.fetch = vi.fn(async () => ({ ok: false, status: 503 }))
     const b = createBrowser({ container, onView: () => {}, onError: () => {} })
@@ -123,6 +174,74 @@ describe('createBrowser', () => {
 
       expect(trs()[0].getAttribute('aria-selected')).toBe('true')
       expect(trs()[2].getAttribute('aria-selected')).toBe('false')
+    })
+  })
+
+  // Fix round 1, hallazgo 5: un "Ver" que tarda —12,4 s medidos en vías—
+  // no puede dejar la interfaz muda. El botón avisa que está trabajando y,
+  // en vías, cuánto puede llegar a tardar.
+  describe('Ver deja un estado de carga mientras tarda', () => {
+    it('deshabilita el botón y cambia el texto, y lo restaura al terminar', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      let resolverOnView
+      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
+      const b = createBrowser({ container, onView, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      const button = container.querySelectorAll('tbody tr button')[0]
+      button.click()
+      expect(button.disabled).toBe(true)
+      expect(button.textContent).toBe('Viendo…')
+
+      resolverOnView()
+      await new Promise((r) => setTimeout(r, 0))
+      expect(button.disabled).toBe(false)
+      expect(button.textContent).toBe('Ver')
+    })
+
+    it('si onView no devuelve una promesa, igual se restaura solo', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      const button = container.querySelectorAll('tbody tr button')[0]
+      button.click()
+      await new Promise((r) => setTimeout(r, 0))
+      expect(button.disabled).toBe(false)
+      expect(button.textContent).toBe('Ver')
+    })
+
+    it('en vías, mientras carga, avisa la espera con el número medido', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      let resolverOnView
+      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
+      const b = createBrowser({ container, onView, onError: () => {} })
+      b.show(depVias)
+      container.querySelectorAll('[role="tab"]')[1].click() // vías
+      boton(/cargar/i).click()
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      container.querySelectorAll('tbody tr button')[0].click()
+      expect(container.textContent).toMatch(/12 segundos/)
+
+      resolverOnView()
+      await new Promise((r) => setTimeout(r, 0))
+      expect(container.textContent).not.toMatch(/12 segundos/)
+    })
+
+    it('en otras capas no aparece el aviso de los 12 segundos de vías', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      let resolverOnView
+      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
+      const b = createBrowser({ container, onView, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      container.querySelectorAll('tbody tr button')[0].click()
+      expect(container.textContent).not.toMatch(/12 segundos/)
+      resolverOnView()
     })
   })
 

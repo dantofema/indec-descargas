@@ -63,9 +63,11 @@ function beginRequest() {
 }
 
 /**
- * Pide el GeoJSON de `url` y lo dibuja, si para cuando llega sigue siendo
- * la petición vigente. Es la parte que showObject y showFeature comparten
- * entera: sólo cambia de dónde sale la URL, no qué se hace con ella.
+ * Pide el GeoJSON de `url`, lo dibuja si para cuando llega sigue siendo la
+ * petición vigente, y devuelve las propiedades del feature —quien llama
+ * decide qué hacer con ellas, ver más abajo por qué—. Es la parte que
+ * showObject y showFeature comparten entera: sólo cambia de dónde sale la
+ * URL, no qué se hace con ella.
  *
  * Una petición superada no escribe nada: ni el mapa, ni la línea de
  * estado. El chequeo va antes de mirar el status, y el try/catch cubre
@@ -75,7 +77,7 @@ function beginRequest() {
 async function drawFromUrl(request, url) {
   try {
     const res = await fetch(url)
-    if (request !== pending) return
+    if (request !== pending) return undefined
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const geojson = await res.json()
@@ -87,21 +89,31 @@ async function drawFromUrl(request, url) {
     }).addTo(map)
 
     map.fitBounds(layer.getBounds(), { padding: [16, 16] })
-    featureCallback(geojson.features[0].properties)
+    return geojson.features[0].properties
   } catch (err) {
-    if (request !== pending) return
+    if (request !== pending) return undefined
     throw err
   }
 }
 
 export async function showObject(obj) {
   if (!map) return
-  return drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
+  // Sólo el objeto de la búsqueda avisa sus propiedades: esa línea describe
+  // la ficha, y una petición superada devuelve `undefined` (ver arriba).
+  const props = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
+  if (props) featureCallback(props)
 }
 
-/** Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
- * desde la tabla de la fila 3, no el objeto de la búsqueda. */
+/**
+ * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
+ * desde la tabla de la fila 3, no el objeto de la búsqueda. A propósito no
+ * avisa al callback de `onFeature`: esa línea describe la identidad del
+ * objeto de la ficha y no tiene que cambiar con cada "Ver" —mirar una fila
+ * ya se señala marcándola en la tabla, no reescribiendo el nombre de al
+ * lado del mapa—. Antes lo hacía, y cada "Ver" le pegaba otro tramo de
+ * texto sin límite a `#detail-meta`.
+ */
 export async function showFeature(layerName, field, code) {
   if (!map) return
-  return drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
+  await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
 }

@@ -21,6 +21,14 @@ const VIAS_COST_NOTICE = 'Esta capa no tiene un índice útil sobre sus 477.588 
 const VIAS_COST_REMINDER = 'Cada página que pidas de esta capa vuelve a costar lo mismo.'
 
 /**
+ * Medido contra el GeoServer real el 2026-09-06: un solo feature con
+ * geometría —lo que pide el botón "Ver"— tarda 12,4 s en vías, contra
+ * 0,65 s en radios. Sin este aviso, el clic deja la interfaz "muerta" ese
+ * rato sin que el usuario sepa si se colgó.
+ */
+const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
+
+/**
  * La fila que se recorre: una pestaña por capa hija, y adentro la página que
  * se esté mirando. Guarda qué pestaña está activa, en qué página va cada una
  * y cuál fue el último pedido, para que una respuesta lenta de una pestaña
@@ -88,15 +96,15 @@ export function createBrowser({ container, onView, onError }) {
   async function load(key, page) {
     const mine = (token += 1)
     pages.set(key, page)
-    body.replaceChildren(estado('Cargando…'))
+    body.replaceChildren(metaParagraph('Cargando…'))
     try {
       const { rows, total } = await fetchPage(obj, key, page)
       // Llegó tarde: el usuario ya está en otra pestaña o en otra página.
       if (mine !== token || key !== active) return
 
-      const tableEl = renderTable(key, rows, (row, childKey) => marcar(tableEl, rows, row, childKey))
+      const tableEl = renderTable(key, rows, (row, childKey) => markRow(tableEl, rows, row, childKey))
       const panels = [tableEl, renderPager({ page, total, onPage: (p) => load(key, p) })]
-      if (LAZY_KEYS.has(key)) panels.push(estado(VIAS_COST_REMINDER))
+      if (LAZY_KEYS.has(key)) panels.push(metaParagraph(VIAS_COST_REMINDER))
       body.replaceChildren(...panels)
     } catch (err) {
       if (mine !== token || key !== active) return
@@ -109,16 +117,39 @@ export function createBrowser({ container, onView, onError }) {
    * Marca la fila vista con `aria-selected` —la regla ya existe en
    * style.css— y avisa. Se ubica por identidad dentro de `rows`, no por
    * texto: es la misma referencia que `renderTable` le pasa a `onView`.
+   *
+   * Además deja el botón "Ver" en estado de carga mientras `onView` tarda
+   * —puede devolver una promesa; si no devuelve nada, se restaura en el
+   * siguiente microtask—. En vías es la única forma de que el usuario sepa
+   * que los ~12 s medidos están corriendo y no que la interfaz se colgó.
    */
-  function marcar(tableEl, rows, row, childKey) {
+  function markRow(tableEl, rows, row, childKey) {
     const idx = rows.indexOf(row)
     tableEl.querySelectorAll('tbody tr').forEach((tr, i) => {
       tr.setAttribute('aria-selected', String(i === idx))
     })
-    onView(row, childKey)
+
+    const button = [...tableEl.querySelectorAll('tbody tr')][idx]?.querySelector('button')
+    let notice = null
+    if (button) {
+      button.disabled = true
+      button.textContent = 'Viendo…'
+      if (childKey === 'vias') {
+        notice = metaParagraph(VIAS_VIEW_NOTICE)
+        button.insertAdjacentElement('afterend', notice)
+      }
+    }
+
+    Promise.resolve(onView(row, childKey)).finally(() => {
+      if (button) {
+        button.disabled = false
+        button.textContent = 'Ver'
+      }
+      notice?.remove()
+    })
   }
 
-  function estado(texto) {
+  function metaParagraph(texto) {
     const p = document.createElement('p')
     p.className = 'meta'
     p.textContent = texto

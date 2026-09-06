@@ -24,6 +24,7 @@ const respuesta = (body = geometria) => ({ ok: true, status: 200, json: async ()
 let pendientes
 let showObject
 let showFeature
+let onFeatureSpy
 
 /** Un fetch que no resuelve hasta que el test lo decide. */
 function fetchDiferido() {
@@ -40,6 +41,8 @@ beforeEach(async () => {
   map.initMap('map')
   showObject = map.showObject
   showFeature = map.showFeature
+  onFeatureSpy = vi.fn()
+  map.onFeature(onFeatureSpy)
 })
 
 describe('showObject: la selección más nueva manda', () => {
@@ -132,6 +135,18 @@ describe('showFeature', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
+  // Fix round 1, hallazgo 4: es el único lugar de esta tarea que arma un
+  // CQL_FILTER nuevo (featureQueryUrl) y no tenía test de la URL en sí.
+  it('arma la URL con la capa, el campo y el código exactos', async () => {
+    const p = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
+    pendientes[0].resolve(respuesta())
+    await p
+    const url = global.fetch.mock.calls[0][0]
+    expect(url).toContain('typenames=geonode%3Aradios_censales2')
+    expect(url).toContain('CQL_FILTER=cod_indec%3D%27068400101%27')
+    expect(url).toContain('outputFormat=application%2Fjson')
+  })
+
   it('propaga el error HTTP con su status', async () => {
     const p = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
     pendientes[0].resolve({ ok: false, status: 503 })
@@ -156,5 +171,25 @@ describe('showFeature', () => {
     pendientes[0].resolve(respuesta())
     await expect(vieja).resolves.toBeUndefined()
     expect(geoJSON).toHaveBeenCalledTimes(1)
+  })
+})
+
+// Fix round 1, hallazgo 1 (importante): la línea de metadatos de la fila 1
+// describe el objeto de la ficha, siempre, y nunca acumula. Antes,
+// showFeature disparaba el mismo callback que showObject y cada "Ver"
+// pegaba otro tramo de texto sin límite a `#detail-meta` (ver main.js).
+describe('la identidad del objeto no la toca un Ver', () => {
+  it('showObject sí avisa las propiedades del objeto: esa línea lo describe', async () => {
+    const p = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await p
+    expect(onFeatureSpy).toHaveBeenCalledWith(geometria.features[0].properties)
+  })
+
+  it('showFeature no avisa nada: mirar una fila no cambia la identidad de la ficha', async () => {
+    const p = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
+    pendientes[0].resolve(respuesta())
+    await p
+    expect(onFeatureSpy).not.toHaveBeenCalled()
   })
 })

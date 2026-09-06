@@ -48,9 +48,12 @@ function renderChildren(obj) {
  */
 const browser = createBrowser({
   container: el.browse,
+  // Devuelve la promesa: es lo que usa browser.js para dejar el botón
+  // "Ver" en estado de carga mientras el GeoServer contesta (ver
+  // markRow en browser.js; en vías tarda ~12 s medidos).
   onView: (row, key) => {
     const spec = specOf(key)
-    showFeature(CHILD_LAYERS[key].layer, spec.idField, String(row[spec.idField]))
+    return showFeature(CHILD_LAYERS[key].layer, spec.idField, String(row[spec.idField]))
       .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
   },
   onError: () => {},
