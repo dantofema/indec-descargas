@@ -8,17 +8,48 @@ import { fmt } from './ui.js'
 /**
  * Capas que no cargan solas al abrir su pestaña. Medido contra el
  * GeoServer real el 2026-09-06: una página de 20 vías tarda 14-20 s si el
- * filtro es un departamento y 88-99 s si es una provincia —no es el peso,
- * son 477.588 filas sin índice útil—. Auto-cargar esa pestaña colgaría la
- * interfaz hasta minuto y medio sin que el usuario haya pedido nada.
+ * filtro es un departamento, 17-18 s si es una localidad censal y 88-99 s
+ * si es una provincia —no es el peso, son 477.588 filas sin índice útil—.
+ * Auto-cargar esa pestaña colgaría la interfaz hasta minuto y medio sin que
+ * el usuario haya pedido nada.
  */
 const LAZY_KEYS = new Set(['vias'])
 
+/**
+ * El caso de la localidad censal no es un adorno: es el 58% de las fichas
+ * donde este panel aparece —4.023 de los 6.977 objetos del catálogo, todas
+ * con vías como única capa hija—, así que era justo el número que faltaba.
+ */
 const VIAS_COST_NOTICE = 'Esta capa no tiene un índice útil sobre sus 477.588 vías: '
   + 'una página de 20 filas tarda entre 14 y 20 segundos si el filtro es un '
-  + 'departamento, y entre 88 y 99 segundos si es una provincia.'
+  + 'departamento, entre 17 y 18 segundos si es una localidad censal, y entre '
+  + '88 y 99 segundos si es una provincia.'
 
 const VIAS_COST_REMINDER = 'Cada página que pidas de esta capa vuelve a costar lo mismo.'
+
+/**
+ * Cuánto se espera una página antes de darla por muerta, por capa. Un
+ * `fetch` sin corte no falla nunca: si el GeoServer acepta la conexión y no
+ * contesta, `load` deja "Cargando…" para siempre —el errorBox con
+ * Reintentar sólo vive en el `catch`, y un pedido colgado no llega ahí—.
+ * Y no siempre hay a dónde escapar: 4.023 de los 6.977 objetos del catálogo
+ * (58%) son localidades censales con una sola capa hija, así que no hay otra
+ * pestaña que clickear, y `tabs.js` corta el reclic sobre la activa.
+ *
+ * Los números salen de lo medido el 2026-09-06 y dejan headroom sobre el
+ * peor caso legítimo, para no convertir una espera larga en un error: una
+ * página de vías tarda 88-99 s filtrando por provincia (17-18 s por
+ * localidad, 14-20 s por departamento), así que 180 s deja casi el doble;
+ * el resto de las capas tarda 0,65-0,89 s, así que 30 s deja treinta veces.
+ *
+ * Es por capa y no por tipo de padre a propósito: afinarlo por padre sería
+ * una tabla de dos dimensiones para elegir un corte. El precio es que una
+ * localidad espera hasta 3 minutos antes de ver el error, contra no verlo
+ * nunca, que es lo que hace hoy.
+ */
+const TIMEOUT_MS = { vias: 180_000 }
+const DEFAULT_TIMEOUT_MS = 30_000
+const timeoutOf = (childKey) => TIMEOUT_MS[childKey] ?? DEFAULT_TIMEOUT_MS
 
 /**
  * Medido contra el GeoServer real el 2026-09-06: un solo feature con
@@ -42,8 +73,21 @@ export function createBrowser({ container, onView, onError }) {
   let confirmed = new Set()
   let token = 0
   let body = null
+  // El pedido en vuelo, para poder abortarlo y no sólo ignorarlo.
+  let inFlight = null
+
+  /**
+   * Corta el pedido que haya en vuelo. Descartar la respuesta no alcanza:
+   * la conexión abandonada sigue ocupando una de las ~6 que el browser
+   * permite por origen, y el mapa pide al mismo origen.
+   */
+  function abortInFlight(reason) {
+    inFlight?.abort(new Error(reason))
+    inFlight = null
+  }
 
   function show(next) {
+    abortInFlight('se eligió otro objeto')
     obj = next
     active = null
     pages = new Map()
@@ -94,11 +138,21 @@ export function createBrowser({ container, onView, onError }) {
   }
 
   async function load(key, page) {
+    abortInFlight('empezó otro pedido')
     const mine = (token += 1)
+    const ms = timeoutOf(key)
+    const controller = new AbortController()
+    inFlight = controller
+    // El corte llega como abort, no como una carrera aparte: así el pedido
+    // que se da por muerto además muere, en vez de seguir vivo sin dueño.
+    const timer = setTimeout(
+      () => controller.abort(new Error(`el GeoServer no contestó en ${ms / 1000} segundos`)),
+      ms,
+    )
     pages.set(key, page)
     body.replaceChildren(metaParagraph('Cargando…'))
     try {
-      const { rows, total } = await fetchPage(obj, key, page)
+      const { rows, total } = await fetchPage(obj, key, page, controller.signal)
       // Llegó tarde: el usuario ya está en otra pestaña o en otra página.
       if (mine !== token || key !== active) return
 
@@ -107,9 +161,14 @@ export function createBrowser({ container, onView, onError }) {
       if (LAZY_KEYS.has(key)) panels.push(metaParagraph(VIAS_COST_REMINDER))
       body.replaceChildren(...panels)
     } catch (err) {
+      // Un aborto propio ya perdió la carrera por definición: el guard de
+      // abajo lo silencia, porque `token` avanzó antes de abortar.
       if (mine !== token || key !== active) return
       body.replaceChildren(errorBox(err, () => load(key, page)))
       onError(err)
+    } finally {
+      clearTimeout(timer)
+      if (inFlight === controller) inFlight = null
     }
   }
 

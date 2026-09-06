@@ -27,6 +27,15 @@ const paginaOk = (total = 42, n = 20) => ({
 const boton = (texto) => [...container.querySelectorAll('button')]
   .find((b) => b.textContent.match(texto))
 
+/**
+ * Un fetch que no contesta nunca y sólo se rinde si le abortan el signal,
+ * que es lo que hace el `fetch` de verdad. Un GeoServer que acepta la
+ * conexión y se queda callado es exactamente esto.
+ */
+const fetchColgado = () => vi.fn((_url, opts) => new Promise((_resolve, reject) => {
+  opts?.signal?.addEventListener('abort', () => reject(opts.signal.reason))
+}))
+
 beforeEach(() => {
   document.body.innerHTML = '<div id="c"></div>'
   container = document.querySelector('#c')
@@ -291,6 +300,11 @@ describe('createBrowser', () => {
       expect(global.fetch).toHaveBeenCalledTimes(llamadasAntes)
       expect(container.textContent).toMatch(/20 segundos/)
       expect(container.textContent).toMatch(/99 segundos/)
+      // Fix round 3: el 58% de las fichas donde aparece este panel son
+      // localidades censales, y ese caso faltaba en el aviso. Medido el
+      // 2026-09-06: clc=06840010 dio 18,0 s y clc=82084010 dio 17,2 s.
+      expect(container.textContent).toMatch(/localidad/i)
+      expect(container.textContent).toMatch(/1[78] (y 18 )?segundos/)
       expect(boton(/cargar/i)).not.toBe(undefined)
     })
 
@@ -354,6 +368,146 @@ describe('createBrowser', () => {
 
       await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
       expect(container.textContent).toMatch(/cada página/i)
+    })
+  })
+
+  // Fix round 3, hallazgo 2: ningún fetch del repo tenía timeout. Si el
+  // GeoServer acepta la conexión y no contesta, `load` deja "Cargando…"
+  // para siempre: el errorBox con Reintentar sólo vive en el `catch` y un
+  // pedido colgado nunca llega ahí. Y el 58% del catálogo son localidades
+  // censales con una sola pestaña (vías), así que no hay ni siquiera otra
+  // pestaña a la que escapar.
+  describe('un pedido que no vuelve', () => {
+    it('corta solo y deja el errorBox con Reintentar', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+        b.show(dep)
+        expect(container.textContent).toMatch(/Cargando/)
+
+        await vi.advanceTimersByTimeAsync(29_000)
+        expect(container.textContent).toMatch(/Cargando/)
+
+        await vi.advanceTimersByTimeAsync(2_000)
+        expect(container.querySelector('button.retry')).not.toBe(null)
+        expect(container.textContent).toMatch(/no contestó/)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('avisa el error una sola vez, por la vía de onError', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const onError = vi.fn()
+        const b = createBrowser({ container, onView: () => {}, onError })
+        b.show(dep)
+        await vi.advanceTimersByTimeAsync(31_000)
+        expect(onError).toHaveBeenCalledTimes(1)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    // El corte tiene que quedar por encima del peor caso legítimo medido:
+    // una página de vías tarda 88-99 s filtrando por provincia. Con el
+    // mismo corte que el resto de las capas, esa espera legítima daría
+    // error.
+    it('en vías espera más que las 99 s medidas antes de darla por muerta', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+        b.show(depVias)
+        container.querySelectorAll('[role="tab"]')[1].click() // vías
+        boton(/cargar/i).click()
+
+        await vi.advanceTimersByTimeAsync(120_000)
+        expect(container.textContent).toMatch(/Cargando/)
+
+        await vi.advanceTimersByTimeAsync(61_000)
+        expect(container.querySelector('button.retry')).not.toBe(null)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('reintentar arranca un pedido nuevo, con su propio corte', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+        b.show(dep)
+        await vi.advanceTimersByTimeAsync(31_000)
+
+        container.querySelector('button.retry').click()
+        expect(container.textContent).toMatch(/Cargando/)
+        expect(global.fetch).toHaveBeenCalledTimes(2)
+
+        await vi.advanceTimersByTimeAsync(31_000)
+        expect(container.querySelector('button.retry')).not.toBe(null)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  // El pedido abandonado no se descarta nomás: se aborta. Sin eso, cada
+  // reintento suma una conexión viva contra geonode.indec.gob.ar, el
+  // browser corta en ~6 por origen y el mapa —que pide al mismo origen—
+  // deja de dibujar. La falla de la fila 3 se propaga a la fila 1.
+  describe('el pedido abandonado se aborta', () => {
+    const señales = () => global.fetch.mock.calls.map(([, opts]) => opts.signal)
+
+    it('cambiar de pestaña aborta el pedido de la anterior', () => {
+      global.fetch = fetchColgado()
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      container.querySelectorAll('[role="tab"]')[1].click()
+
+      expect(señales()[0].aborted).toBe(true)
+      expect(señales()[1].aborted).toBe(false)
+    })
+
+    it('pasar de página aborta el pedido de la página anterior', async () => {
+      global.fetch = vi.fn()
+        .mockImplementationOnce(async () => paginaOk(42, 20))
+        .mockImplementation((_url, opts) => new Promise((_r, reject) => {
+          opts?.signal?.addEventListener('abort', () => reject(opts.signal.reason))
+        }))
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('.pager')).not.toBe(null))
+
+      const siguiente = container.querySelectorAll('.pager button')[1]
+      siguiente.click()
+      siguiente.click()
+
+      expect(señales()[1].aborted).toBe(true)
+      expect(señales()[2].aborted).toBe(false)
+    })
+
+    it('elegir otro objeto aborta el pedido en vuelo', () => {
+      global.fetch = fetchColgado()
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      b.show({ t: 'dep', c: '82084', n: 'Rosario', ch: { fracciones: 10 } })
+
+      expect(señales()[0].aborted).toBe(true)
+      expect(señales()[1].aborted).toBe(false)
+    })
+
+    // Un objeto sin capas hijas no dibuja nada y sale temprano: si el
+    // aborto viviera sólo en `load`, ese camino dejaría el pedido vivo.
+    it('elegir un objeto sin hijos también aborta el pedido en vuelo', () => {
+      global.fetch = fetchColgado()
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      b.show({ t: 'gl', c: '060840', n: 'Tres de Febrero' })
+
+      expect(señales()[0].aborted).toBe(true)
     })
   })
 })

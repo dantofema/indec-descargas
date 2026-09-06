@@ -58,3 +58,21 @@ describe('fetchPage', () => {
     expect(total).toBe(0)
   })
 })
+
+// Fix round 3, hallazgo 2: sin un `signal` que llegue hasta el `fetch`, un
+// pedido abandonado sigue vivo contra geonode.indec.gob.ar. El browser corta
+// en ~6 conexiones por origen y el mapa pide al mismo origen: unos pocos
+// pedidos de vías colgados dejan de dibujar también la fila 1.
+describe('fetchPage: el pedido se puede abortar', () => {
+  it('le pasa al fetch el signal que recibe', async () => {
+    global.fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ totalFeatures: 0 }) }))
+    const controller = new AbortController()
+    await fetchPage(dep, 'radios', 0, controller.signal)
+    expect(global.fetch.mock.calls[0][1]).toEqual({ signal: controller.signal })
+  })
+
+  it('sin signal sigue andando: el parámetro es opcional', async () => {
+    global.fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ totalFeatures: 0 }) }))
+    await expect(fetchPage(dep, 'radios', 0)).resolves.toEqual({ rows: [], total: 0 })
+  })
+})

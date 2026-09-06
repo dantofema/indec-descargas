@@ -32,9 +32,16 @@ export function pageUrl(obj, childKey, page) {
   return `${GEOSERVER}?${p}`
 }
 
-/** Las filas de una página y el total que dice el servidor. */
-export async function fetchPage(obj, childKey, page) {
-  const res = await fetch(pageUrl(obj, childKey, page))
+/**
+ * Las filas de una página y el total que dice el servidor.
+ *
+ * `signal` es opcional pero es lo que hace que un pedido abandonado muera
+ * de verdad: sin él, la respuesta se descarta pero la conexión sigue viva
+ * contra geonode.indec.gob.ar, y el browser corta en ~6 por origen —el
+ * mismo origen del que el mapa pide su geometría—.
+ */
+export async function fetchPage(obj, childKey, page, signal) {
+  const res = await fetch(pageUrl(obj, childKey, page), { signal })
   if (!res.ok) throw new Error(`el GeoServer respondió HTTP ${res.status}`)
   const body = await res.json()
   return {
