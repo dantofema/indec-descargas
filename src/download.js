@@ -1,3 +1,5 @@
+import { specOf } from './columns.js'
+
 export const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
 
 /**
@@ -83,6 +85,23 @@ export function childUrl(obj, childKey, format = GPKG) {
     `${type.field}='${assertCode(obj.c)}'`,
     format,
     format === GPKG ? filename(obj, childKey) : null,
+  )
+}
+
+/**
+ * URL de descarga de un objeto hijo suelto. En vías el filtro es por
+ * `cod_indec`, que agrupa todos los tramos de una calle: se baja la calle
+ * entera, no el tramo de la fila.
+ */
+export function featureUrl(childKey, code, format = GPKG) {
+  const child = CHILD_LAYERS[childKey]
+  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  const base = child.layer.replace('geonode:', '')
+  return wfsUrl(
+    child.layer,
+    `${specOf(childKey).idField}='${assertCode(code)}'`,
+    format,
+    format === GPKG ? `${base}-${assertCode(code)}.gpkg` : null,
   )
 }
 
