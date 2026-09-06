@@ -412,15 +412,16 @@ describe('createBrowser', () => {
     })
 
     // El corte tiene que quedar por encima del peor caso legítimo medido:
-    // una página de vías tarda 88-99 s filtrando por provincia. Con el
-    // mismo corte que el resto de las capas, esa espera legítima daría
-    // error.
-    it('en vías espera más que las 99 s medidas antes de darla por muerta', async () => {
+    // una página de vías filtrada por provincia (padre `jur`) tarda 88-99 s.
+    // Con el mismo corte que el resto de las capas, esa espera legítima
+    // daría error.
+    it('en vías, con padre jur, espera más que las 99 s medidas antes de darla por muerta', async () => {
       vi.useFakeTimers()
       try {
         global.fetch = fetchColgado()
         const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-        b.show(depVias)
+        const jurVias = { t: 'jur', c: '06', n: 'Buenos Aires', ch: { fracciones: 135, vias: 45000 } }
+        b.show(jurVias)
         container.querySelectorAll('[role="tab"]')[1].click() // vías
         boton(/cargar/i).click()
 
@@ -428,6 +429,30 @@ describe('createBrowser', () => {
         expect(container.textContent).toMatch(/Cargando/)
 
         await vi.advanceTimersByTimeAsync(61_000)
+        expect(container.querySelector('button.retry')).not.toBe(null)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    // Post-review, arreglo B: 4.023 de 6.977 objetos del catálogo (58%) son
+    // localidades censales con vías como única capa, y su peor caso medido
+    // es 17-18 s. Esperar los 180 s pensados para el caso de provincia deja
+    // ese 58% del catálogo hasta 3 minutos para enterarse de un colgado. El
+    // padre `loc` (y `dep`) usa un plazo corto de 60 s en cambio.
+    it('en vías, con padre loc, corta a los 60 s y no espera los 180 s de jur', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+        const locVias = { t: 'loc', c: '06840010', n: 'Ciudadela', ch: { vias: 300 } }
+        b.show(locVias) // vías es la única pestaña: se auto-selecciona, sin auto-cargar
+        boton(/cargar/i).click()
+
+        await vi.advanceTimersByTimeAsync(59_000)
+        expect(container.textContent).toMatch(/Cargando/)
+
+        await vi.advanceTimersByTimeAsync(2_000)
         expect(container.querySelector('button.retry')).not.toBe(null)
       } finally {
         vi.useRealTimers()
@@ -497,6 +522,21 @@ describe('createBrowser', () => {
 
       expect(señales()[0].aborted).toBe(true)
       expect(señales()[1].aborted).toBe(false)
+    })
+
+    // Post-review, arreglo A: el camino a vías sin confirmar vuelve antes de
+    // `load()` (muestra el panel de costo), y `load()` es el único lugar
+    // donde vivía `abortInFlight`. Un pedido en vuelo en la pestaña anterior
+    // no se cortaba al pasar a vías: sobrevivía hasta que venciera su propio
+    // timeout, contradiciendo a NAV-R8 ("todo pedido que se abandona... se
+    // aborta").
+    it('cambiar a la pestaña de vías sin confirmar aborta el pedido de la anterior', () => {
+      global.fetch = fetchColgado()
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(depVias) // auto-carga fracciones: queda colgada
+      container.querySelectorAll('[role="tab"]')[1].click() // vías, lazy y sin confirmar
+
+      expect(señales()[0].aborted).toBe(true)
     })
 
     // Un objeto sin capas hijas no dibuja nada y sale temprano: si el

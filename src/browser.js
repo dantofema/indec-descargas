@@ -28,28 +28,47 @@ const VIAS_COST_NOTICE = 'Esta capa no tiene un índice útil sobre sus 477.588 
 const VIAS_COST_REMINDER = 'Cada página que pidas de esta capa vuelve a costar lo mismo.'
 
 /**
- * Cuánto se espera una página antes de darla por muerta, por capa. Un
- * `fetch` sin corte no falla nunca: si el GeoServer acepta la conexión y no
- * contesta, `load` deja "Cargando…" para siempre —el errorBox con
- * Reintentar sólo vive en el `catch`, y un pedido colgado no llega ahí—.
- * Y no siempre hay a dónde escapar: 4.023 de los 6.977 objetos del catálogo
- * (58%) son localidades censales con una sola capa hija, así que no hay otra
- * pestaña que clickear, y `tabs.js` corta el reclic sobre la activa.
+ * Cuánto se espera una página antes de darla por muerta. Un `fetch` sin
+ * corte no falla nunca: si el GeoServer acepta la conexión y no contesta,
+ * `load` deja "Cargando…" para siempre —el errorBox con Reintentar sólo
+ * vive en el `catch`, y un pedido colgado no llega ahí—. Y no siempre hay a
+ * dónde escapar: 4.023 de los 6.977 objetos del catálogo (58%) son
+ * localidades censales con una sola capa hija, así que no hay otra pestaña
+ * que clickear, y `tabs.js` corta el reclic sobre la activa.
  *
- * Los números salen de lo medido el 2026-09-06 y dejan headroom sobre el
- * peor caso legítimo, para no convertir una espera larga en un error: una
- * página de vías tarda 88-99 s filtrando por provincia (17-18 s por
- * localidad, 14-20 s por departamento), así que 180 s deja casi el doble;
- * el resto de las capas tarda 0,65-0,89 s, así que 30 s deja treinta veces.
+ * El resto de las capas —fracciones, radios, departamentos, localidades—
+ * tarda 0,65-0,89 s medidos, así que 30 s les deja treinta veces de
+ * headroom, sin distinguir tipo de padre.
  *
- * Es por capa y no por tipo de padre a propósito: afinarlo por padre sería
- * una tabla de dos dimensiones para elegir un corte. El precio es que una
- * localidad espera hasta 3 minutos antes de ver el error, contra no verlo
- * nunca, que es lo que hace hoy.
+ * Vías es la única que hace falta partir por tipo de padre: post-review del
+ * 2026-09-06 se midió que el peor caso no es parejo. Antes había un solo
+ * plazo de 180 s para toda la capa, pensado para el peor caso de provincia;
+ * el 58% del catálogo (las localidades censales) pagaba esa espera entera
+ * —hasta 3 minutos— para enterarse de un colgado cuyo caso legítimo termina
+ * en 18 s. Acá sí vale la pena partir: es un solo eje (tipo de padre) sobre
+ * una sola capa, con los números ya medidos, no la tabla de dos dimensiones
+ * que hubiera hecho falta para partir todas las capas por todos los padres:
+ * - `jur`: 180 s. Es el padre del peor caso medido, 88-99 s por provincia,
+ *   así que 180 s deja headroom ~1,8x.
+ * - `aglo`: 180 s también, pero sin medir. Un aglomerado puede cubrir más
+ *   área que un departamento y no hay dato que lo descarte, así que queda a
+ *   propósito en el tier conservador de `jur` en vez de en el corto.
+ * - `dep` y `loc`: 60 s. Peores casos medidos de 20 s y 18 s, headroom ~3x.
  */
-const TIMEOUT_MS = { vias: 180_000 }
+const VIAS_TIMEOUT_MS = {
+  jur: 180_000,
+  aglo: 180_000,
+  dep: 60_000,
+  loc: 60_000,
+}
 const DEFAULT_TIMEOUT_MS = 30_000
-const timeoutOf = (childKey) => TIMEOUT_MS[childKey] ?? DEFAULT_TIMEOUT_MS
+const timeoutOf = (childKey, parentType) => {
+  if (childKey !== 'vias') return DEFAULT_TIMEOUT_MS
+  // Ningún objeto con vías debería caer acá —jur/dep/loc/aglo son los
+  // únicos padres posibles—, pero si algo no medido llegara, el tier
+  // conservador es el que no rompe la promesa de NAV-R8.
+  return VIAS_TIMEOUT_MS[parentType] ?? VIAS_TIMEOUT_MS.aglo
+}
 
 /**
  * Medido contra el GeoServer real el 2026-09-06: un solo feature con
@@ -118,6 +137,11 @@ export function createBrowser({ container, onView, onError }) {
       onSelect: (key) => {
         active = key
         if (LAZY_KEYS.has(key) && !confirmed.has(key)) {
+          // Este camino no pasa por `load()` —muestra el panel de costo, no
+          // pide nada—, pero es tan "cambiar de pestaña" como cualquier
+          // otro: si había un pedido en vuelo en la anterior, NAV-R8 promete
+          // que se aborta, no que se lo deja morir de su propio timeout.
+          abortInFlight('se cambió a una pestaña que no auto-carga')
           body.replaceChildren(costPane(key))
           return
         }
@@ -148,7 +172,7 @@ export function createBrowser({ container, onView, onError }) {
   async function load(key, page) {
     abortInFlight('empezó otro pedido')
     const mine = (token += 1)
-    const ms = timeoutOf(key)
+    const ms = timeoutOf(key, obj.t)
     const controller = new AbortController()
     inFlight = controller
     // El corte llega como abort, no como una carrera aparte: así el pedido
