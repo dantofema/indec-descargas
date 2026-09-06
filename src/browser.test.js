@@ -547,4 +547,29 @@ describe('createBrowser', () => {
       expect(pestañas[0].textContent).toContain('Fracciones')
     })
   })
+
+  // Fix round 3, hallazgo menor: una fila sin `cod_indec` hacía tirar
+  // `renderTable`, y el `try` de `load` lo convertía en "No se pudo traer la
+  // lista" —culpando a la red cuando el fetch salió bien— con un Reintentar
+  // condenado a fallar siempre.
+  it('una fila sin código no se disfraza de error de red', async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        totalFeatures: 2,
+        features: [
+          { properties: { cod_indec: null, cro: '07', cfn: '01', tro: 'U' } },
+          { properties: { cod_indec: '068400102', cro: '02', cfn: '01', tro: 'R' } },
+        ],
+      }),
+    }))
+    const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+    b.show(dep)
+    await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+    expect(container.querySelector('button.retry')).toBe(null)
+    expect(container.textContent).not.toMatch(/no se pudo traer la lista/i)
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+    expect(container.textContent).toMatch(/sin código/i)
+  })
 })

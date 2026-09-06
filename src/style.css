@@ -222,6 +222,9 @@ td.code { font-family: ui-monospace, Menlo, Consolas, monospace; }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.acts { white-space: nowrap; }
 td.acts .btn + .btn { margin-left: .4rem; }
+/* El motivo de una fila sin código (ver table.js) es prosa, no botones: sin
+   esto hereda el `nowrap` de la celda y estira la tabla a lo ancho. */
+td.acts .note { white-space: normal; max-width: 20rem; }
 
 /* Sólo vías (`table.wide`) fija la primera columna: con 21 campos hay que
    scrollear para ver el resto, y sin una columna ancla se pierde a qué

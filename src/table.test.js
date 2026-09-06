@@ -70,6 +70,47 @@ describe('renderTable', () => {
     const t = renderTable('radios', radios, () => {})
     expect(t.querySelector('table').className).toBe('')
   })
+
+  // Fix round 3, hallazgo menor: `row[col.field] ?? ''` para mostrar pero
+  // `String(row[spec.idField])` sin red para descargar. Un `cod_indec` nulo
+  // —plausible: DES-R8 documenta que los códigos del INDEC no cierran—
+  // hacía tirar `renderTable` con `código inválido: "undefined"`, y el `try`
+  // de browser.js lo convertía en "No se pudo traer la lista", culpando a la
+  // red cuando el fetch había salido bien, con un Reintentar condenado.
+  describe('una fila sin código', () => {
+    const sinCodigo = { cod_indec: null, cro: '07', cfn: '01', tro: 'U' }
+
+    it('no rompe la tabla', () => {
+      expect(() => renderTable('radios', [sinCodigo], () => {})).not.toThrow()
+    })
+
+    it('dice por qué no tiene acciones, en vez de ofrecer un enlace roto', () => {
+      const t = renderTable('radios', [sinCodigo], () => {})
+      const acts = t.querySelector('tbody tr td.acts')
+      expect(acts.querySelector('a.btn')).toBe(null)
+      expect(acts.querySelector('button')).toBe(null)
+      expect(acts.textContent).toMatch(/sin código/i)
+      expect(acts.textContent).toContain('cod_indec')
+    })
+
+    it('sigue mostrando los datos que sí tiene', () => {
+      const t = renderTable('radios', [sinCodigo], () => {})
+      expect(t.querySelector('tbody tr').textContent).toContain('07')
+    })
+
+    it('no se lleva puestas a las filas que sí tienen código', () => {
+      const t = renderTable('radios', [sinCodigo, ...radios], () => {})
+      expect(t.querySelectorAll('tbody tr')).toHaveLength(3)
+      expect(t.querySelectorAll('tbody tr a.btn')).toHaveLength(2)
+    })
+
+    // El `id` de vías llega como número en el JSON del GeoServer: un código
+    // numérico es válido y no puede caer en este camino.
+    it('un código que viene como número sigue descargando', () => {
+      const t = renderTable('departamentos', [{ nam: 'x', cde: 6840 }], () => {})
+      expect(t.querySelector('tbody tr a.btn').getAttribute('href')).toContain('cde%3D%276840%27')
+    })
+  })
 })
 
 describe('renderPager', () => {
@@ -99,5 +140,33 @@ describe('renderPager', () => {
     const p = renderPager({ page: 2, total: 432, onPage })
     p.querySelectorAll('button')[1].click()
     expect(onPage).toHaveBeenCalledWith(3)
+  })
+
+  // Fix round 3, hallazgo menor: WFS admite `"totalFeatures": "unknown"`.
+  // Con eso, `Math.ceil(total / PAGE_SIZE)` daba NaN, `page >= NaN` daba
+  // false y "Siguiente" quedaba habilitado para siempre —en vías, cada clic
+  // en esa nada cuesta entre 14 y 99 segundos medidos—.
+  describe('cuando el servidor no informa el total', () => {
+    it('con una página incompleta no deja avanzar: no hay más', () => {
+      const p = renderPager({ page: 0, total: 'unknown', count: 3, onPage: () => {} })
+      expect(p.querySelectorAll('button')[1].disabled).toBe(true)
+    })
+
+    it('con una página llena sí deja avanzar: puede haber más', () => {
+      const p = renderPager({ page: 0, total: 'unknown', count: 20, onPage: () => {} })
+      expect(p.querySelectorAll('button')[1].disabled).toBe(false)
+    })
+
+    it('dice dónde está y que el total no lo sabe, en vez de inventarlo', () => {
+      const p = renderPager({ page: 1, total: 'unknown', count: 20, onPage: () => {} })
+      expect(p.textContent).toContain('21–40')
+      expect(p.textContent).toMatch(/no informó el total/i)
+      expect(p.textContent).not.toMatch(/NaN|unknown/)
+    })
+
+    it('sin filas no promete una página que no está', () => {
+      const p = renderPager({ page: 0, total: 'unknown', count: 0, onPage: () => {} })
+      for (const b of p.querySelectorAll('button')) expect(b.disabled).toBe(true)
+    })
   })
 })

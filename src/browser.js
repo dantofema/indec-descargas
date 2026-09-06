@@ -165,7 +165,7 @@ export function createBrowser({ container, onView, onError }) {
       if (mine !== token || key !== active) return
 
       const tableEl = renderTable(key, rows, (row, childKey) => markRow(tableEl, rows, row, childKey))
-      const panels = [tableEl, renderPager({ page, total, onPage: (p) => load(key, p) })]
+      const panels = [tableEl, renderPager({ page, total, count: rows.length, onPage: (p) => load(key, p) })]
       if (LAZY_KEYS.has(key)) panels.push(metaParagraph(VIAS_COST_REMINDER))
       body.replaceChildren(...panels)
     } catch (err) {

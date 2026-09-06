@@ -28,11 +28,15 @@ export const CHILD_LAYERS = {
 /**
  * Los códigos del INDEC son siempre dígitos con ceros a la izquierda.
  * Validarlos acá evita interpolar cualquier otra cosa dentro del CQL.
+ *
+ * `isCode` es la misma pregunta sin explotar, para quien puede ofrecer otra
+ * cosa en vez de la descarga: una fila del GeoServer sin código no es un
+ * error de programa, es un dato que el INDEC no publicó (DES-R8).
  */
+export const isCode = (code) => typeof code === 'string' && /^\d+$/.test(code)
+
 export function assertCode(code) {
-  if (typeof code !== 'string' || !/^\d+$/.test(code)) {
-    throw new Error(`código inválido: ${JSON.stringify(code)}`)
-  }
+  if (!isCode(code)) throw new Error(`código inválido: ${JSON.stringify(code)}`)
   return code
 }
 
