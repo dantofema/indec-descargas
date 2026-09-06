@@ -5,7 +5,6 @@ import { buildCatalog } from './lib/aggregate.mjs'
 import { assertMinRows } from './lib/dump.mjs'
 
 const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
-const MAX_FEATURES = 5000
 const CACHE_DIR = new URL('./.cache/', import.meta.url)
 const OUT = new URL('../public/catalog.json', import.meta.url)
 
@@ -88,7 +87,6 @@ async function main() {
 
   const { catalog, warnings } = buildCatalog({
     generated: new Date().toISOString().slice(0, 10),
-    maxFeatures: MAX_FEATURES,
     ...rows,
   })
 

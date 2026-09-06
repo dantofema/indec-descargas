@@ -42,7 +42,7 @@ const get = (map, key) => map.get(key) ?? 0
  */
 export function buildCatalog(input) {
   const {
-    generated, maxFeatures,
+    generated,
     jurisdicciones, departamentos, localidades, gobiernosLocales, aglomerados,
     fracciones, radios, vias,
   } = input
@@ -156,5 +156,5 @@ export function buildCatalog(input) {
   orphans(viasByAglo, knownAglo, 'vias por codaglo')
   orphans(viasByLoc, knownLoc, 'vias por clc')
 
-  return { catalog: { generated, maxFeatures, objects }, warnings }
+  return { catalog: { generated, objects }, warnings }
 }

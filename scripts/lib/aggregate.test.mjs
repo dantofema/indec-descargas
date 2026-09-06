@@ -3,7 +3,6 @@ import { countBy, buildCatalog, NA } from './aggregate.mjs'
 
 const input = {
   generated: '2026-09-04',
-  maxFeatures: 5000,
   jurisdicciones: [
     { cpr: '06', nam: 'Buenos Aires' },
     { cpr: '82', nam: 'Santa Fe' },
@@ -60,7 +59,6 @@ describe('buildCatalog', () => {
 
   it('copia la metadata', () => {
     expect(catalog.generated).toBe('2026-09-04')
-    expect(catalog.maxFeatures).toBe(5000)
   })
 
   it('incluye un objeto por cada fila buscable', () => {

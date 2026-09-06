@@ -16,7 +16,6 @@ vi.mock('leaflet', () => ({
 
 const catalogo = {
   generated: '2026-09-04',
-  maxFeatures: 5000,
   objects: [
     { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires',
       ch: { fracciones: 42, radios: 432, localidades: 1, vias: 1487 } },

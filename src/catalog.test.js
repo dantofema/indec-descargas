@@ -3,7 +3,6 @@ import { childrenOf, loadCatalog } from './catalog.js'
 
 const catalog = {
   generated: '2026-09-04',
-  maxFeatures: 5000,
   objects: [
     // Las claves de `ch` van desordenadas a propósito: con el orden
     // natural, `Object.keys` habría pasado el test igual que CHILD_ORDER.
