@@ -87,6 +87,17 @@ describe('buildCatalog', () => {
     expect(byCode('loc', '06840010').ch).toEqual({ vias: 2 })
   })
 
+  // El aglomerado de una localidad no sale de su código: `clc` no lo
+  // contiene. Sin esto, una tarea posterior que arme la cadena de padres
+  // de una localidad pierde ese eslabón.
+  it('guarda el código de aglomerado de cada localidad', () => {
+    expect(byCode('loc', '06840010').ag).toBe('0001')
+  })
+
+  it('no inventa aglomerado donde el INDEC no lo declara', () => {
+    expect(byCode('loc', '82084010').ag).toBeUndefined()
+  })
+
   it('el gobierno local no tiene hijos', () => {
     expect(byCode('gl', '060840').ch).toBeUndefined()
   })
