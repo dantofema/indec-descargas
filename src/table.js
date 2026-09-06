@@ -18,9 +18,10 @@ export function renderTable(childKey, rows, onView) {
 
   const spec = specOf(childKey)
   const table = document.createElement('table')
-  // Vías es la única capa con 21 columnas: necesita scroll horizontal y
-  // columna de acciones fija (ver la regla `.wide` en style.css).
-  if (spec.columns.length > 8) table.className = 'wide'
+  // La capa decide si es ancha (ver `wide` en columns.js), no se lo adivina
+  // acá contando columnas: una capa futura de 9 campos no necesita por eso
+  // el scroll horizontal y la columna fija (ver la regla `.wide` en style.css).
+  if (spec.wide) table.className = 'wide'
 
   const thead = document.createElement('thead')
   const headRow = document.createElement('tr')

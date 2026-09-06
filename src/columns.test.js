@@ -25,6 +25,17 @@ describe('LAYER_SPECS', () => {
     expect(LAYER_SPECS.vias.columns[0].field).toBe('id')
     expect(LAYER_SPECS.vias.columns.at(-1).field).toBe('sag')
   })
+
+  // Vías es la única capa que necesita scroll horizontal y columna fija en
+  // la tabla. Que lo declare la capa, no que table.js lo adivine contando
+  // columnas: una capa futura de 9 campos activaría el scroll sin motivo.
+  it('vías es la única capa marcada wide', () => {
+    expect(LAYER_SPECS.vias.wide).toBe(true)
+    for (const [key, spec] of Object.entries(LAYER_SPECS)) {
+      if (key === 'vias') continue
+      expect(spec.wide, key).toBeFalsy()
+    }
+  })
 })
 
 describe('specOf', () => {

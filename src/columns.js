@@ -59,6 +59,9 @@ export const LAYER_SPECS = {
     // sin desempate el paginado podría repetir o saltear filas entre páginas.
     sortBy: 'cod_indec,id',
     idField: 'cod_indec',
+    // Única capa con 21 columnas: la tabla necesita scroll horizontal y
+    // columna fija. Lo declara la capa, no lo adivina table.js contando.
+    wide: true,
     columns: VIA_FIELDS.map((field) => ({
       field,
       label: field,

@@ -1,11 +1,21 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { renderTable, renderPager } from './table.js'
+import { specOf } from './columns.js'
 
 const radios = [
   { cod_indec: '068400101', cro: '01', cfn: '01', tro: 'U' },
   { cod_indec: '068400102', cro: '02', cfn: '01', tro: 'R' },
 ]
+
+// Una fila real de vías, con sus 21 campos, para ejercitar la columna wide
+// de verdad —con `rows` vacío `renderTable` corta antes de armar la
+// `<table>`, y no prueba nada del requisito de esta capa—. `cod_indec` tiene
+// que ser dígitos: es el `idField` y arma la descarga de la fila.
+const via = {
+  ...Object.fromEntries(specOf('vias').columns.map((c) => [c.field, 'x'])),
+  cod_indec: '0684001000010',
+}
 
 describe('renderTable', () => {
   it('pone una columna por campo declarado, más la de acciones', () => {
@@ -37,14 +47,28 @@ describe('renderTable', () => {
     expect(onView).toHaveBeenCalledWith(radios[1], 'radios')
   })
 
+  it('el botón Ver es de baja jerarquía y el de descarga es chico, para no competir por atención en la fila', () => {
+    const t = renderTable('radios', radios, () => {})
+    const fila = t.querySelector('tbody tr')
+    expect(fila.querySelector('button').className).toBe('btn ghost mini')
+    expect(fila.querySelector('a').className).toBe('btn mini')
+  })
+
   it('sin filas dice que no hay nada, sin tabla vacía', () => {
     const t = renderTable('radios', [], () => {})
     expect(t.querySelector('table')).toBe(null)
     expect(t.textContent).toMatch(/no hay/i)
   })
 
-  it('la tabla ancha scrollea sola', () => {
-    expect(renderTable('vias', [], () => {}).className).toContain('table-scroll')
+  it('la tabla ancha (vías) le pone la clase wide a la <table>, no sólo al contenedor', () => {
+    const t = renderTable('vias', [via], () => {})
+    expect(t.className).toContain('table-scroll')
+    expect(t.querySelector('table').className).toBe('wide')
+  })
+
+  it('una capa angosta no arrastra la clase wide', () => {
+    const t = renderTable('radios', radios, () => {})
+    expect(t.querySelector('table').className).toBe('')
   })
 })
 
