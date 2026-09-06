@@ -92,8 +92,20 @@ main, .site-header, .site-footer {
 .status { color: var(--muted); margin: 1rem 0; }
 .status.error { color: #b32020; }
 
-.detail { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0 3rem; }
-@media (max-width: 48rem) { .detail { grid-template-columns: 1fr; } }
+.detail { display: flex; flex-direction: column; gap: 1.75rem; margin: 1.5rem 0 3rem; }
+
+.row-identity { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.row-bulk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 1.5rem; }
+@media (max-width: 48rem) {
+  .row-identity, .row-bulk { grid-template-columns: 1fr; }
+}
+
+.identity { display: flex; flex-direction: column; justify-content: center; }
+
+.block-title {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin: 0 0 .4rem;
+}
 
 .map { height: 24rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--disabled); }
 /* Leaflet pinta la placa de atribución al 80% de opacidad, así que el fondo
@@ -104,12 +116,18 @@ main, .site-header, .site-footer {
    (`.leaflet-container .leaflet-control-attribution`) y queda después en el
    bundle, así que empatar no alcanza. */
 #map .leaflet-control-attribution { background: #fff; }
-.panel h2 { margin: 0 0 .25rem; font-size: 1.25rem; }
 .meta { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
 
-.children { list-style: none; padding: 0; margin: 0; }
-.children li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-top: 1px solid var(--line); }
-.children .count { color: var(--muted); font-size: .9rem; }
+.rel { list-style: none; padding: 0; margin: 0; }
+.rel li {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .55rem 0; border-top: 1px solid var(--line);
+}
+.rel .who { font-size: .92rem; }
+.rel .count { color: var(--muted); }
+/* El aviso de peso va debajo del nombre de la capa, no al lado del botón:
+   es lo que se lee antes de decidir el clic. */
+.rel .heavy { color: var(--warn); font-size: .8rem; display: block; }
 
 .btn {
   display: inline-block;

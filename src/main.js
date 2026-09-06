@@ -5,6 +5,7 @@ import { initMap, showObject, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
 import { childRows } from './children.js'
 import { createCombobox } from './combobox.js'
+import { codeIndex, parentsOf } from './parents.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -15,12 +16,17 @@ const el = {
   name: document.querySelector('#detail-name'),
   meta: document.querySelector('#detail-meta'),
   self: document.querySelector('#detail-self'),
-  childrenTitle: document.querySelector('#children-title'),
+  parents: document.querySelector('#parents'),
+  rowParents: document.querySelector('#row-parents'),
+  rowBrowse: document.querySelector('#row-browse'),
+  rowNotes: document.querySelector('#row-notes'),
+  browse: document.querySelector('#browse'),
   children: document.querySelector('#children'),
   generated: document.querySelector('#generated'),
 }
 
 let catalog = null
+let index = null   // se llena junto con `catalog`
 
 function setStatus(text, isError = false) {
   el.status.textContent = text
@@ -30,8 +36,27 @@ function setStatus(text, isError = false) {
 
 function renderChildren(obj) {
   const rows = childRows(obj)
-  el.childrenTitle.hidden = rows.length === 0
   el.children.replaceChildren(...rows)
+}
+
+/** Una fila por padre: quién es y su descarga. */
+function parentRow(parent) {
+  const li = document.createElement('li')
+  const who = document.createElement('span')
+  who.className = 'who'
+  who.textContent = parent.n
+  const kind = document.createElement('span')
+  kind.className = 'count'
+  kind.textContent = ` · ${TYPES[parent.t].label} · ${parent.c}`
+  who.append(kind)
+  li.append(who, downloadButton(selfUrl(parent), 'Descargar'))
+  return li
+}
+
+function renderParents(obj) {
+  const rows = parentsOf(obj, index).map(parentRow)
+  el.rowParents.hidden = rows.length === 0
+  el.parents.replaceChildren(...rows)
 }
 
 function selectObject(obj) {
@@ -47,6 +72,7 @@ function selectObject(obj) {
     downloadButton(selfUrl(obj), `Descargar ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()}`),
   )
 
+  renderParents(obj)
   renderChildren(obj)
   el.detail.hidden = false
   document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
@@ -121,6 +147,7 @@ document.addEventListener('object:selected', (e) => {
 loadCatalog()
   .then((c) => {
     catalog = c
+    index = codeIndex(c.objects)
     setStatus('')
     el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
     el.q.focus()

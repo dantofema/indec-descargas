@@ -90,7 +90,6 @@ describe('el recorrido completo', () => {
     expect(propia.getAttribute('href')).toContain('outputFormat=geopackage')
 
     expect($('#children').children).toHaveLength(4)
-    expect($('#children-title').hidden).toBe(false)
     expect($('#children').querySelectorAll('a.btn')).toHaveLength(4)
   })
 
@@ -181,5 +180,24 @@ describe('la provincia como término extra', () => {
     buscar('febrero buenos aires')
     expect($('#results').children).toHaveLength(1)
     expect($('#results').textContent).toContain('Tres de Febrero')
+  })
+})
+
+// La cadena de padres es lo único que la fila 2 agrega al recorrido de hoy.
+describe('la fila de padres', () => {
+  it('ofrece la jurisdicción de un departamento', () => {
+    buscar('tres')
+    $('#results').children[0].click()
+    const filas = [...$('#parents').children]
+    expect(filas).toHaveLength(1)
+    expect(filas[0].textContent).toContain('Buenos Aires')
+    expect(filas[0].textContent).toContain('Jurisdicción')
+    expect(filas[0].querySelector('a.btn').getAttribute('href')).toContain('cpr%3D%2706%27')
+  })
+
+  it('la jurisdicción no muestra la fila, porque no tiene padres', () => {
+    buscar('buenos')
+    $('#results').children[0].click()
+    expect($('#row-parents').hidden).toBe(true)
   })
 })
