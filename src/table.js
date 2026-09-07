@@ -28,6 +28,10 @@ export function renderTable(childKey, rows, onView) {
   for (const col of spec.columns) {
     const th = document.createElement('th')
     th.textContent = col.label
+    // `col-anchor` es la columna que la capa eligió fijar (ver `anchorField`
+    // en columns.js), no la primera: en vías es `fna`, no `id`. Sin
+    // `anchorField` declarado esto nunca matchea y no se marca nada.
+    if (col.field === spec.anchorField) th.className = 'col-anchor'
     headRow.append(th)
   }
   headRow.append(document.createElement('th'))
@@ -38,7 +42,8 @@ export function renderTable(childKey, rows, onView) {
     const tr = document.createElement('tr')
     for (const col of spec.columns) {
       const td = document.createElement('td')
-      if (col.kind !== 'text') td.className = col.kind
+      const classes = [col.kind !== 'text' ? col.kind : null, col.field === spec.anchorField ? 'col-anchor' : null].filter(Boolean)
+      if (classes.length) td.className = classes.join(' ')
       const raw = row[col.field] ?? ''
       td.textContent = col.map ? col.map(String(raw)) : String(raw)
       tr.append(td)

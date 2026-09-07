@@ -36,6 +36,22 @@ describe('LAYER_SPECS', () => {
       expect(spec.wide, key).toBeFalsy()
     }
   })
+
+  // La columna que se fija al scrollear la tuvo que nombrar la capa: es la
+  // única que sabe cuál campo identifica la fila para una persona. No puede
+  // ser `id` (primer campo publicado, un número interno) ni tampoco la
+  // primera posición a secas: el orden del GeoServer no se toca.
+  it('vías ancla la columna del nombre de la calle, no la primera publicada', () => {
+    expect(LAYER_SPECS.vias.anchorField).toBe('fna')
+    expect(LAYER_SPECS.vias.columns[0].field).toBe('id')
+  })
+
+  it('ninguna otra capa declara columna ancla', () => {
+    for (const [key, spec] of Object.entries(LAYER_SPECS)) {
+      if (key === 'vias') continue
+      expect(spec.anchorField, key).toBeUndefined()
+    }
+  })
 })
 
 describe('specOf', () => {

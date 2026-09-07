@@ -154,6 +154,25 @@ describe('la atribución del mapa', () => {
   })
 })
 
+describe('columna fija de vías: ancla la que declara la capa, no la primera', () => {
+  // El bug medido en el sitio desplegado: la regla apuntaba a `:first-child`,
+  // y el primer campo publicado por el GeoServer es `id` (un número interno),
+  // no `fna` (el nombre de la calle). El arreglo es apuntar a una clase que
+  // pone la capa, no a la posición.
+  it('la regla sticky apunta a .col-anchor, no a :first-child', () => {
+    const bloques = rule('table.wide th.col-anchor, table.wide td.col-anchor')
+    expect(bloques.length).toBe(1)
+    expect(bloques[0]).toMatch(/position:\s*sticky/)
+    expect(css).not.toMatch(/table\.wide\s+(th|td):first-child/)
+  })
+
+  it('la variante de fila seleccionada también ancla por clase, no por :first-child', () => {
+    const bloques = rule('table.wide tbody tr[aria-selected="true"] td.col-anchor')
+    expect(bloques.length).toBe(1)
+    expect(css).not.toMatch(/aria-selected="true"\]\s*td:first-child/)
+  })
+})
+
 describe('lo que cambia sin mouse', () => {
   // En una pantalla táctil el `:hover` queda pegado después del tap: en el
   // iPhone la fila tocada seguía tintada, sin estar elegida, y parecía una

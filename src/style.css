@@ -226,18 +226,21 @@ td.acts .btn + .btn { margin-left: .4rem; }
    esto hereda el `nowrap` de la celda y estira la tabla a lo ancho. */
 td.acts .note { white-space: normal; max-width: 20rem; }
 
-/* Sólo vías (`table.wide`) fija la primera columna: con 21 campos hay que
-   scrollear para ver el resto, y sin una columna ancla se pierde a qué
-   tramo corresponde la fila que se está mirando. El fondo propio evita que
-   el contenido de las columnas que van pasando por detrás se transparente;
-   el segundo, que se note el corte con el resto de la fila cuando está
-   seleccionada. */
-table.wide th:first-child, table.wide td:first-child {
+/* Sólo vías (`table.wide`) fija una columna: con 21 campos hay que scrollear
+   para ver el resto, y sin una columna ancla se pierde a qué tramo
+   corresponde la fila que se está mirando. La ancla es `.col-anchor`, la
+   clase que table.js le pone a la columna que declaró la capa
+   (`anchorField` en columns.js) — no `:first-child`: el primer campo
+   publicado por el GeoServer es `id`, un número interno que no identifica
+   nada para quien mira. El fondo propio evita que el contenido de las
+   columnas que van pasando por detrás se transparente; el segundo, que se
+   note el corte con el resto de la fila cuando está seleccionada. */
+table.wide th.col-anchor, table.wide td.col-anchor {
   position: sticky;
   left: 0;
   background: var(--bg);
 }
-table.wide tbody tr[aria-selected="true"] td:first-child { background: var(--hl); }
+table.wide tbody tr[aria-selected="true"] td.col-anchor { background: var(--hl); }
 tbody tr[aria-selected="true"] { background: var(--hl); }
 
 /* Anterior / dónde estoy / siguiente, debajo de la tabla. */

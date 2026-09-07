@@ -71,6 +71,33 @@ describe('renderTable', () => {
     expect(t.querySelector('table').className).toBe('')
   })
 
+  // El bug real: se congelaba la primera columna publicada (`id`, un número
+  // interno) en vez de la que identifica la fila para una persona (`fna`,
+  // el nombre de la calle). La capa declara `anchorField` y table.js marca
+  // esa celda con una clase, no con `:first-child`.
+  describe('columna ancla (fija) de vías', () => {
+    const idxDe = (field) => specOf('vias').columns.findIndex((c) => c.field === field)
+
+    it('marca fna, no id, en el encabezado', () => {
+      const t = renderTable('vias', [via], () => {})
+      const ths = [...t.querySelectorAll('thead th')]
+      expect(ths[idxDe('fna')].className).toContain('col-anchor')
+      expect(ths[idxDe('id')].className).not.toContain('col-anchor')
+    })
+
+    it('marca fna, no id, en la celda de datos', () => {
+      const t = renderTable('vias', [via], () => {})
+      const tds = [...t.querySelectorAll('tbody tr')[0].children]
+      expect(tds[idxDe('fna')].className).toContain('col-anchor')
+      expect(tds[idxDe('id')].className).not.toContain('col-anchor')
+    })
+
+    it('una capa sin columna ancla declarada no marca ninguna celda', () => {
+      const t = renderTable('radios', radios, () => {})
+      expect(t.querySelectorAll('.col-anchor')).toHaveLength(0)
+    })
+  })
+
   // Fix round 3, hallazgo menor: `row[col.field] ?? ''` para mostrar pero
   // `String(row[spec.idField])` sin red para descargar. Un `cod_indec` nulo
   // —plausible: DES-R8 documenta que los códigos del INDEC no cierran—

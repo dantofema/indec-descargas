@@ -59,9 +59,20 @@ export const LAYER_SPECS = {
     // sin desempate el paginado podría repetir o saltear filas entre páginas.
     sortBy: 'cod_indec,id',
     idField: 'cod_indec',
-    // Única capa con 21 columnas: la tabla necesita scroll horizontal y
-    // columna fija. Lo declara la capa, no lo adivina table.js contando.
+    // Única capa con 21 columnas: la tabla necesita scroll horizontal.
+    // Lo declara la capa, no lo adivina table.js contando.
     wide: true,
+    // Qué columna queda fija (`position: sticky`) al scrollear. No es la
+    // primera del orden publicado —`id`, un número interno que no identifica
+    // nada para quien mira— sino `fna`, el nombre de la calle: es lo único
+    // que hace falta seguir viendo mientras el resto pasa por detrás. Al no
+    // ser la posición 0 del array, no se ve al abrir la tabla —queda fuera
+    // de pantalla a la derecha, como cualquier columna 13 de 21— y recién se
+    // ancla al borde izquierdo cuando el scroll la alcanza: es el
+    // comportamiento buscado, no un defecto. Ninguna otra capa lo declara,
+    // así que ninguna otra congela nada (table.js y style.css lo leen como
+    // opcional).
+    anchorField: 'fna',
     columns: VIA_FIELDS.map((field) => ({
       field,
       label: field,
