@@ -27,6 +27,16 @@ export function parse(search) {
   if (!isCode(c)) {
     return { status: 'invalid', reason: `el código del enlace no son dígitos: ${c}` }
   }
+  // El largo es lo único que separa una fracción de un radio: los dos son
+  // `cod_indec` de la misma forma. Sin esta guarda, `?t=rad&c=0684042` sale
+  // a pedirle al GeoServer un radio de siete dígitos, que no puede existir,
+  // y el usuario ve un error de red donde hay un enlace mal escrito.
+  if (c.length !== TYPES[t].len) {
+    return {
+      status: 'invalid',
+      reason: `el código ${c} no tiene el largo de ${TYPES[t].label.toLowerCase()}: son ${TYPES[t].len} dígitos`,
+    }
+  }
 
   // Una capa que no existe se ignora en vez de invalidar el enlace: el
   // objeto sigue siendo mostrable y abrir su primera pestaña es una

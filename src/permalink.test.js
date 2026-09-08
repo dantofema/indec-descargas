@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parse, format } from './permalink.js'
+import { TYPES, LAYER_OF_TYPE, TYPE_OF_LAYER } from './download.js'
 
 const search = (href) => new URL(href, 'http://x').search
 
@@ -96,5 +97,35 @@ describe('format', () => {
       expect(parse(search(format(obj, layer))))
         .toEqual({ status: 'ok', type: obj.t, code: obj.c, layer, layerRequested: layer !== null })
     }
+  })
+})
+
+describe('los ocho tipos direccionables', () => {
+  it('los ocho largos de código son distintos: es lo que deja resolver por código', () => {
+    const largos = Object.values(TYPES).map((v) => v.len)
+    expect(new Set(largos).size).toBe(largos.length)
+    expect(largos.sort((a, b) => a - b)).toEqual([2, 4, 5, 6, 7, 8, 9, 13])
+  })
+
+  it('los tres nuevos no están en el catálogo y los cinco viejos sí', () => {
+    expect(Object.entries(TYPES).filter(([, v]) => !v.catalogo).map(([t]) => t).sort())
+      .toEqual(['frac', 'rad', 'via'])
+  })
+
+  it('capa y tipo se traducen en los dos sentidos', () => {
+    for (const [t, capa] of Object.entries(LAYER_OF_TYPE)) expect(TYPE_OF_LAYER[capa]).toBe(t)
+  })
+
+  it('parsea un radio, una fracción y una vía', () => {
+    expect(parse('?t=rad&c=068402311')).toMatchObject({ status: 'ok', type: 'rad', code: '068402311' })
+    expect(parse('?t=frac&c=0684042')).toMatchObject({ status: 'ok', type: 'frac' })
+    expect(parse('?t=via&c=0646908000600')).toMatchObject({ status: 'ok', type: 'via' })
+  })
+
+  it('un código con el largo de otro tipo es un enlace inválido', () => {
+    // Siete dígitos es una fracción, no un radio: sin esta guarda la página
+    // saldría a pedirle al GeoServer un objeto que no puede existir.
+    expect(parse('?t=rad&c=0684042')).toMatchObject({ status: 'invalid' })
+    expect(parse('?t=dep&c=06840010')).toMatchObject({ status: 'invalid' })
   })
 })
