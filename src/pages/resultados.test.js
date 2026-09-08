@@ -300,6 +300,19 @@ describe('recorrer los hijos', () => {
     expect($('#status').hidden).toBe(true)
   })
 
+  // El control positivo que se perdió en la mudanza a /resultados/: sin
+  // él, el caso de abajo pasaría aunque nadie hubiera arreglado nada,
+  // porque captura `metaTrasVer` recién DESPUÉS del primer "Ver" y no
+  // verifica que `describeFeature` haya corrido nunca. Con el control,
+  // borrar `describeFeature` o su `onFeature(...)` pone la suite roja.
+  it('la ficha del objeto suma los campos del GeoServer, una sola vez', async () => {
+    await montar('?t=dep&c=06840')
+    await vi.waitFor(() => expect($('#detail-meta').textContent).toContain('cod_indec: 068400101'))
+
+    const ocurrencias = (s) => $('#detail-meta').textContent.split(s).length - 1
+    expect(ocurrencias('cod_indec')).toBe(1)
+  })
+
   // Fix round 1, hallazgo 1 (importante): `el.meta.textContent += ...` en
   // el handler de onFeature acumulaba con cada "Ver", incluso repetido
   // sobre la misma fila. Con NAV-R10 la línea de metadatos SÍ cambia al ver
