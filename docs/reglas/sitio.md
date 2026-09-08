@@ -68,7 +68,7 @@ El home pinta sus ocho tiles desde un archivo de totales aparte del catálogo, g
 mismo paso de build y comparado contra `catalog.json` en la suite.
 
 **Por qué:** el home muestra sus números en menos de 100 ms sin bajar los 673 KB de
-`catalog.json` —el archivo de totales pesa unos 300 bytes—. La alternativa, si el catálogo se
+`catalog.json` —el archivo de totales pesa 162 bytes medidos—. La alternativa, si el catálogo se
 regenera sin regenerar los totales, era publicar números viejos sin que nadie se enterara; con
 el test de por medio, es la suite la que se pone roja.
 

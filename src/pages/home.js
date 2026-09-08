@@ -3,8 +3,8 @@
  *
  * No abre fichas: elegir un objeto navega a /resultados/, que es donde vive
  * el estado (la URL). Y no baja el catálogo al cargar —son 673 KB contra
- * los 300 bytes de los totales—: lo pide recién cuando alguien toca el
- * campo, y el buscador vuelve a buscar solo lo que ya esté escrito cuando
+ * los 162 bytes medidos de los totales—: lo pide recién cuando alguien toca
+ * el campo, y el buscador vuelve a buscar solo lo que ya esté escrito cuando
  * el catálogo llega.
  */
 import { loadCatalog } from '../catalog.js'
@@ -140,8 +140,8 @@ export function initHome({ navigate = (href) => window.location.assign(href) } =
     onPick: (obj) => navigate(format(obj)),
   })
 
-  // Los totales primero: son 300 bytes y son lo que el home tiene para
-  // mostrar. Si fallan, el buscador sigue sirviendo, que es lo que la
+  // Los totales primero: son 162 bytes medidos y son lo que el home tiene
+  // para mostrar. Si fallan, el buscador sigue sirviendo, que es lo que la
   // página vino a hacer.
   loadTotales().then(renderTotals).catch(() => {})
 

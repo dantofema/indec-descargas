@@ -70,7 +70,7 @@ padre) y aborta si algún volcado llega truncado o si salen menos objetos de los
 `public/catalog.json` se commitea a propósito: así el deploy no depende de que el GeoServer
 del INDEC esté arriba, y cualquier cambio en los datos queda visible en el diff.
 
-El mismo comando emite además `public/totales.json` (unos 300 bytes), los ocho totales que
+El mismo comando emite además `public/totales.json` (162 bytes medidos), los ocho totales que
 pinta el home sin bajar el catálogo entero. También se commitea, y una regla propia
 (`docs/reglas/sitio.md`, SITIO-R7) hace que la suite se ponga roja si alguno de los dos archivos
 se desincroniza del otro.

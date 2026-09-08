@@ -20,6 +20,13 @@ describe('public/totales.json', () => {
       fracciones: 6571, radios: 66515, vias: 477588,
     })
   })
+
+  it('pesa menos de 1 KB: es lo que le permite al home entrar sin bajar el catálogo', () => {
+    // La cota y no el byte exacto: lo que sostiene la decisión es "chico
+    // contra los 673 KB del catálogo", no 162. Fijar el número exacto se
+    // rompería la próxima vez que se agregue un total legítimo.
+    expect(readFileSync(resolve(process.cwd(), 'public/totales.json')).length).toBeLessThan(1024)
+  })
 })
 
 describe('loadTotales', () => {
