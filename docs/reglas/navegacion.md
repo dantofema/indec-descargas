@@ -48,7 +48,10 @@ el síntoma es la tabla equivocada bajo la pestaña correcta.
 Descartar la respuesta es lo que esta regla decide; que además se aborte el pedido lo decide
 NAV-R8, y por otro motivo (la conexión, no la pintura).
 
-### NAV-R6 — La fila de notas aparece sólo si el objeto tiene alguna nota
+### ~~NAV-R6 — La fila de notas aparece sólo si el objeto tiene alguna nota~~
+
+**Muerta:** la fila de notas dejó de existir. Las notas se mudaron a /notas/ y la ficha enlaza
+en vez de repetir; la reemplaza NOTA-R3 de notas.md.
 
 Sin notas para ninguna de sus capas hijas, la fila no se renderiza.
 
@@ -118,21 +121,41 @@ Abortar, además de descartar, es por la conexión y no por la pintura: un pedid
 ocupando una de las ~6 que el browser permite por origen, y el mapa pide al mismo origen. Con unos
 pocos pedidos de vías colgados, la fila 1 deja de dibujar por culpa de la fila 3.
 
-### NAV-R9 — Una capa hija en cero no se recorre ni se anota
+### NAV-R9 — Una capa hija en cero no se recorre
 
-Una capa con conteo cero no abre pestaña en la fila 3 ni trae su nota en la fila 4. Aparece sólo
-en la fila 2, con el botón deshabilitado y el motivo (DES-R3). Si todas las capas de un objeto
-están en cero, la fila 3 no se muestra.
+Una capa con conteo cero no abre pestaña en la fila 3. Aparece sólo en la fila 2, con el botón
+deshabilitado y el motivo (DES-R3). Si todas las capas de un objeto están en cero, la fila 3 no
+se muestra.
 
-**Por qué:** las tres filas decían cosas distintas sobre el mismo dato. Grytviken —una de las 11
-combinaciones (objeto, capa) del catálogo con conteo cero— decía bien en la fila 2 que no hay
-vías, y abría igual en la fila 3 una pestaña «Vías de circulación 0» con el panel de costo
+La mitad de esta regla que decía "ni se anota" se fue con NAV-R6: la fila 4 de notas ya no
+existe, así que no hay nada que ocultar ahí.
+
+**Por qué:** la fila 2 y la fila 3 decían cosas distintas sobre el mismo dato. Grytviken —una de
+las 11 combinaciones (objeto, capa) del catálogo con conteo cero— decía bien en la fila 2 que no
+hay vías, y abría igual en la fila 3 una pestaña «Vías de circulación 0» con el panel de costo
 avisando 88 a 99 segundos y un botón para cargar igual. Medido el 2026-09-06, ese pedido tarda 17
 segundos y vuelve con `totalFeatures: 0`: el usuario paga la espera entera para no recibir nada
-que la fila 2 no le dijera gratis. La fila 4, mientras tanto, le explicaba la trampa de una capa
-que ese objeto no tiene.
+que la fila 2 no le dijera gratis.
 
 El conteo cero sigue llegando entero a la fila 2 —DES-R3 lo necesita para dibujar el botón muerto
 con su motivo, y es el único lugar del sitio donde el cero se explica—, así que el filtro es una
-pregunta aparte y no un recorte en la fuente. Las 11 combinaciones con cero caen todas en capas
-que tienen nota, así que la fila 4 era el otro lugar donde se notaba.
+pregunta aparte y no un recorte en la fuente.
+
+### NAV-R10 — La ficha describe lo que el mapa está dibujando
+
+El "Ver" de una fila hija reemplaza el panel de identidad de la ficha por el de esa fila, no
+sólo el dibujo del mapa. Los campos que muestra salen de la misma definición que ya arma la
+tabla: en fracciones y radios eso sigue siendo número y código, sin nombre (NAV-R4); en vías, los
+21 campos publicados (NAV-R3). Ficha y tabla no pueden decir cosas distintas de la misma fila. El
+botón de descarga de esa ficha pasa a ser el de esa fila —en vías, baja la calle entera, no el
+tramo (DES-R9)—. Una fila sin código muestra el botón deshabilitado con su motivo, no una promesa
+que el INDEC no publicó cómo cumplir (DES-R8). Siempre hay una forma de volver a la ficha del
+objeto. Una respuesta que perdió la carrera contra un "Ver" más nuevo no llega a escribir la
+ficha.
+
+**Por qué:** antes el mapa podía estar dibujando un radio mientras la ficha de al lado seguía
+describiendo el departamento. El primer intento de arreglar esto agregaba el texto de cada fila
+vista al panel que ya estaba, sin límite ni reemplazo: cada clic dejaba más texto pegado al
+anterior. Reemplazar el panel entero, construido desde la misma definición que ya gobierna la
+tabla, es lo que hace que el arreglo no reviva ese bug: no queda nada por acumular porque no se
+concatena nada.
