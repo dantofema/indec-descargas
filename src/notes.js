@@ -79,8 +79,15 @@ export const NOTES = [
     total: 4023,
     paragraphs: [
       '«Localidad censal» no es lo que en la conversación diaria se llama localidad. Es una unidad del Marco Geoestadístico y a menudo no coincide con el municipio ni con el partido del mismo nombre.',
+      'El Marco Geoestadístico la define por continuidad física: una concentración de edificaciones conectadas entre sí por vías de circulación. No la define una ley, ni un límite municipal, ni quién cobra los impuestos ahí.',
       'Buscando Avellaneda, el INDEC publica tres objetos distintos con el mismo nombre y límites diferentes: «Partido de Avellaneda» (departamento, 06035), «Municipio Avellaneda» (gobierno local, 060035) y «Localidad Avellaneda» (localidad censal, 06035010, dentro del aglomerado Gran Buenos Aires). Quien dice «la localidad de Avellaneda» casi siempre se refiere al partido o al municipio.',
-      'Al revés también pasa: Tres de Febrero sí existe como localidad censal, además de como partido y como municipio. Por eso cada resultado del buscador muestra su tipo al lado: es lo que decide qué límites vas a bajar.',
+      'El caso que más engaña es el contrario, y conviene mirarlo despacio. El partido de Tres de Febrero tiene una sola localidad censal, la 06840010, y abarca el partido entero: el INDEC la publica con el nombre «Localidad Tres de Febrero», que no usa nadie. Caseros, Ciudadela, Sáenz Peña y Villa Bosch —los pueblos donde vive esa gente— no existen en esta capa. Son entidades, y las entidades no se publican acá. Pasa en 28 partidos del Gran Buenos Aires, todos marcados como componente de aglomerado: ahí la unidad del INDEC es el partido, no el pueblo.',
+      'Tampoco es la única forma oficial de contar localidades. El IGN publica 3.528 localidades —las de BAHRA, la base de asentamientos que mantiene junto al INDEC— donde esta capa publica 4.023 localidades censales, y cuenta a la Ciudad Autónoma de Buenos Aires como una sola localidad donde el INDEC la parte en quince, una por comuna.',
+      'Y una localidad censal no delimita lo urbano. El Marco Geoestadístico llama zona rural al «área comprendida entre el perímetro de la localidad censal y el límite del departamento», así que todo lo que queda afuera es rural por definición, haya lo que haya ahí. Adentro tampoco es todo urbano: el propio INDEC clasifica cada radio censal en urbano, rural o mixto.',
+    ],
+    sources: [
+      { label: 'Marco Geoestadístico', href: 'https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf' },
+      { label: 'IGN', href: 'https://www.ign.gob.ar/ut/' },
     ],
   },
   {

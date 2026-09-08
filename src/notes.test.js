@@ -82,7 +82,7 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
   // `total`—, así que están exceptuadas por nombre. La lista es cerrada en
   // los dos sentidos: el caso de abajo la pone roja si alguna de las dos
   // empieza a afirmarlo, y una nota nueva entra al gate sola.
-  const SIN_TOTAL_EN_PROSA = new Set(['localidad-censal', 'via-de-circulacion'])
+  const SIN_TOTAL_EN_PROSA = new Set(['via-de-circulacion'])
 
   it('el número que la prosa afirma es el mismo que verifica el catálogo', () => {
     for (const n of NOTES) {
@@ -120,15 +120,6 @@ describe('las dos notas que ya existían', () => {
     )
     expect(vias.paragraphs[1]).toMatch(/^Se muestra tal como lo publica el INDEC/)
   })
-
-  it('localidad censal conserva sus tres párrafos intactos', () => {
-    const loc = noteFor('localidad-censal')
-    expect(loc.paragraphs).toHaveLength(3)
-    expect(loc.paragraphs[0]).toBe(
-      '«Localidad censal» no es lo que en la conversación diaria se llama localidad. Es una unidad del Marco Geoestadístico y a menudo no coincide con el municipio ni con el partido del mismo nombre.',
-    )
-    expect(loc.paragraphs[1]).toMatch(/tres objetos distintos con el mismo nombre/)
-  })
 })
 
 describe('las fuentes externas (NOTA-R2, mitad nueva)', () => {
@@ -155,5 +146,52 @@ describe('las fuentes externas (NOTA-R2, mitad nueva)', () => {
     for (const n of NOTES) {
       if ('sources' in n) expect(n.sources.length, `${n.slug}`).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('el caso que engaña (NOTA-R2, contra el catálogo)', () => {
+  const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+  const locsDe = (dep) => catalog.objects.filter((o) => o.t === 'loc' && o.c.startsWith(dep.c))
+
+  it('el partido de Tres de Febrero tiene una sola localidad censal, homónima', () => {
+    const dep = catalog.objects.find((o) => o.t === 'dep' && o.c === '06840')
+    const locs = locsDe(dep)
+    expect(locs).toHaveLength(1)
+    expect(locs[0].c).toBe('06840010')
+    expect(norm(locs[0].n)).toBe(norm(dep.n))
+  })
+
+  it('los pueblos del partido no existen en la capa de localidades censales', () => {
+    const ausentes = ['Caseros', 'Ciudadela', 'Sáenz Peña', 'Villa Bosch']
+    for (const nombre of ausentes) {
+      const enBA = catalog.objects.filter(
+        (o) => o.t === 'loc' && o.p === 'Buenos Aires' && norm(o.n) === norm(nombre),
+      )
+      expect(enBA, `${nombre} apareció como localidad censal bonaerense`).toHaveLength(0)
+    }
+  })
+
+  it('el número de partidos que la nota afirma sale del catálogo, no de la memoria', () => {
+    const deps = catalog.objects.filter((o) => o.t === 'dep' && o.c.startsWith('06'))
+    const unicaYHomonima = deps.filter((d) => {
+      const h = locsDe(d)
+      return h.length === 1 && norm(h[0].n) === norm(d.n)
+    })
+    // 29 en el catálogo; 28 son componente de aglomerado del Gran Buenos
+    // Aires y una —General Alvear, 06287010— es un pueblo de verdad, que no
+    // engaña a nadie. El catálogo no trae `tlc`, así que la excepción se
+    // nombra acá: si el INDEC agrega otra, este caso se pone rojo y hay que
+    // volver a mirar cuál de las dos cosas es.
+    const SIN_AGLOMERADO = new Set(['06287010'])
+    const componentes = unicaYHomonima.filter((d) => !SIN_AGLOMERADO.has(locsDe(d)[0].c))
+    expect(componentes).toHaveLength(28)
+    expect(noteFor('localidad-censal').paragraphs.join(' '))
+      .toContain(`${componentes.length} partidos del Gran Buenos Aires`)
+  })
+
+  it('CABA aparece partida en quince, una por comuna', () => {
+    const caba = catalog.objects.filter((o) => o.t === 'loc' && o.c.startsWith('02'))
+    expect(caba).toHaveLength(15)
+    expect(noteFor('localidad-censal').paragraphs.join(' ')).toContain('quince')
   })
 })
