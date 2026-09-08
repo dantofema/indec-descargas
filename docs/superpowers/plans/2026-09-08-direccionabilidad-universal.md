@@ -372,21 +372,37 @@ describe('la ficha de un objeto que no está en el catálogo', () => {
 Run: `npx vitest run src/pages/resultados.test.js`
 Expected: FAIL — hoy `?t=rad` ni siquiera parsea como objeto del catálogo, así que aparece «No hay ningún objeto con el código…».
 
-- [ ] **Step 3: Que `showObject` devuelva las propiedades, en `src/map.js`**
+- [ ] **Step 3: Que `showObject` devuelva las propiedades y cuántos features vinieron, en `src/map.js`**
+
+En `drawFromUrl`, cambiar los dos `return` del final para que devuelva las dos cosas:
+
+```js
+    map.fitBounds(layer.getBounds(), { padding: [16, 16] })
+    // El conteo, además de las propiedades del primero: en vías un código no
+    // identifica un tramo sino una calle entera, y sus tramos comparten el
+    // código —80 filas en el caso más partido medido, la AUTOPISTA DEL OESTE
+    // (`0684001002660`)—. Sin este número la ficha describiría el tramo 1
+    // mientras el mapa dibuja los 80, que es justo la contradicción que
+    // NAV-R11 vino a eliminar.
+    return { props: geojson.features[0].properties, count: geojson.features.length }
+```
+
+y en el `catch`, `return undefined` como está.
 
 ```js
 export async function showObject(obj) {
   if (!map) return undefined
-  // Sólo el objeto de la búsqueda avisa sus propiedades: esa línea describe
-  // la ficha, y una petición superada devuelve `undefined` (ver arriba).
-  const props = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
-  if (props) featureCallback(props)
-  // Devolverlas, además de avisarlas: la ficha de un objeto sin catálogo se
+  // Devuelve, además de avisar: la ficha de un objeto sin catálogo se
   // construye entera con esto —no tiene un nombre que venga del catálogo—,
-  // y el callback es un canal de aviso, no de datos.
-  return props
+  // y el callback es un canal de aviso, no de datos. Una petición superada
+  // devuelve `undefined` (ver arriba).
+  const drawn = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
+  if (drawn) featureCallback(drawn.props)
+  return drawn
 }
 ```
+
+**`showFeature` se borra en este paso**, junto con `featureQueryUrl`. Con `TYPES` extendido (Task 1), la ficha de una fracción, un radio o una vía se dibuja con `showObject` —`selfUrl` ya sabe armar su URL—, y el único otro llamador era el "Ver" que en la Task 4 pasa a navegar. Borrar los tests de `map.test.js` que la ejercitan.
 
 - [ ] **Step 4: Dar un `id` al bloque «Qué contiene», en `resultados/index.html`**
 
@@ -511,17 +527,37 @@ En `drawObject`, para un objeto sin catálogo:
 ```js
 function drawObject(obj) {
   showObject(obj)
-    .then((props) => {
+    .then((drawn) => {
       // Un objeto sin catálogo llega a la página con nada más que su tipo y
       // su código: los campos que lo describen los trae el mismo pedido que
       // dibuja el mapa, así que la identidad se completa acá y no antes.
-      if (props && !TYPES[obj.t].catalogo) showFeatureIdentity(LAYER_OF_TYPE[obj.t], props)
+      if (drawn && !TYPES[obj.t].catalogo) {
+        showFeatureIdentity(LAYER_OF_TYPE[obj.t], drawn.props, drawn.count)
+      }
     })
     .catch((err) => {
       setStatus(el.status, `No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
     })
 }
 ```
+
+Y `showFeatureIdentity` recibe ese conteo, porque en vías cambia lo que la ficha puede decir con verdad. Su firma pasa a `showFeatureIdentity(layerKey, row, count = 1)` y termina así:
+
+```js
+  // Una vía es la excepción: el código identifica la calle y sus tramos lo
+  // comparten, así que `row` describe uno solo de los que el mapa está
+  // dibujando. Los campos de tramo —alturas, id— mienten sobre la calle, así
+  // que en su lugar la ficha dice cuántos tramos son. Es además el aviso de
+  // duplicados que pide la nota de vías, acá gratis: el pedido ya volvió con
+  // todos.
+  if (layerKey === 'vias') {
+    el.meta.textContent = count > 1
+      ? `Código ${codigo} · el INDEC la publica partida en ${fmt(count)} tramos`
+      : `Código ${codigo} · un solo tramo`
+  }
+```
+
+insertado después de asignar `el.meta.textContent` con las columnas de la spec y antes del enlace a la nota. `fmt` ya está importado de `../ui.js`.
 
 - [ ] **Step 8: Correr y verificar que pasa**
 
@@ -620,7 +656,7 @@ Se van, enteros:
 - `showRow` (el envoltorio de la Task 3; `showFeatureIdentity` **queda**)
 - `backButton`
 - `describeFeature` y la línea `onFeature(describeFeature)`
-- el import de `showFeature` si ya no se usa
+- el import de `showFeature`, que la Task 3 ya borró de `map.js`
 - el import de `childOf` si ya no se usa
 
 `current` deja de hacer falta para el botón de volver, pero **sigue haciendo falta** para `onTab`: no borrarla.
@@ -736,6 +772,17 @@ describe('la ficha de una vía (SITIO-R3)', () => {
     await montar('?t=via&c=0684001001810')
     $('#load-feature').click()
     await vi.waitFor(() => expect(pidioVias()).toBe(true))
+  })
+
+  // Verificado el 2026-09-08: un `cod_indec` de vías identifica la calle, no
+  // el tramo, y hasta 80 filas lo comparten. La ficha describe la calle.
+  it('cargada, dice en cuántos tramos está partida la calle', async () => {
+    await montar('?t=via&c=0684001001810')
+    $('#load-feature').click()
+    await vi.waitFor(() => expect($('#detail-meta').textContent).toContain('tramos'))
+    // El fixture de vías tiene que devolver más de un feature para este caso:
+    // si hoy devuelve uno solo, duplicalo en el mock con el mismo cod_indec.
+    expect($('#detail-meta').textContent).toMatch(/partida en \d+ tramos/)
   })
 })
 ```

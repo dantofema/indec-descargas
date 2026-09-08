@@ -105,8 +105,23 @@ cobraría 12–20 segundos por exactamente la misma razón.
 - el panel de costo medido con un botón **«Cargar igual»** — el mismo patrón que NAV-R7 ya usa
   al abrir la pestaña.
 
-Recién ese botón dispara el `GetFeature` que trae la geometría y los 21 campos. Fracciones y
-radios no llevan panel: cargan solas, 0,65–0,89 segundos medidos.
+Recién ese botón dispara el `GetFeature` que trae la geometría. Fracciones y radios no llevan
+panel: cargan solas, 0,65–0,89 segundos medidos.
+
+**Y lo que ese permalink direcciona es una calle, no un tramo.** Verificado el 2026-09-08: un
+`cod_indec` devuelve exactamente un feature en fracciones y en radios, pero en vías lo comparten
+todos los tramos de la calle —de las 1.487 filas del departamento `06840` salen 727 códigos, y el
+más partido, `0684001002660` (AUTOPISTA DEL OESTE), tiene **80 tramos**—. El mapa los dibuja a
+todos, que es lo correcto y lo que ya hace `DES-R9` al descargar.
+
+La consecuencia para la ficha no es menor: describir el primer tramo —con su rango de alturas,
+que es de ese tramo y de ningún otro— mientras el mapa dibuja los 80 sería la misma contradicción
+entre ficha y mapa que NAV-R11 dice haber eliminado, entrando por otra puerta. Así que **la ficha
+de una vía describe la calle**: nombre, código y en cuántos tramos está partida. Los campos de
+tramo no se muestran.
+
+Eso además entrega gratis la advertencia de duplicados que motiva la nota de vías: el pedido ya
+volvió con todos los tramos, así que contarlos no cuesta nada.
 
 **SITIO-R3 se reescribe** para cubrir los dos casos bajo un solo enunciado: nada de vías se pide
 sin un acto explícito del usuario, venga de la pestaña o del permalink. La regla vieja hablaba
@@ -121,9 +136,13 @@ que existía para que media ficha describiera otra cosa que la otra media:
 (`if (props)`, el «Ver» de 12 s que llega tarde), `clearSelection`, y la acumulación de
 `describeFeature` sobre `#detail-meta`.
 
-**Queda:** `showFeature` —ahora la usa la ficha del objeto, no una previsualización dentro de la
-ficha de otro—, `markRow` no tiene ya para qué existir, y `NAV-R5` y `NAV-R8` siguen valiendo:
-son sobre las páginas de la tabla, no sobre «Ver».
+**Muere también `showFeature`**, que no se había previsto: con `TYPES` extendido, la ficha de una
+fracción, un radio o una vía se dibuja con `showObject` —`selfUrl` ya sabe armar su URL—, y el
+«Ver» era su único otro llamador. Es menos código del que este diseño preveía, no más.
+
+**Queda:** `showFeatureIdentity`, que ahora la usa la ficha del objeto y no una previsualización
+dentro de la ficha de otro; y `NAV-R5` y `NAV-R8`, que siguen valiendo porque son sobre las
+páginas de la tabla, no sobre «Ver».
 
 **Lo que reemplaza a «Volver»** es el botón Atrás del navegador, que ahora es navegación de
 verdad. Eso es SITIO-R2 aplicado a un caso más.
