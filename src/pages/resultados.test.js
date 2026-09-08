@@ -353,10 +353,14 @@ describe('un objeto con una capa hija en cero', () => {
 // fila, con los campos de su propia capa —no seguir hablando del padre—.
 describe('el "Ver" de una fila hija (NAV-R10)', () => {
   // Tres filas de radios: dos con código completo —para la carrera— y una
-  // tercera cuyo feature (el pedido de "Ver", no el de la página) vuelve
-  // sin cod_indec: el GeoServer puede devolver un feature sin el campo
-  // identificador aunque la tabla sí lo traía (DES-R8), y la ficha tiene
-  // que seguir en pie igual, con la descarga apagada.
+  // tercera cuyo feature (el pedido de "Ver", no el de la página) vuelve,
+  // en el mock, con `cod_indec` vacío. Esa respuesta no es alcanzable
+  // clickeando: el filtro de ese pedido es una igualdad sobre el mismo
+  // campo (`cod_indec='068400103'`), así que un GeoServer que la conteste
+  // ya está siendo inconsistente consigo mismo. Igual se prueba: el guard
+  // de showRow (DES-R8) es barato, y este repo ya trata los datos del
+  // INDEC como poco confiables en otros lados —más vale que la ficha
+  // aguante también una respuesta rota, no sólo un dato ausente legítimo.
   const filas = [
     { cod_indec: '068400101', cfn: '01', cro: '01', tro: 'U' },
     { cod_indec: '068400102', cfn: '01', cro: '02', tro: 'R' },
@@ -437,7 +441,10 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
   })
 
   it('una fila sin código no ofrece descarga, y no rompe la ficha (DES-R8)', async () => {
-    // fila cuyo idField viene vacío
+    // El feature de esta fila vuelve, en el mock, con el idField vacío:
+    // una respuesta de GeoServer inconsistente consigo misma (ver el
+    // comentario del describe), no un click real. El guard no distingue
+    // de dónde salió el dato faltante.
     await montar('?t=dep&c=06840&capa=radios')
     await verFilaSinCodigo()
     expect(document.querySelector('#detail-self .is-disabled')).not.toBeNull()

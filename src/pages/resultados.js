@@ -117,13 +117,13 @@ function objectNoteLink(obj) {
 }
 
 /** Vuelve a la ficha del objeto, en la pestaña desde la que se vino. */
-function backButton(capa) {
+function backButton(layer) {
   const b = document.createElement('button')
   b.type = 'button'
   b.id = 'back-to-object'
   b.className = 'btn ghost mini'
   b.textContent = `Volver a ${current.n}`
-  b.addEventListener('click', () => selectObject(current, capa))
+  b.addEventListener('click', () => selectObject(current, layer))
   return b
 }
 
@@ -136,14 +136,14 @@ function backButton(capa) {
  * separa esto del bug viejo, donde cada "Ver" le pegaba otro tramo de texto
  * a #detail-meta sin límite.
  */
-function showRow(capa, row) {
-  const spec = specOf(capa)
+function showRow(layer, row) {
+  const spec = specOf(layer)
   const codigo = String(row[spec.idField] ?? '')
 
   // El singular sale del `label` de la nota de esa capa, que ya está en
   // singular ("Radio censal"). Derivarlo de CHILD_LAYERS con un replace
   // daría "Radios censale": el plural del INDEC no se deshace con un regex.
-  const singular = noteFor(NOTE_BY_LAYER[capa]).label
+  const singular = noteFor(NOTE_BY_LAYER[layer]).label
 
   el.name.textContent = spec.titleField && row[spec.titleField]
     ? row[spec.titleField]
@@ -158,9 +158,9 @@ function showRow(capa, row) {
   // no publicó (DES-R8). Se dice, y la ficha sigue en pie.
   el.self.replaceChildren(
     isCode(codigo)
-      ? downloadButton(featureUrl(capa, codigo), `Descargar ${singular.toLowerCase()}`)
+      ? downloadButton(featureUrl(layer, codigo), `Descargar ${singular.toLowerCase()}`)
       : disabledButton('Descargar', 'El INDEC no publicó el código de esta fila.'),
-    backButton(capa),
+    backButton(layer),
   )
 }
 
