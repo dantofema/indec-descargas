@@ -41,7 +41,7 @@ describe('las ocho notas', () => {
 })
 
 describe('los dos vocabularios llegan a una nota', () => {
-  it('todo tipo buscable tiene nota', () => {
+  it('todo tipo direccionable tiene nota', () => {
     for (const t of Object.keys(TYPES)) {
       expect(noteFor(NOTE_BY_TYPE[t]), `falta la nota del tipo ${t}`).toBeDefined()
     }

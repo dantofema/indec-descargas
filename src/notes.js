@@ -145,6 +145,9 @@ export const NOTE_BY_TYPE = {
   loc: 'localidad-censal',
   gl: 'gobierno-local',
   aglo: 'aglomerado',
+  frac: 'fraccion-censal',
+  rad: 'radio-censal',
+  via: 'via-de-circulacion',
 }
 
 export const NOTE_BY_LAYER = {
