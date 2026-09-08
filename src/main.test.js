@@ -296,20 +296,12 @@ describe('recorrer los hijos', () => {
   })
 })
 
-it('la fila de notas aparece con las notas que corresponden', () => {
-  buscar('tres')
-  $('#results').children[0].click()
-  expect($('#row-notes').hidden).toBe(false)
-  expect($('#notes').textContent).toMatch(/tramos/)
-})
-
-// Fix round 3, hallazgo 3: las tres filas de la misma ficha se
+// Fix round 3, hallazgo 3: las dos filas de la misma ficha se
 // contradecían con conteo cero. La 2 decía bien que no hay vías; la 3
 // ofrecía recorrerlas igual, con el panel de costo y un botón que dispara
-// un pedido de 17 s que vuelve vacío; y la 4 explicaba la trampa de una
-// capa que este objeto no tiene.
+// un pedido de 17 s que vuelve vacío.
 describe('un objeto con una capa hija en cero', () => {
-  it('lo dice una sola vez, en la fila 2, y no ofrece recorrer ni anotar nada', async () => {
+  it('lo dice una sola vez, en la fila 2, y no ofrece recorrerla', async () => {
     buscar('grytviken')
     $('#results').children[0].click()
 
@@ -318,9 +310,7 @@ describe('un objeto con una capa hija en cero', () => {
     expect(vias.textContent).toMatch(/no hay vías de circulación en este objeto/i)
 
     expect($('#row-browse').hidden).toBe(true)
-    expect($('#row-notes').hidden).toBe(true)
     expect($('#browse').children).toHaveLength(0)
-    expect($('#notes').children).toHaveLength(0)
 
     // Y no se le pide nada al GeoServer por una capa que sabemos vacía.
     await new Promise((r) => setTimeout(r, 0))

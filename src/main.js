@@ -8,8 +8,6 @@ import { createCombobox } from './combobox.js'
 import { codeIndex, parentsOf } from './parents.js'
 import { createBrowser } from './browser.js'
 import { specOf } from './columns.js'
-import { createTabs } from './tabs.js'
-import { notesFor } from './notes.js'
 
 const el = {
   q: document.querySelector('#q'),
@@ -23,9 +21,7 @@ const el = {
   parents: document.querySelector('#parents'),
   rowParents: document.querySelector('#row-parents'),
   rowBrowse: document.querySelector('#row-browse'),
-  rowNotes: document.querySelector('#row-notes'),
   browse: document.querySelector('#browse'),
-  notes: document.querySelector('#notes'),
   children: document.querySelector('#children'),
   generated: document.querySelector('#generated'),
 }
@@ -82,35 +78,6 @@ function renderParents(obj) {
   el.parents.replaceChildren(...rows)
 }
 
-/**
- * La fila 4: aclaraciones sobre las trampas de la capa, sin badge porque no
- * hay una cantidad que mostrar al lado del nombre de la nota.
- */
-function renderNotes(obj) {
-  const notes = notesFor(obj)
-  el.rowNotes.hidden = notes.length === 0
-  el.notes.replaceChildren()
-  if (!notes.length) return
-
-  const tabsBox = document.createElement('div')
-  const body = document.createElement('div')
-  body.className = 'pane nota-body'
-  el.notes.append(tabsBox, body)
-
-  createTabs({
-    container: tabsBox,
-    items: notes.map((n) => ({ key: n.key, label: n.label })),
-    onSelect: (key) => {
-      const nota = notes.find((n) => n.key === key)
-      body.replaceChildren(...nota.paragraphs.map((t) => {
-        const p = document.createElement('p')
-        p.textContent = t
-        return p
-      }))
-    },
-  })
-}
-
 function selectObject(obj) {
   el.q.value = obj.n
   setStatus('')
@@ -126,9 +93,8 @@ function selectObject(obj) {
 
   renderParents(obj)
   renderChildren(obj)
-  renderNotes(obj)
-  // La visibilidad de la fila la decide quien la dibuja, como las filas 2 y
-  // 4: recalcular acá el mismo predicado es cómo divergen y queda una fila
+  // La visibilidad de la fila la decide quien la dibuja, como la fila 2:
+  // recalcular acá el mismo predicado es cómo divergen y queda una fila
   // visible y vacía.
   el.rowBrowse.hidden = !browser.show(obj)
   el.detail.hidden = false
