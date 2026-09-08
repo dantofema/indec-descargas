@@ -64,17 +64,26 @@ Hoy dice, parafraseando:
 > Estos límites son para integración de información estadística. No son fuente oficial de
 > delimitación territorial ni sirven como prueba en controversias de límites.
 
-La fuente real no es el Marco Geoestadístico —el PDF no trae ningún descargo de oficialidad—
-sino los metadatos de las capas del GeoNode, y dicen algo más fuerte y más útil: que los
-límites del INDEC no son ni los del IGN ni los de las leyes, sino los de las direcciones
-provinciales de estadística. Pasa a:
+Pasa a:
 
-> Los límites del INDEC son los que usa cada dirección provincial de estadística para armar su
-> base geográfica, no los del IGN ni los de la ley. La cartografía censal se elabora con fines
-> estadísticos: usarla para otra cosa queda bajo tu responsabilidad. Los límites oficiales los
-> publica el [IGN](https://www.ign.gob.ar/ut/).
+> Los límites que publica el INDEC son para uso estadístico: no son los límites oficiales del
+> territorio ni sirven como prueba en una controversia de límites. Los oficiales los publica el
+> [IGN](https://www.ign.gob.ar/ut/), y no siempre coinciden con éstos.
 
-Fuente: metadatos de `geonode:departamentos` en `https://geonode.indec.gob.ar/`.
+**Corregido durante la implementación, el 2026-09-08.** Este documento mandaba antes un texto
+más fuerte —que los límites del INDEC «son los que usa cada dirección provincial de estadística
+para armar su base geográfica, no los del IGN ni los de la ley»—, atribuido a los metadatos de
+las capas del GeoNode. Esa cita venía del material de research y **no se pudo verificar**: el API
+v2 del GeoNode devuelve el shell HTML de su app, el CSW devuelve una página de error, y el
+`<Abstract>` que sí publica el WMS para `geonode:departamentos` dice sólo «Censo Nacional de
+Población, Hogares y Viviendas 2022.». Puede ser cierta y simplemente inalcanzable desde acá,
+pero afirmarla en la voz del sitio viola la restricción global de este mismo plan —ningún dato
+sobre el INDEC se escribe de memoria— y es el defecto que este trabajo viene a corregir. El
+aviso dice ahora sólo lo verificado.
+
+Que los dos organismos no coinciden sí está medido (§2.2): 2.114 municipios del IGN contra 2.282
+gobiernos locales del INDEC, 3.528 localidades de BAHRA contra 4.023 localidades censales, y 529
+departamentos los dos.
 
 ### 1.3 Los títulos
 
@@ -171,16 +180,45 @@ lleva su enlace.
 | Afirmación | Fuente |
 |---|---|
 | Definición de localidad censal: concentración espacial de edificaciones conectadas por vías de circulación, delimitada por criterio de continuidad física | Marco Geoestadístico Nacional, INDEC — `https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf` |
-| Criterio urbano/rural del Censo 2022: urbana = localidad censal de 2.000 hab o más; rural agrupada = localidad censal de menos de 2.000; rural dispersa = no pertenece a ninguna localidad censal | INDEC, definiciones de la base del Censo 2022 (Redatam) |
-| El umbral de 2.000 se usa desde 1914 sin modificación y sin fundamento explícito publicado | Pérez Frattini & Huber (2024), Instituto de Geografía, UBA — `https://repositorio.inta.gob.ar/handle/20.500.12123/17990` |
-| Los límites del INDEC son los de las direcciones provinciales de estadística; la cartografía censal es para fines estadísticos | Metadatos de `geonode:departamentos`, GeoNode INDEC |
+| Zona rural: «Área comprendida entre el perímetro de la localidad censal y el límite del departamento, donde se puede localizar población rural dispersa» | Marco Geoestadístico (mismo PDF) |
+| El radio se clasifica en urbano, rural **o mixto** | Marco Geoestadístico (mismo PDF) |
+| «Se denomina partido en la provincia de Buenos Aires, departamento en el resto de las provincias y comuna en la Ciudad Autónoma de Buenos Aires» | Marco Geoestadístico (mismo PDF) |
+| Entidad censal: «unidad territorial que identifica una subdivisión de la localidad censal dentro de una misma área político-administrativa» | Marco Geoestadístico (mismo PDF) |
+
+Las cinco citas del Marco Geoestadístico están **verificadas textuales contra el PDF el
+2026-09-08**, leído desde este entorno. La única otra fuente admitida es el IGN
+(`https://www.ign.gob.ar/ut/`, HTTP 200), y su número lo medí yo contra su WFS.
+
+**Tres fuentes se cayeron el 2026-09-08, todas por no ser verificables:**
+
+1. **Los metadatos del GeoNode**, que sostenían que los límites del INDEC son los de las
+   direcciones provinciales de estadística. El API v2 devuelve el shell HTML de la app y el CSW
+   una página de error; la frase no está en el PDF ni en el `<Abstract>` del WMS. Salió del pie
+   (§1.2) y de la nota de `departamento`.
+2. **Pérez Frattini & Huber (2024)**, que sostenía el umbral de 2.000 habitantes y su origen
+   en 1914. `repositorio.inta.gob.ar` devuelve 000 por http y por https: no se puede leer el
+   trabajo ni ofrecer el enlace que la propia NOTA-R2 ampliada exige. Un enlace muerto parece
+   respaldo y no lo es, que es peor que no citar. Con él sale el criterio de los 2.000, que
+   tampoco aparece en el PDF del MGN.
+3. **`bahra.gob.ar`** como enlace: devuelve 000. El dato de BAHRA se cita como del IGN, que es
+   de donde lo medí (`ign:localidad_bahra` = 3.528).
+
+Lo que reemplaza a la 2 es mejor que la cita que perdió: en vez de un umbral de población que el
+sitio no puede verificar, las notas dicen lo que el MGN define y lo que se puede medir —que todo
+lo que queda fuera del perímetro de una localidad censal es zona rural por definición, y que el
+radio tiene tres tipos, con 54.459 urbanos, 9.347 rurales y 2.683 mixtos medidos—.
 
 **Lo que queda afuera a propósito:** la afirmación fuerte de que el criterio *subestima* la
-población rural. Depende de Castro & Reboratti (2008), que no se consiguió, y la formulación
-sostenible con lo que sí se verificó es más modesta: el umbral no cambia desde 1914 y no tiene
-fundamento explícito publicado. Tampoco entra ninguna comparación internacional del umbral: la
-premisa de que 2.000 es de los más bajos del mundo resultó falsa —los países nórdicos usan
-200—.
+población rural, que depende de Castro & Reboratti (2008) y no se consiguió. Tampoco entra
+ninguna comparación internacional del umbral: la premisa de que 2.000 es de los más bajos del
+mundo resultó falsa —los países nórdicos usan 200—. Y desde la corrección del 2026-09-08 tampoco
+entra el umbral de 2.000 en sí, por la razón de arriba: su única fuente no responde.
+
+El patrón de las tres bajas es el mismo y conviene nombrarlo, porque es la lección de este
+trabajo: **el research trajo material bueno cuyas fuentes no se pueden alcanzar desde acá.** Un
+sitio que existe para que nadie tome por cierto lo que no puede chequear no puede ser el primero
+en hacerlo. Todo lo que sobrevivió está verificado contra el PDF que sí se leyó, contra el
+GeoServer, contra el WFS del IGN o contra el catálogo commiteado.
 
 ### 2.4 Nota por nota
 
@@ -211,13 +249,19 @@ idénticas salvo un `id` interno. Se suman los dos datos verificados que termina
 qué **no** sirve esta capa: **20.613 tramos se llaman literalmente `CALLE SN`**, y sólo **97.073
 de 477.588 (20,3 %)** traen alguna altura. No es un nomenclador de direcciones.
 
-**`radio-censal` y `localidad-censal` — urbano/rural.**
+**`radio-censal` y `localidad-censal` — urbano/rural, y un bug que salió al escribirlo.**
 
-Entra el criterio oficial citado, y con él la consecuencia que contesta tu punto: **«localidad
-censal» no significa urbano, ni siquiera para el INDEC**. Una localidad censal de menos de 2.000
-habitantes es *rural agrupada*. La nota de radio ya muestra el campo `tro` como Urbano/Rural en
-la tabla; ahora explica de dónde sale esa U y esa R, y que el umbral que las separa no se toca
-desde 1914.
+Entra lo que el Marco Geoestadístico define, y con ello la consecuencia que contesta el punto:
+**una localidad censal no delimita lo urbano.** El MGN llama zona rural a todo lo que queda
+entre el perímetro de la localidad censal y el límite del departamento, así que la línea es
+administrativa, no descriptiva.
+
+Y el radio tiene **tres** tipos, no dos: urbano, rural o mixto. Eso destapó un defecto del
+sitio: `columns.js` mapea `U` y `R` y deja pasar cualquier otra cosa, así que los **2.683**
+radios mixtos medidos muestran hoy una `M` cruda en la tabla. Escribir una nota que explique una
+columna que muestra un código sin traducir sería hacerla mentir sobre la tabla que explica, así
+que el mapeo se arregla junto con la nota. Los 26 radios que no traen tipo siguen pasando sin
+traducir: es un dato que falta, no un rótulo que inventar (DES-R8).
 
 **`gobierno-local` — la divergencia entre organismos.**
 

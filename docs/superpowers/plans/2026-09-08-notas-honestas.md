@@ -22,10 +22,17 @@
   - Tramos de vía llamados `CALLE SN`: **20.613**. Con alguna altura: **97.073** de **477.588** = **20,3 %**.
   - IGN: **2.114** municipios, **3.528** localidades BAHRA, **529** departamentos. INDEC: **2.282** gobiernos locales, **4.023** localidades censales, **529** departamentos.
   - Localidades censales de CABA en el catálogo: **15**, `CABA - Comuna 1` … `CABA - Comuna 15`.
-  - Criterio urbano/rural del Censo 2022: urbana = localidad censal de 2.000 hab o más; rural agrupada = localidad censal de menos de 2.000; rural dispersa = no pertenece a ninguna localidad censal.
-  - Fuente del umbral de 1914: **Pérez Frattini y Huber, 2024** → `https://repositorio.inta.gob.ar/handle/20.500.12123/17990`
-  - Marco Geoestadístico → `https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf`
-  - IGN Unidades Territoriales → `https://www.ign.gob.ar/ut/`
+  - Radios por tipo, medidos contra el GeoServer: **54.459** urbanos (`tro='U'`), **9.347** rurales (`tro='R'`), **2.683** mixtos (`tro='M'`). Suman 66.489 de los 66.515 publicados: **26** no traen tipo.
+- **Sólo dos fuentes externas se pueden citar, y son las únicas cuyo enlace resuelve** (verificado el 2026-09-08; el resto de lo que trajo el research quedó afuera, ver abajo):
+  - Marco Geoestadístico (PDF, HTTP 200, leído) → `https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf`
+  - IGN Unidades Territoriales (HTTP 200) → `https://www.ign.gob.ar/ut/`
+- **Citas del Marco Geoestadístico verificadas textuales contra el PDF. Usar así, no parafrasear:**
+  - Localidad censal: «Unidad territorial caracterizada por la concentración espacial de edificaciones conectadas entre sí a través de redes de vías de circulación, terrestres o navegables. Se identifica por un nombre establecido por ley o costumbre. La delimitación de la localidad censal se realiza de acuerdo con el criterio de continuidad física.»
+  - Entidad censal: «unidad territorial que identifica una subdivisión de la localidad censal dentro de una misma área político-administrativa.»
+  - Zona rural: «Área comprendida entre el perímetro de la localidad censal y el límite del departamento, donde se puede localizar población rural dispersa.»
+  - Departamento: «Se denomina partido en la provincia de Buenos Aires, departamento en el resto de las provincias y comuna en la Ciudad Autónoma de Buenos Aires.»
+  - Radio censal: «Con fines estadísticos, el radio se clasifica en urbano, rural o mixto.»
+- **Prohibido citar, porque no se pudo verificar** (los tres se probaron el 2026-09-08 y fallaron): que los límites del INDEC salen de las direcciones provinciales de estadística (el API v2 y el CSW del GeoNode no responden; la frase no está en el PDF ni en el `Abstract` del WMS); el umbral urbano/rural de 2.000 habitantes y su origen en 1914 (`repositorio.inta.gob.ar` devuelve 000 por http y https, y «2.000» no aparece en el PDF del MGN); y `bahra.gob.ar` como enlace (devuelve 000 — el dato de BAHRA se cita como del IGN, que es de donde lo medí).
 - **Comandos:** `npm test` corre la suite. `npx vitest run src/notes.test.js` corre un archivo. `npm run build` construye.
 
 ## Estructura de archivos
@@ -319,19 +326,21 @@ En el bloque de comentario de arriba del archivo, agregar:
  * hace.
 ```
 
-Como semilla del mecanismo, agregar `sources` a la nota `departamento`, que es la más corta de tocar. En su tercer párrafo ya se habla de códigos que no cierran; agregar un cuarto párrafo:
+Como semilla del mecanismo, agregar `sources` a la nota `departamento`, que es la más corta de tocar. Su primer párrafo ya cuenta que el nombre cambia por provincia; agregar un cuarto párrafo que diga de dónde sale eso:
 
 ```js
-      'Los límites que publica el INDEC no son los del IGN ni los de la ley: son los que usa cada dirección provincial de estadística para armar su base geográfica. Lo dicen los metadatos de la capa del GeoNode, no el Marco Geoestadístico.',
+      'Que se llame partido, departamento o comuna no es costumbre local: lo fija el Marco Geoestadístico, que define al departamento como la división político-administrativa de segundo nivel y aclara que «se denomina partido en la provincia de Buenos Aires, departamento en el resto de las provincias y comuna en la Ciudad Autónoma de Buenos Aires».',
 ```
 
 y el campo, después de `paragraphs`:
 
 ```js
     sources: [
-      { label: 'metadatos de la capa del GeoNode', href: 'https://geonode.indec.gob.ar/' },
+      { label: 'Marco Geoestadístico', href: 'https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf' },
     ],
 ```
+
+Esa cita está verificada textual contra el PDF el 2026-09-08.
 
 - [ ] **Step 4: Agregar el nodo en `notas/index.html`**
 
@@ -483,13 +492,12 @@ Reemplazar sus `paragraphs` enteros y agregar `sources`:
       'El Marco Geoestadístico la define por continuidad física: una concentración de edificaciones conectadas entre sí por vías de circulación. No la define una ley, ni un límite municipal, ni quién cobra los impuestos ahí.',
       'Buscando Avellaneda, el INDEC publica tres objetos distintos con el mismo nombre y límites diferentes: «Partido de Avellaneda» (departamento, 06035), «Municipio Avellaneda» (gobierno local, 060035) y «Localidad Avellaneda» (localidad censal, 06035010, dentro del aglomerado Gran Buenos Aires). Quien dice «la localidad de Avellaneda» casi siempre se refiere al partido o al municipio.',
       'El caso que más engaña es el contrario, y conviene mirarlo despacio. El partido de Tres de Febrero tiene una sola localidad censal, la 06840010, y abarca el partido entero: el INDEC la publica con el nombre «Localidad Tres de Febrero», que no usa nadie. Caseros, Ciudadela, Sáenz Peña y Villa Bosch —los pueblos donde vive esa gente— no existen en esta capa. Son entidades, y las entidades no se publican acá. Pasa en 28 partidos del Gran Buenos Aires, todos marcados como componente de aglomerado: ahí la unidad del INDEC es el partido, no el pueblo.',
-      'Tampoco es la única forma oficial de contar localidades. BAHRA —la base de asentamientos que arman juntos el IGN, el INDEC y el Mapa Educativo— publica 3.528 localidades donde esta capa publica 4.023 localidades censales, y cuenta a la Ciudad Autónoma de Buenos Aires como una sola localidad donde el INDEC la parte en quince, una por comuna.',
-      'Y una localidad censal no significa zona urbana. Para el Censo 2022 es urbana la que tiene 2.000 habitantes o más; con menos de 2.000 es rural agrupada, y lo que no pertenece a ninguna localidad censal es rural disperso. Ese umbral no cambia desde 1914 y no tiene un fundamento explícito publicado (Pérez Frattini y Huber, 2024).',
+      'Tampoco es la única forma oficial de contar localidades. El IGN publica 3.528 localidades —las de BAHRA, la base de asentamientos que mantiene junto al INDEC— donde esta capa publica 4.023 localidades censales, y cuenta a la Ciudad Autónoma de Buenos Aires como una sola localidad donde el INDEC la parte en quince, una por comuna.',
+      'Y una localidad censal no delimita lo urbano. El Marco Geoestadístico llama zona rural al «área comprendida entre el perímetro de la localidad censal y el límite del departamento», así que todo lo que queda afuera es rural por definición, haya lo que haya ahí. Adentro tampoco es todo urbano: el propio INDEC clasifica cada radio censal en urbano, rural o mixto.',
     ],
     sources: [
       { label: 'Marco Geoestadístico', href: 'https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf' },
-      { label: 'BAHRA', href: 'https://www.ign.gob.ar/ut/' },
-      { label: 'Pérez Frattini y Huber, 2024', href: 'https://repositorio.inta.gob.ar/handle/20.500.12123/17990' },
+      { label: 'IGN', href: 'https://www.ign.gob.ar/ut/' },
     ],
 ```
 
@@ -576,9 +584,13 @@ git commit -m "fix: vías describía que son tramos donde tenía que advertirlo"
 
 ---
 
-### Task 6: Radio censal explica de dónde sale su columna Tipo
+### Task 6: La columna Tipo de radios dice "M" y la nota no lo explica
+
+Son dos cosas que son una sola: la tabla muestra hoy una `M` cruda en 2.683 filas —`columns.js` mapea `U` y `R` y nada más— y la nota no dice qué significa esa columna. Escribir la nota sin arreglar el mapeo la haría mentir sobre la tabla que explica.
 
 **Files:**
+- Modify: `src/columns.js` (`urbanoRural`)
+- Modify: `src/columns.test.js`
 - Modify: `src/notes.js` (nota `radio-censal`)
 - Modify: `src/notes.test.js`
 
@@ -586,45 +598,78 @@ git commit -m "fix: vías describía que son tramos donde tenía que advertirlo"
 - Consumes: `sources` de la Task 3.
 - Produces: nada nuevo.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [ ] **Step 1: Escribir los tests que fallan**
+
+En `src/columns.test.js`:
 
 ```js
-  it('radio censal explica qué significa su columna Tipo', () => {
-    const texto = noteFor('radio-censal').paragraphs.join(' ')
-    expect(texto).toContain('2.000 habitantes')
-    expect(texto).toContain('1914')
+  it('el tipo de radio tiene tres valores, no dos (MGN)', () => {
+    const tipo = specOf('radios').columns.find((c) => c.field === 'tro')
+    expect(tipo.map('U')).toBe('Urbano')
+    expect(tipo.map('R')).toBe('Rural')
+    // 2.683 radios son mixtos y hasta hoy mostraban una "M" cruda.
+    expect(tipo.map('M')).toBe('Mixto')
+  })
+
+  // Un valor que el INDEC no documentó se muestra tal cual: no se inventa
+  // un rótulo (DES-R8).
+  it('un tipo desconocido pasa sin traducir', () => {
+    expect(specOf('radios').columns.find((c) => c.field === 'tro').map('X')).toBe('X')
   })
 ```
 
-- [ ] **Step 2: Correr y verificar que falla**
+En `src/notes.test.js`:
 
-Run: `npx vitest run src/notes.test.js`
-Expected: FAIL.
+```js
+  it('radio censal explica qué significa su columna Tipo, con los tres valores', () => {
+    const texto = noteFor('radio-censal').paragraphs.join(' ')
+    expect(texto).toContain('mixto')
+    expect(texto).toContain('54.459')
+    expect(texto).toContain('9.347')
+    expect(texto).toContain('2.683')
+  })
+```
 
-- [ ] **Step 3: Agregar el párrafo a la nota `radio-censal`**
+- [ ] **Step 2: Correr y verificar que fallan**
+
+Run: `npx vitest run src/columns.test.js src/notes.test.js`
+Expected: FAIL — `tipo.map('M')` devuelve `'M'`, y la nota no dice ninguno de los tres números.
+
+- [ ] **Step 3: Mapear el tercer valor en `src/columns.js`**
+
+```js
+// El Marco Geoestadístico clasifica el radio en urbano, rural o mixto: son
+// tres, no dos. Los 2.683 mixtos medidos mostraban una "M" cruda en la
+// tabla. Cualquier otro valor pasa sin traducir —el INDEC no documentó un
+// cuarto, y los 26 radios que no traen ninguno son un dato que falta, no un
+// rótulo que inventar (DES-R8)—.
+const urbanoRural = (v) => (v === 'U' ? 'Urbano' : v === 'R' ? 'Rural' : v === 'M' ? 'Mixto' : v)
+```
+
+- [ ] **Step 4: Agregar el párrafo a la nota `radio-censal`**
 
 Insertar como segundo párrafo, después del que dice «Son 66.515…», y agregar `sources`:
 
 ```js
-      'La columna Tipo sale del campo tro del INDEC y dice Urbano o Rural. Conviene tomarla con cuidado, porque el criterio es de población y no de paisaje: para el Censo 2022 es urbana la localidad censal de 2.000 habitantes o más, rural agrupada la de menos de 2.000, y rural dispersa lo que no pertenece a ninguna localidad censal. Ese umbral se usa desde 1914 sin modificación y sin un fundamento explícito publicado (Pérez Frattini y Huber, 2024).',
+      'La columna Tipo sale del campo tro y tiene tres valores, no dos: el Marco Geoestadístico clasifica cada radio en urbano, rural o mixto. Medidos contra el GeoServer: 54.459 urbanos, 9.347 rurales y 2.683 mixtos —y 26 radios que no traen ninguno—. Conviene tomarla con cuidado: es una clasificación operativa del censo, no una descripción del paisaje, y el radio mixto existe justamente porque en muchos lugares el corte no cae en ningún lado.',
 ```
 
 ```js
     sources: [
-      { label: 'Pérez Frattini y Huber, 2024', href: 'https://repositorio.inta.gob.ar/handle/20.500.12123/17990' },
+      { label: 'Marco Geoestadístico', href: 'https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf' },
     ],
 ```
 
-- [ ] **Step 4: Correr y verificar que pasa**
+- [ ] **Step 5: Correr y verificar que pasa**
 
-Run: `npx vitest run src/notes.test.js`
+Run: `npx vitest run src/columns.test.js src/notes.test.js`
 Expected: PASS. El gate de prosa sigue exigiendo que la nota diga `66.515`: el párrafo nuevo se agrega, no reemplaza al primero.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/notes.js src/notes.test.js
-git commit -m "feat: la columna Tipo de radios decía Urbano sin decir según quién"
+git add src/columns.js src/columns.test.js src/notes.js src/notes.test.js
+git commit -m "fix: 2.683 radios mostraban una M cruda y la nota no decía qué era esa columna"
 ```
 
 ---
