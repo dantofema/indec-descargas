@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { NOTAS, NOTA_POR_TIPO, NOTA_POR_CAPA, notaDe, notaHref } from './notes.js'
+import { NOTES, NOTE_BY_TYPE, NOTE_BY_LAYER, noteFor, noteHref } from './notes.js'
 import { TYPES, CHILD_LAYERS } from './download.js'
 
 const catalog = JSON.parse(readFileSync(resolve(process.cwd(), 'public/catalog.json'), 'utf8'))
@@ -12,11 +12,11 @@ const sumaEnJurisdicciones = (capa) => catalog.objects
 
 describe('las ocho notas', () => {
   it('son ocho, una por objeto del Marco', () => {
-    expect(NOTAS).toHaveLength(8)
+    expect(NOTES).toHaveLength(8)
   })
 
   it('cada slug es único y sirve como ancla', () => {
-    const slugs = NOTAS.map((n) => n.slug)
+    const slugs = NOTES.map((n) => n.slug)
     expect(new Set(slugs).size).toBe(8)
     for (const s of slugs) expect(s).toMatch(/^[a-z][a-z-]*[a-z]$/)
   })
@@ -27,7 +27,7 @@ describe('las ocho notas', () => {
   // por párrafo: se verifica longitud no nula por párrafo y un piso sobre
   // la nota entera.
   it('ninguna nota está vacía', () => {
-    for (const n of NOTAS) {
+    for (const n of NOTES) {
       expect(n.paragraphs.length).toBeGreaterThan(0)
       for (const p of n.paragraphs) expect(p.trim().length).toBeGreaterThan(0)
       expect(n.paragraphs.join(' ').length, n.slug).toBeGreaterThan(200)
@@ -35,39 +35,39 @@ describe('las ocho notas', () => {
   })
 
   it('el href apunta a la página de notas con el ancla', () => {
-    expect(notaHref('radio-censal')).toMatch(/notas\/#radio-censal$/)
+    expect(noteHref('radio-censal')).toMatch(/notas\/#radio-censal$/)
   })
 })
 
 describe('los dos vocabularios llegan a una nota', () => {
   it('todo tipo buscable tiene nota', () => {
     for (const t of Object.keys(TYPES)) {
-      expect(notaDe(NOTA_POR_TIPO[t]), `falta la nota del tipo ${t}`).toBeDefined()
+      expect(noteFor(NOTE_BY_TYPE[t]), `falta la nota del tipo ${t}`).toBeDefined()
     }
   })
 
   it('toda capa hija tiene nota', () => {
     for (const capa of Object.keys(CHILD_LAYERS)) {
-      expect(notaDe(NOTA_POR_CAPA[capa]), `falta la nota de la capa ${capa}`).toBeDefined()
+      expect(noteFor(NOTE_BY_LAYER[capa]), `falta la nota de la capa ${capa}`).toBeDefined()
     }
   })
 
   it('no hay notas huérfanas: cada una la alcanza algún vocabulario', () => {
-    const alcanzables = new Set([...Object.values(NOTA_POR_TIPO), ...Object.values(NOTA_POR_CAPA)])
-    for (const n of NOTAS) expect(alcanzables.has(n.slug), `${n.slug} no la nombra nadie`).toBe(true)
+    const alcanzables = new Set([...Object.values(NOTE_BY_TYPE), ...Object.values(NOTE_BY_LAYER)])
+    for (const n of NOTES) expect(alcanzables.has(n.slug), `${n.slug} no la nombra nadie`).toBe(true)
   })
 })
 
 describe('los números que afirma una nota (NOTA-R2)', () => {
   it('coinciden con el catálogo commiteado', () => {
-    for (const n of NOTAS) {
-      if (n.tipo) expect(n.total, `total de ${n.slug} por tipo`).toBe(porTipo(n.tipo))
-      if (n.capa) expect(n.total, `total de ${n.slug} por capa`).toBe(sumaEnJurisdicciones(n.capa))
+    for (const n of NOTES) {
+      if (n.type) expect(n.total, `total de ${n.slug} por tipo`).toBe(porTipo(n.type))
+      if (n.layer) expect(n.total, `total de ${n.slug} por capa`).toBe(sumaEnJurisdicciones(n.layer))
     }
   })
 
   it('los dos objetos que son tipo y capa a la vez dan lo mismo por los dos caminos', () => {
-    const dobles = NOTAS.filter((n) => n.tipo && n.capa)
+    const dobles = NOTES.filter((n) => n.type && n.layer)
     expect(dobles.map((n) => n.slug).sort()).toEqual(['departamento', 'localidad-censal'])
   })
 
@@ -79,13 +79,13 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
       porNombre.get(o.n).add(o.t)
     }
     const losTres = [...porNombre.values()].filter((s) => s.size === 3).length
-    expect(notaDe('gobierno-local').paragraphs.join(' ')).toContain(`${losTres} nombres del catálogo`)
+    expect(noteFor('gobierno-local').paragraphs.join(' ')).toContain(`${losTres} nombres del catálogo`)
   })
 })
 
 describe('las dos notas que ya existían', () => {
   it('vías conserva su texto intacto', () => {
-    const vias = notaDe('via-de-circulacion')
+    const vias = noteFor('via-de-circulacion')
     expect(vias.paragraphs[0]).toBe(
       'Esta capa no lista calles: lista tramos. Una misma calle aparece tantas veces como tramos tenga su geometría, y todos comparten nombre, código y altura. En Tres de Febrero, las 1.487 filas son 727 calles; la más partida llega a 80 tramos.',
     )
@@ -93,7 +93,7 @@ describe('las dos notas que ya existían', () => {
   })
 
   it('localidad censal conserva sus tres párrafos intactos', () => {
-    const loc = notaDe('localidad-censal')
+    const loc = noteFor('localidad-censal')
     expect(loc.paragraphs).toHaveLength(3)
     expect(loc.paragraphs[0]).toBe(
       '«Localidad censal» no es lo que en la conversación diaria se llama localidad. Es una unidad del Marco Geoestadístico y a menudo no coincide con el municipio ni con el partido del mismo nombre.',

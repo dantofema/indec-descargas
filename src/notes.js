@@ -3,19 +3,19 @@
  * de /notas/ porque los tests tienen que poder citarlas y porque los
  * números que afirman se comparan contra el catálogo (NOTA-R2).
  *
- * `tipo` es la clave de TYPES cuando el objeto se puede buscar; `capa` la
+ * `type` es la clave de TYPES cuando el objeto se puede buscar; `layer` la
  * de CHILD_LAYERS cuando además se puede recorrer como hija. Departamento y
  * localidad censal son las dos cosas a la vez.
  *
  * `total` va aparte de `paragraphs` a propósito: así las dos notas que ya
  * existían se mudaron sin tocarles una coma.
  */
-export const NOTAS = [
+export const NOTES = [
   {
     slug: 'jurisdiccion',
     label: 'Jurisdicción',
-    tipo: 'jur',
-    capa: null,
+    type: 'jur',
+    layer: null,
     total: 24,
     paragraphs: [
       'El INDEC llama jurisdicción a lo que en la conversación diaria es una provincia. Son 24: las 23 provincias y la Ciudad Autónoma de Buenos Aires, que no es una provincia pero sí una unidad del mismo nivel para el Marco Geoestadístico.',
@@ -26,8 +26,8 @@ export const NOTAS = [
   {
     slug: 'departamento',
     label: 'Departamento',
-    tipo: 'dep',
-    capa: 'departamentos',
+    type: 'dep',
+    layer: 'departamentos',
     total: 529,
     paragraphs: [
       'Son 529 en el país, y el nombre cambia según dónde estés parado: en la Ciudad Autónoma de Buenos Aires son las 15 comunas y en la provincia de Buenos Aires, los 135 partidos. El INDEC los publica a todos en la misma capa, con el mismo campo cde.',
@@ -38,8 +38,8 @@ export const NOTAS = [
   {
     slug: 'fraccion-censal',
     label: 'Fracción censal',
-    tipo: null,
-    capa: 'fracciones',
+    type: null,
+    layer: 'fracciones',
     total: 6571,
     paragraphs: [
       'Son 6.571 y no tienen nombre: el Marco Geoestadístico publica un número de fracción y un código, nada más. Este sitio no les inventa un rótulo, así que la tabla muestra número y código.',
@@ -50,8 +50,8 @@ export const NOTAS = [
   {
     slug: 'radio-censal',
     label: 'Radio censal',
-    tipo: null,
-    capa: 'radios',
+    type: null,
+    layer: 'radios',
     total: 66515,
     paragraphs: [
       'Son 66.515 y es la unidad más chica del Marco Geoestadístico. Tampoco tiene nombre: número de radio, número de la fracción que lo contiene, si es urbano o rural, y su código.',
@@ -62,8 +62,8 @@ export const NOTAS = [
   {
     slug: 'localidad-censal',
     label: 'Localidad censal',
-    tipo: 'loc',
-    capa: 'localidades',
+    type: 'loc',
+    layer: 'localidades',
     total: 4023,
     paragraphs: [
       '«Localidad censal» no es lo que en la conversación diaria se llama localidad. Es una unidad del Marco Geoestadístico y a menudo no coincide con el municipio ni con el partido del mismo nombre.',
@@ -74,8 +74,8 @@ export const NOTAS = [
   {
     slug: 'gobierno-local',
     label: 'Gobierno local',
-    tipo: 'gl',
-    capa: null,
+    type: 'gl',
+    layer: null,
     total: 2282,
     paragraphs: [
       'Son 2.282 y son la excepción del sitio: no ofrecen ninguna capa hija. No es una omisión. Ni los radios ni las fracciones llevan el campo cmu que identifica al gobierno local, así que lo único que podrían ofrecer son las vías; y el gobierno local está fuera de la cadena censal —no tiene cde—, así que una sola capa suelta ahí no se explica.',
@@ -86,8 +86,8 @@ export const NOTAS = [
   {
     slug: 'aglomerado',
     label: 'Aglomerado',
-    tipo: 'aglo',
-    capa: null,
+    type: 'aglo',
+    layer: null,
     total: 119,
     paragraphs: [
       'Son 119 y es el único objeto del Marco que no respeta los límites administrativos: 14 de ellos cruzan más de una provincia. El Gran Buenos Aires abarca la provincia de Buenos Aires y la Ciudad Autónoma, con 64 localidades censales y 112.152 vías.',
@@ -98,8 +98,8 @@ export const NOTAS = [
   {
     slug: 'via-de-circulacion',
     label: 'Vía de circulación',
-    tipo: null,
-    capa: 'vias',
+    type: null,
+    layer: 'vias',
     total: 477588,
     paragraphs: [
       'Esta capa no lista calles: lista tramos. Una misma calle aparece tantas veces como tramos tenga su geometría, y todos comparten nombre, código y altura. En Tres de Febrero, las 1.487 filas son 727 calles; la más partida llega a 80 tramos.',
@@ -108,7 +108,7 @@ export const NOTAS = [
   },
 ]
 
-export const NOTA_POR_TIPO = {
+export const NOTE_BY_TYPE = {
   jur: 'jurisdiccion',
   dep: 'departamento',
   loc: 'localidad-censal',
@@ -116,7 +116,7 @@ export const NOTA_POR_TIPO = {
   aglo: 'aglomerado',
 }
 
-export const NOTA_POR_CAPA = {
+export const NOTE_BY_LAYER = {
   departamentos: 'departamento',
   fracciones: 'fraccion-censal',
   radios: 'radio-censal',
@@ -124,7 +124,7 @@ export const NOTA_POR_CAPA = {
   vias: 'via-de-circulacion',
 }
 
-export const notaDe = (slug) => NOTAS.find((n) => n.slug === slug)
+export const noteFor = (slug) => NOTES.find((n) => n.slug === slug)
 
 /** El ancla de una nota en su página. La ficha enlaza acá (NOTA-R3). */
-export const notaHref = (slug) => `${import.meta.env.BASE_URL}notas/#${slug}`
+export const noteHref = (slug) => `${import.meta.env.BASE_URL}notas/#${slug}`

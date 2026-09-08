@@ -14,30 +14,35 @@ export function parse(search) {
   const t = p.get('t')
   const c = p.get('c')
 
-  if (t === null && c === null) return { estado: 'vacio' }
+  if (t === null && c === null) return { status: 'empty' }
   if (t === null || c === null) {
-    return { estado: 'invalido', motivo: 'faltan el tipo o el código del objeto en el enlace' }
+    return { status: 'invalid', reason: 'faltan el tipo o el código del objeto en el enlace' }
   }
   if (!Object.hasOwn(TYPES, t)) {
-    return { estado: 'invalido', motivo: `tipo de objeto desconocido en el enlace: ${t}` }
+    return { status: 'invalid', reason: `tipo de objeto desconocido en el enlace: ${t}` }
   }
   // El código es lo único que se interpola dentro del CQL_FILTER: entra por
   // la misma puerta que `assertCode`, pero sin explotar, porque un enlace
   // mal copiado no es un error de programa.
   if (!isCode(c)) {
-    return { estado: 'invalido', motivo: `el código del enlace no son dígitos: ${c}` }
+    return { status: 'invalid', reason: `el código del enlace no son dígitos: ${c}` }
   }
 
   // Una capa que no existe se ignora en vez de invalidar el enlace: el
   // objeto sigue siendo mostrable y abrir su primera pestaña es una
   // respuesta mejor que un error.
-  const capa = p.get('capa')
-  return { estado: 'ok', t, c, capa: capa && Object.hasOwn(CHILD_LAYERS, capa) ? capa : null }
+  const layer = p.get('capa')
+  return { status: 'ok', type: t, code: c, layer: layer && Object.hasOwn(CHILD_LAYERS, layer) ? layer : null }
 }
 
-/** El enlace permanente de un objeto, opcionalmente con su capa abierta. */
-export function format(obj, capa = null) {
+/**
+ * El enlace permanente de un objeto, opcionalmente con su capa abierta.
+ * La clave de la URL sigue siendo `capa` —es formato de cable, parte del
+ * spec y visible en el enlace que alguien comparte—; lo que cambia de
+ * nombre acá es sólo el parámetro de la función.
+ */
+export function format(obj, layer = null) {
   const p = new URLSearchParams({ t: obj.t, c: obj.c })
-  if (capa) p.set('capa', capa)
+  if (layer) p.set('capa', layer)
   return `${import.meta.env.BASE_URL}resultados/?${p}`
 }
