@@ -11,7 +11,7 @@ import { loadCatalog } from '../catalog.js'
 import { loadTotales } from '../totales.js'
 import { createSearchBox } from '../searchbox.js'
 import { format } from '../permalink.js'
-import { fmt } from '../ui.js'
+import { fmt, setStatus } from '../ui.js'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -79,12 +79,6 @@ function queryEls() {
   })
 }
 
-function setStatus(text, isError = false) {
-  el.status.textContent = text
-  el.status.classList.toggle('error', isError)
-  el.status.hidden = !text
-}
-
 /** Un icono de trazo, sin relleno, que hereda el color del texto. */
 function icon(shapes) {
   const svg = document.createElementNS(SVG_NS, 'svg')
@@ -149,7 +143,7 @@ export function initHome({ navigate = (href) => window.location.assign(href) } =
   const fetchCatalog = () => {
     pending ??= loadCatalog()
       .then((c) => searchbox.setObjects(c.objects))
-      .catch((err) => setStatus(`No se pudo cargar el catálogo: ${err.message}`, true))
+      .catch((err) => setStatus(el.status, `No se pudo cargar el catálogo: ${err.message}`, true))
   }
   el.q.addEventListener('focus', fetchCatalog, { once: true })
   el.q.addEventListener('input', fetchCatalog, { once: true })

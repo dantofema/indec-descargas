@@ -14,7 +14,7 @@
 import { loadCatalog } from '../catalog.js'
 import { selfUrl, TYPES, childOf, featureUrl, isCode } from '../download.js'
 import { initMap, showObject, showFeature, onFeature } from '../map.js'
-import { fmt, downloadButton, disabledButton } from '../ui.js'
+import { fmt, downloadButton, disabledButton, setStatus } from '../ui.js'
 import { childRows } from '../children.js'
 import { createSearchBox } from '../searchbox.js'
 import { codeIndex, parentsOf } from '../parents.js'
@@ -78,12 +78,6 @@ function queryEls() {
   }
 }
 
-function setStatus(text, isError = false) {
-  el.status.textContent = text
-  el.status.classList.toggle('error', isError)
-  el.status.hidden = !text
-}
-
 function renderChildren(obj) {
   el.children.replaceChildren(...childRows(obj))
 }
@@ -145,7 +139,7 @@ function backButton() {
     // El error del "Ver" del que se vuelve ya no describe nada de lo que
     // se está mirando; si el redibujo falla, `drawObject` lo vuelve a
     // poner.
-    setStatus('')
+    setStatus(el.status, '')
     showObjectIdentity(current)
     drawObject(current)
   })
@@ -227,7 +221,7 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   current = obj
   writeTab = layerRequested
   el.q.value = obj.n
-  setStatus('')
+  setStatus(el.status, '')
 
   showObjectIdentity(obj)
   renderParents(obj)
@@ -263,7 +257,7 @@ function describeFeature(props) {
  */
 function drawObject(obj) {
   showObject(obj).catch((err) => {
-    setStatus(`No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
+    setStatus(el.status, `No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
   })
 }
 
@@ -287,7 +281,7 @@ function setupCopyLink(button) {
         clearTimeout(timer)
         timer = setTimeout(() => { button.textContent = 'Copiar enlace' }, COPY_FEEDBACK_MS)
       })
-      .catch(() => setStatus('No se pudo copiar el enlace: copialo de la barra del navegador.', true))
+      .catch(() => setStatus(el.status, 'No se pudo copiar el enlace: copialo de la barra del navegador.', true))
   })
 }
 
@@ -329,7 +323,7 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
           // mirando (NAV-R10).
           if (props) showRow(key, { ...row, ...props })
         })
-        .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
+        .catch((err) => setStatus(el.status, `No se pudo dibujar en el mapa: ${err.message}`, true))
     },
     onError: () => {},
     onTab: (layer) => {
@@ -350,20 +344,20 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
       searchbox.setObjects(c.objects)
       el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
 
-      if (url.status === 'empty') return setStatus('Buscá un objeto para verlo en el mapa.')
-      if (url.status === 'invalid') return setStatus(`Ese enlace no se puede abrir: ${url.reason}`, true)
+      if (url.status === 'empty') return setStatus(el.status, 'Buscá un objeto para verlo en el mapa.')
+      if (url.status === 'invalid') return setStatus(el.status, `Ese enlace no se puede abrir: ${url.reason}`, true)
 
       // `permalink.js` valida sintaxis; la existencia la decide el catálogo,
       // que es quien la sabe.
       const obj = c.objects.find((o) => o.t === url.type && o.c === url.code)
-      if (!obj) return setStatus(`No hay ningún objeto con el código ${url.code} en el catálogo.`, true)
+      if (!obj) return setStatus(el.status, `No hay ningún objeto con el código ${url.code} en el catálogo.`, true)
 
       initMap('map') // recién acá: sin objeto no hay nada que dibujar
       selectObject(obj, url.layer, url.layerRequested)
       el.q.focus()
     })
     .catch((err) => {
-      setStatus(`No se pudo cargar el catálogo: ${err.message}`, true)
+      setStatus(el.status, `No se pudo cargar el catálogo: ${err.message}`, true)
     })
 }
 

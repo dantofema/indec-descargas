@@ -32,3 +32,17 @@ export function disabledButton(label, reason) {
   wrap.append(span, note)
   return wrap
 }
+
+/**
+ * El mensaje de estado de una página: qué dice, si es un error y si se ve.
+ * La clase `error` es contrato con `.status.error` de style.css.
+ *
+ * Recibe el nodo en vez de leerlo de un `el` compartido: home y resultados
+ * tienen sets de nodos distintos, así que abstraer eso sería peor que
+ * pasarle el único nodo que esta función toca.
+ */
+export function setStatus(node, text, isError = false) {
+  node.textContent = text
+  node.classList.toggle('error', isError)
+  node.hidden = !text
+}
