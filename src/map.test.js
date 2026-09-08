@@ -5,13 +5,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // el orden de la carga —quién gana, quién dibuja, quién avisa del error—,
 // que es lógica propia del módulo.
 const capa = { addTo: () => capa, getBounds: () => 'bounds', remove: vi.fn() }
-const mapa = { invalidateSize: vi.fn(), fitBounds: vi.fn() }
+const mapa = { invalidateSize: vi.fn(), fitBounds: vi.fn(), attributionControl: { setPrefix: vi.fn() } }
 const geoJSON = vi.fn(() => capa)
+const tileLayer = vi.fn(() => ({ addTo: () => {} }))
 
 vi.mock('leaflet', () => ({
   default: {
     map: () => mapa,
-    tileLayer: () => ({ addTo: () => {} }),
+    tileLayer: (...args) => tileLayer(...args),
     geoJSON: (...args) => geoJSON(...args),
   },
 }))
@@ -36,6 +37,8 @@ beforeEach(async () => {
   vi.resetModules()
   geoJSON.mockClear()
   capa.remove.mockClear()
+  tileLayer.mockClear()
+  mapa.attributionControl.setPrefix.mockClear()
   global.fetch = fetchDiferido()
   const map = await import('./map.js')
   map.initMap('map')
@@ -43,6 +46,20 @@ beforeEach(async () => {
   showFeature = map.showFeature
   onFeatureSpy = vi.fn()
   map.onFeature(onFeatureSpy)
+})
+
+// El prefijo por defecto del attributionControl es el enlace a Leaflet, y
+// desde 1.9 trae adentro una bandera de Ucrania: no es la atribución del
+// dato que se está mostrando, así que no tiene lugar en la interfaz.
+describe('initMap: la interfaz acredita al IGN, no a Leaflet', () => {
+  it('no acredita a Leaflet: ni el enlace ni la bandera que viaja en ese prefijo', () => {
+    expect(mapa.attributionControl.setPrefix).toHaveBeenCalledWith(false)
+  })
+
+  it('la atribución del IGN queda: es la del basemap, no la de la librería', () => {
+    const opcionesDelTileLayer = tileLayer.mock.calls[0][1]
+    expect(opcionesDelTileLayer.attribution).toBe('Instituto Geográfico Nacional, OpenStreetMap')
+  })
 })
 
 describe('showObject: la selección más nueva manda', () => {
@@ -127,6 +144,21 @@ describe('showFeature', () => {
     await p
     expect(geoJSON).toHaveBeenCalledTimes(1)
     expect(mapa.fitBounds).toHaveBeenCalledWith('bounds', { padding: [16, 16] })
+  })
+
+  it('devuelve las propiedades de la fila dibujada', async () => {
+    const p = showFeature('geonode:radios_censales2', 'cod_indec', '068400101')
+    pendientes[0].resolve(respuesta())
+    await expect(p).resolves.toEqual(geometria.features[0].properties)
+  })
+
+  it('un showFeature superado por otro no devuelve nada, aunque su respuesta llegue bien', async () => {
+    const vieja = showFeature('geonode:vias_de_circulacion', 'cod_indec', '068400101')
+    const nueva = showFeature('geonode:radios_censales2', 'cod_indec', '068400202')
+    pendientes[1].resolve(respuesta())
+    await nueva
+    pendientes[0].resolve(respuesta())
+    await expect(vieja).resolves.toBeUndefined()
   })
 
   it('valida el código antes de armar el CQL_FILTER', async () => {

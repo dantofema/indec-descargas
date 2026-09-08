@@ -23,6 +23,12 @@ export function initMap(containerId) {
     attribution: 'Instituto Geográfico Nacional, OpenStreetMap',
   }).addTo(map)
   map.fitBounds(ARGENTINA)
+  // El prefijo por defecto del control de atribución es el enlace a Leaflet,
+  // y desde 1.9 se lleva adentro una bandera de Ucrania (leaflet-src.js:5762).
+  // Se saca entero: la licencia BSD-2-Clause de Leaflet no pide crédito en la
+  // interfaz, sólo el aviso de copyright en el código, que sigue donde estaba.
+  // La atribución del IGN no se toca: esa sí es del dato que se está viendo.
+  map.attributionControl.setPrefix(false)
 }
 
 /** Registra a quién avisarle cuando llegan las propiedades del objeto. */
@@ -117,14 +123,16 @@ export async function showObject(obj) {
 
 /**
  * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
- * desde la tabla de la fila 3, no el objeto de la búsqueda. A propósito no
- * avisa al callback de `onFeature`: esa línea describe la identidad del
- * objeto de la ficha y no tiene que cambiar con cada "Ver" —mirar una fila
- * ya se señala marcándola en la tabla, no reescribiendo el nombre de al
- * lado del mapa—. Antes lo hacía, y cada "Ver" le pegaba otro tramo de
- * texto sin límite a `#detail-meta`.
+ * desde la tabla de la fila 3, no el objeto de la búsqueda.
+ *
+ * Devuelve las propiedades para que la ficha pueda describir la fila que
+ * se está viendo (NAV-R10). `undefined` significa "este pedido perdió la
+ * carrera": quien llama no tiene que escribir nada. `onFeature` sigue
+ * siendo sólo del objeto de la búsqueda —esta función no lo dispara—: esa
+ * línea describe la identidad del objeto de la ficha y no tiene que
+ * cambiar con cada "Ver".
  */
 export async function showFeature(layerName, field, code) {
-  if (!map) return
-  await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
+  if (!map) return undefined
+  return drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
 }

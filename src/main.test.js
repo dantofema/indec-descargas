@@ -8,7 +8,7 @@ import { resolve } from 'node:path'
 // demás es el código que se publica.
 vi.mock('leaflet', () => ({
   default: {
-    map: () => ({ invalidateSize: () => {}, fitBounds: () => {} }),
+    map: () => ({ invalidateSize: () => {}, fitBounds: () => {}, attributionControl: { setPrefix: () => {} } }),
     tileLayer: () => ({ addTo: () => {} }),
     geoJSON: () => ({ addTo() { return this }, getBounds: () => 'bounds', remove: () => {} }),
   },
