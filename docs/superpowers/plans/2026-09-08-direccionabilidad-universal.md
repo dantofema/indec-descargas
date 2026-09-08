@@ -511,20 +511,7 @@ function showObjectIdentity(obj) {
 }
 ```
 
-**Cuidado:** `objectNoteLink` usa `NOTE_BY_TYPE[obj.t]`, que hoy tiene cinco claves. Agregarle las tres nuevas en `src/notes.js`:
-
-```js
-export const NOTE_BY_TYPE = {
-  jur: 'jurisdiccion',
-  dep: 'departamento',
-  loc: 'localidad-censal',
-  gl: 'gobierno-local',
-  aglo: 'aglomerado',
-  frac: 'fraccion-censal',
-  rad: 'radio-censal',
-  via: 'via-de-circulacion',
-}
-```
+**`NOTE_BY_TYPE` ya tiene las ocho claves: lo hizo la Task 1, no ésta.** Estaba planificado acá y estaba mal: el test `'todo tipo direccionable tiene nota'` de `src/notes.test.js` itera `Object.keys(TYPES)`, así que extender la tabla de tipos sin extender el mapa de notas deja la suite en rojo desde el commit de la Task 1. Ninguna tarea puede dejar la suite en rojo entre commits, así que el arreglo se mudó a donde nace el problema. `objectNoteLink` funciona con los ocho tipos sin que esta tarea toque `src/notes.js`.
 
 - [ ] **Step 7: Pintar la identidad con las propiedades cuando llegan**
 
