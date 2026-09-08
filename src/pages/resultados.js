@@ -88,10 +88,15 @@ function parentRow(parent) {
   const li = document.createElement('li')
   const who = document.createElement('span')
   who.className = 'who'
-  who.textContent = parent.n
+  // Un padre sin catálogo no tiene nombre publicado (NAV-R4): su rótulo es
+  // su tipo, y el código va una sola vez, en el `kind`. Sin esto la fila sale
+  // con el nombre en blanco y un separador colgando.
+  who.textContent = parent.n ?? TYPES[parent.t].label
   const kind = document.createElement('span')
   kind.className = 'count'
-  kind.textContent = ` · ${TYPES[parent.t].label} · ${parent.c}`
+  kind.textContent = parent.n
+    ? ` · ${TYPES[parent.t].label} · ${parent.c}`
+    : ` · ${parent.c}`
   who.append(kind)
   li.append(who, downloadButton(selfUrl(parent), 'Descargar'))
   return li
@@ -179,9 +184,12 @@ function showObjectIdentity(obj) {
  * `count` sólo importa en vías: ahí el código identifica una calle entera y
  * `row` describe uno solo de los tramos que el mapa está dibujando, así que
  * la ficha dice cuántos son en vez de repetir campos de un tramo suelto
- * como si fueran de la calle (ver más abajo).
+ * como si fueran de la calle (ver más abajo). El default es `null`, no `1`:
+ * el "Ver" de la fila 3 llega acá sin conteo —`showFeature` en `map.js` lo
+ * descarta a propósito—, y afirmar "un solo tramo" ahí sería mentir sobre
+ * una calle que puede tener ochenta.
  */
-function showFeatureIdentity(layerKey, row, count = 1) {
+function showFeatureIdentity(layerKey, row, count = null) {
   const spec = specOf(layerKey)
   const codigo = String(row[spec.idField] ?? '')
 
@@ -202,13 +210,19 @@ function showFeatureIdentity(layerKey, row, count = 1) {
   // Una vía es la excepción: el código identifica la calle y sus tramos lo
   // comparten, así que `row` describe uno solo de los que el mapa está
   // dibujando. Los campos de tramo —alturas, id— mienten sobre la calle, así
-  // que en su lugar la ficha dice cuántos tramos son. Es además el aviso de
-  // duplicados que pide la nota de vías, acá gratis: el pedido ya volvió con
-  // todos.
+  // que en su lugar la ficha dice cuántos tramos son.
+  //
+  // `count` en null es "no lo sé": pasa cuando se llega por el "Ver" de la
+  // fila 3, que pide el feature por `showFeature` y descarta el conteo. Ahí
+  // la ficha calla en vez de inventar un número, porque decir "un solo
+  // tramo" sobre una calle de 80 es exactamente la contradicción entre ficha
+  // y mapa que este plan vino a eliminar.
   if (layerKey === 'vias') {
-    el.meta.textContent = count > 1
-      ? `Código ${codigo} · el INDEC la publica partida en ${fmt(count)} tramos`
-      : `Código ${codigo} · un solo tramo`
+    el.meta.textContent = count === null
+      ? `Código ${codigo}`
+      : count > 1
+        ? `Código ${codigo} · el INDEC la publica partida en ${fmt(count)} tramos`
+        : `Código ${codigo} · un solo tramo`
   }
 
   el.note.replaceChildren(noteLink(NOTE_BY_LAYER[layerKey], `Qué es ${singular.toLowerCase()} →`))

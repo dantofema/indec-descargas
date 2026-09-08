@@ -545,6 +545,23 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
     expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
     expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(0)
   })
+
+  // Fix round 1: `showRow` —el envoltorio que usa este "Ver"— llama a
+  // `showFeatureIdentity` sin conteo, porque `showFeature` (map.js) lo
+  // descarta a propósito: sólo devuelve las propiedades de un feature. Antes
+  // del fix el default de `count` era `1`, así que en vías esto imprimía
+  // "un solo tramo" aunque el mapa hubiera dibujado ochenta —la
+  // contradicción exacta que NAV-R11 dice haber eliminado—. El panel de
+  // costo de vías no auto-carga: hay que confirmar "Cargar igual" primero.
+  it('el "Ver" de una vía no inventa un conteo que no tiene', async () => {
+    await montar('?t=dep&c=06840&capa=vias')
+    const cargarIgual = [...document.querySelectorAll('#browse button')]
+      .find((b) => b.textContent === 'Cargar igual')
+    cargarIgual.click()
+    await verPrimeraFila()
+    expect(document.querySelector('#detail-meta').textContent).not.toContain('un solo tramo')
+    expect(document.querySelector('#detail-meta').textContent).not.toContain('tramos')
+  })
 })
 
 // "Volver a <objeto>" llamaba a `selectObject`, que llama a `browser.show`,
@@ -805,7 +822,16 @@ describe('la ficha de un objeto que no está en el catálogo', () => {
     await montar('?t=rad&c=068402311')
     expect($('#row-parents').hidden).toBe(false)
     // Fracción 0684023 (sintética), departamento 06840 y jurisdicción 06.
-    expect($('#parents').children.length).toBe(3)
+    const filas = [...$('#parents').children]
+    expect(filas).toHaveLength(3)
+
+    // Fix round 1, hallazgo 2: la fracción sintética no tiene nombre
+    // publicado (NAV-R4). `parentRow` tiene que usar el tipo como rótulo,
+    // no dejar la fila en blanco con un separador colgando de la nada.
+    const fraccion = filas[0].textContent
+    expect(fraccion).toContain('Fracción censal')
+    expect(fraccion).toContain('0684023')
+    expect(fraccion.trimStart().startsWith('·')).toBe(false)
   })
 
   it('el buscador no queda diciendo "undefined"', async () => {
