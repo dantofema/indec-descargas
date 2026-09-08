@@ -1190,7 +1190,7 @@ const objetos = [
   { t: 'loc', c: '06840010', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires', sp: 'buenos aires' },
 ]
 
-let el, onPick, buscador
+let el, onPick, searchbox
 
 beforeEach(() => {
   document.body.innerHTML = `
@@ -1350,7 +1350,7 @@ git commit -m "refactor: el buscador es un módulo, porque ahora lo usan dos pá
 **Interfaces:**
 - Consumes: `parse`/`format` (Task 1), `loadTotales` (Task 2), `createSearchBox` (Task 7).
 - Produces:
-  - `initHome({navegar}) => void` y `initResultados({navegar}) => void`. `navegar` por defecto es `(href) => window.location.assign(href)`; se inyecta para poder testear sin que jsdom se queje de navegar.
+  - `initHome({navigate}) => void` y `initResultados({navigate}) => void`. `navigate` por defecto es `(href) => window.location.assign(href)`; se inyecta para poder testear sin que jsdom se queje de navegar.
   - `createBrowser` cambia su firma: `show(obj, initialLayer = null)` y acepta `onTab(key)` entre sus opciones. Sigue devolviendo `{show}` más `boolean` desde `show`.
 
 **El estado es la URL.** Elegir un objeto **navega**, incluso estando ya en `/resultados/`: `navigate(format(obj))`. No hay `pushState` ni `popstate`. Lo único que escribe la barra sin navegar es cambiar de pestaña, con `history.replaceState`.
@@ -1429,14 +1429,14 @@ describe('la URL es el estado', () => {
     await montar('?t=dep&c=06840')
     document.querySelectorAll('[role="tab"]')[1].click()
     expect(window.location.search).toContain('capa=')
-    expect(navegar).not.toHaveBeenCalled()
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('elegir otro objeto en el buscador navega al permalink', async () => {
     await montar('?t=dep&c=06840')
     buscar('buenos aires')
     document.querySelector('#results').children[0].click()
-    expect(navegar).toHaveBeenCalledWith(expect.stringMatching(/resultados\/\?t=jur&c=06$/))
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/resultados\/\?t=jur&c=06$/))
   })
 
   it('copiar enlace copia la URL de la barra', async () => {
@@ -1571,7 +1571,7 @@ export function initHome({ navigate = (href) => window.location.assign(href) } =
 
 `renderTotals` dibuja ocho `<li>` con un SVG inline, el número con `fmt()` y la etiqueta, en este orden y con estas claves: `jur` Jurisdicciones, `dep` Departamentos, `fracciones` Fracciones censales, `radios` Radios censales, `loc` Localidades censales, `gl` Gobiernos locales, `aglo` Aglomerados, `vias` Vías de circulación. Los iconos son SVG inline de trazo simple (`stroke="currentColor"`, `fill="none"`), uno por objeto; **no agregar una librería de iconos**.
 
-`src/pages/home.test.js`: que los ocho tiles se pinten con los números de `totales.json` mockeado; que el catálogo **no** se pida hasta tocar el campo; que elegir llame a `navegar` con el permalink correcto.
+`src/pages/home.test.js`: que los ocho tiles se pinten con los números de `totales.json` mockeado; que el catálogo **no** se pida hasta tocar el campo; que elegir llame a `navigate` con el permalink correcto.
 
 - [ ] **Step 6: Delete `main.js`, add the entries, run everything**
 
