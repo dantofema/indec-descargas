@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         home: resolve(import.meta.dirname, 'index.html'),
         notas: resolve(import.meta.dirname, 'notas/index.html'),
+        servicios: resolve(import.meta.dirname, 'servicios/index.html'),
       },
     },
   },

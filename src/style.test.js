@@ -199,4 +199,8 @@ describe('el nav marca la página activa', () => {
   it('notas', () => {
     expect(css).toMatch(/\[data-pagina="notas"\][^{]*\[data-nav="notas"\]/)
   })
+
+  it('servicios', () => {
+    expect(css).toMatch(/\[data-pagina="servicios"\][^{]*\[data-nav="servicios"\]/)
+  })
 })

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Servicios geoespaciales del INDEC — INDEC</title>
+    <meta name="description" content="WFS, WMS y GeoNode del INDEC: endpoint, capas, formatos de salida y cómo consumirlos desde QGIS o desde código." />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body data-pagina="servicios">
+    <!--#shell:header-->
+    <main class="servicios">
+      <h1>Servicios geoespaciales del INDEC</h1>
+      <p class="subtitle">Qué publica el INDEC más allá de este sitio, y cómo consumirlo directamente.</p>
+
+      <section id="wfs-service">
+        <h2>WFS 2.0.0</h2>
+        <p>
+          Endpoint: <code>https://geonode.indec.gob.ar/geoserver/ows</code>. CORS abierto — es de
+          lo que depende este sitio.
+        </p>
+
+        <h3 class="block-title">Capas vectoriales</h3>
+        <p>Diez capas, todas bajo el prefijo <code>geonode:</code>. Este sitio usa ocho; las dos versiones "puntos" no.</p>
+        <ul class="capas">
+          <li><code>geonode:aglomerados</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:departamentos</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:fracciones_censales</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:gobiernos_locales4</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:gobiernos_locales_puntos</code> <span class="tag-capa no-usa">no usa este sitio</span></li>
+          <li><code>geonode:jurisdicciones</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:localidades_censales</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:localidades_censales_puntos1</code> <span class="tag-capa no-usa">no usa este sitio</span></li>
+          <li><code>geonode:radios_censales2</code> <span class="tag-capa usa">usa este sitio</span></li>
+          <li><code>geonode:vias_de_circulacion</code> <span class="tag-capa usa">usa este sitio</span></li>
+        </ul>
+
+        <h3 class="block-title">Formatos de salida</h3>
+        <ul>
+          <li><code>geopackage</code> (alias <code>gpkg</code>, <code>geopkg</code>, <code>application/x-gpkg</code>)</li>
+          <li><code>application/json</code> (GeoJSON)</li>
+          <li><code>SHAPE-ZIP</code></li>
+          <li><code>csv</code></li>
+          <li><code>excel</code></li>
+          <li><code>excel2007</code></li>
+          <li>KML</li>
+          <li>GML 2 / 3.1.1 / 3.2</li>
+        </ul>
+      </section>
+
+      <section id="wms-service">
+        <h2>WMS 1.3.0</h2>
+        <p>Mismo endpoint, mismas diez capas.</p>
+        <p>
+          <code>image/png</code> entre los formatos de <code>GetMap</code>, más salidas que no son
+          imagen: <code>application/pdf</code>, KML/KMZ, GeoJSON, TopoJSON y
+          <code>application/vnd.mapbox-vector-tile</code>.
+        </p>
+        <p>CRS soportados: EPSG:4326, EPSG:3857, CRS:84 y otros.</p>
+      </section>
+
+      <section id="geonode-service">
+        <h2>GeoNode / Geoportal INDEC</h2>
+        <p>
+          <a href="https://geonode.indec.gob.ar/" target="_blank" rel="noopener">https://geonode.indec.gob.ar/</a>
+          es el Geoportal INDEC.
+        </p>
+        <p>Publica 47 capas, contra las 8 que usa este sitio, más mapas, documentos y metadatos.</p>
+        <p>OpenSearch: <code>/catalogue/opensearch</code></p>
+      </section>
+
+      <section id="recipes">
+        <h2>Dos recetas</h2>
+
+        <h3 class="block-title">Conectar el WFS en QGIS</h3>
+        <ol>
+          <li>Capa → Añadir capa → WFS</li>
+          <li>Pegar el endpoint: <code>https://geonode.indec.gob.ar/geoserver/ows</code></li>
+        </ol>
+
+        <h3 class="block-title">Pedir una capa desde código</h3>
+        <p>La misma forma que arma este sitio: <code>CQL_FILTER</code> con el campo y el código entre comillas simples.</p>
+        <pre class="ejemplo"><code>https://geonode.indec.gob.ar/geoserver/ows?service=WFS&amp;version=2.0.0&amp;request=GetFeature&amp;typenames=geonode:departamentos&amp;outputFormat=application/json&amp;srsName=EPSG:4326&amp;CQL_FILTER=cde='06840'</code></pre>
+      </section>
+    </main>
+    <!--#shell:cta-->
+    <!--#shell:footer-->
+  </body>
+</html>
