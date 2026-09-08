@@ -486,9 +486,20 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
   it('"volver" restaura la ficha del objeto y lo redibuja', async () => {
     await montar('?t=dep&c=06840&capa=radios')
     await verPrimeraFila()
+
+    // La otra mitad, la que el nombre de este caso prometía y no miraba:
+    // el mapa está dibujando la fila, así que volver tiene que pedir la
+    // geometría del objeto de nuevo. Sin esto, borrar el `drawObject` del
+    // handler dejaba la ficha del padre arriba de un radio dibujado.
+    const geometriasDelObjeto = () => global.fetch.mock.calls
+      .filter(([u]) => String(u).includes('typenames=geonode%3Adepartamentos')).length
+    const antes = geometriasDelObjeto()
+
     document.querySelector('#back-to-object').click()
+
     expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
     expect(document.querySelector('#detail-self a').href).toContain('departamentos')
+    expect(geometriasDelObjeto()).toBe(antes + 1)
   })
 
   it('una respuesta que perdió la carrera no escribe la ficha', async () => {
