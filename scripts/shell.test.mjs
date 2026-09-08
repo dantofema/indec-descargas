@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { injectShell, readPartials } from './shell.mjs'
+import viteConfig from '../vite.config.js'
 
 const partials = { header: '<nav>H</nav>', cta: '<aside>C</aside>', footer: '<footer>F</footer>' }
 const opts = { partials, base: '/indec-descargas/' }
@@ -56,5 +57,34 @@ describe('las páginas del sitio', () => {
     expect(cta).toContain('target="_blank"')
     expect(cta).toContain('rel="noopener"')
     expect(cta).toContain('Más info, más mapas, más capas en Geoportal INDEC')
+  })
+})
+
+// SITIO-R6 no vive en `injectShell` sino en el cableado: hasta acá nadie
+// llamaba al plugin —los cuatro tests de página inyectan el shell ellos
+// mismos—, así que sacar `plugins: [shellPlugin()]` de `vite.config.js`
+// dejaba la suite entera en verde y publicaba las cuatro páginas con
+// `<!--#shell:footer-->` crudo: un comentario HTML invisible, sin header,
+// sin CTA y sin la advertencia de límites. Justo el modo de falla que la
+// regla cita como su razón de ser.
+describe('el plugin del shell, tal como lo enchufa el build', () => {
+  const plugin = (viteConfig.plugins ?? []).flat().find((p) => p?.name === 'indec-shell')
+
+  it('vite.config.js lo tiene enchufado (SITIO-R6)', () => {
+    expect(plugin, 'vite.config.js dejó de enchufar el plugin del shell').toBeDefined()
+  })
+
+  it('resuelve el HTML de una página de verdad, con el base que le da Vite', () => {
+    // `configResolved` es por dónde le llega el base a un plugin de Vite:
+    // sin esa llamada el plugin resolvería `{{base}}` contra `/`.
+    plugin.configResolved({ base: viteConfig.base })
+    const html = plugin.transformIndexHtml.handler(
+      readFileSync(resolve(process.cwd(), 'resultados/index.html'), 'utf8'),
+    )
+
+    expect(html).not.toMatch(/<!--#shell:/)
+    expect(html).toContain('Instituto Nacional de Estadística y Censos')
+    expect(html).toContain('Más info, más mapas, más capas en Geoportal INDEC')
+    expect(html).toContain(`href="${viteConfig.base}notas/"`)
   })
 })
