@@ -66,6 +66,12 @@ Los tres partials se escriben una sola vez y un paso de build los resuelve dentr
 páginas. Un marcador sin su partial correspondiente hace fallar el build en vez de publicarse
 así.
 
+La fecha de generación del catálogo va por el mismo camino: el pie la trae resuelta en build
+desde `totales.json` —el archivo que SITIO-R7 ya compara contra el catálogo—, así que las cuatro
+páginas la muestran aunque el JS no corra, y `/servicios/`, que no tiene una línea de JS, no
+necesita una para eso. Home y resultados la reescriben después con lo que además saben (el home,
+la misma frase; resultados, con el conteo de objetos del catálogo que ya bajó).
+
 **Por qué:** escritos una vez, pero presentes en el HTML servido aunque el JS no llegue a
 correr. Y un marcador con un error de tipeo que no rompiera nada sería un footer ausente en
 producción que nadie ve faltar: tirar en build es preferible a un footer que falta en silencio.

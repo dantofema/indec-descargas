@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, readPartials } from './shell.mjs'
+import { injectShell, readPartials, readGenerated } from './shell.mjs'
 import viteConfig from '../vite.config.js'
 
 const partials = { header: '<nav>H</nav>', cta: '<aside>C</aside>', footer: '<footer>F</footer>' }
@@ -25,6 +25,17 @@ describe('injectShell', () => {
     const conBase = { partials: { header: '<a href="{{base}}notas/">n</a>' }, base: '/indec-descargas/' }
     expect(injectShell('<!--#shell:header--><img src="{{base}}x.png">', conBase))
       .toBe('<a href="/indec-descargas/notas/">n</a><img src="/indec-descargas/x.png">')
+  })
+
+  it('resuelve {{generated}} igual que {{base}}', () => {
+    expect(injectShell('<p id="generated">{{generated}}</p>', { ...opts, generated: 'Catálogo generado el 2026-09-06.' }))
+      .toBe('<p id="generated">Catálogo generado el 2026-09-06.</p>')
+  })
+
+  // Sin fecha el nodo queda vacío, que es como estaba: un pie sin fecha no
+  // es motivo para publicar `{{generated}}` a la vista.
+  it('sin fecha deja el nodo vacío en vez del marcador crudo', () => {
+    expect(injectShell('<p id="generated">{{generated}}</p>', opts)).toBe('<p id="generated"></p>')
   })
 
   it('deja intacto un HTML sin marcadores', () => {
@@ -65,6 +76,28 @@ describe('las páginas del sitio', () => {
     }
   })
 
+  // El spec §6 dice que la fecha de generación del catálogo sigue
+  // mostrándose, y `#generated` vive en el footer compartido: lo llenaban
+  // sólo home y resultados, así que en /notas/ y /servicios/ quedaba un
+  // `<p>` vacío. Se resuelve en build, como el resto del shell: la fecha
+  // está en el HTML servido aunque el JS no corra, y /servicios/ —que no
+  // tiene una línea de JS— no necesita ninguna para mostrarla.
+  it('las cuatro llevan la fecha del catálogo en el pie (spec §6)', () => {
+    const generated = readGenerated()
+    for (const p of paginas) {
+      const html = injectShell(
+        readFileSync(resolve(process.cwd(), p), 'utf8'),
+        { partials: readPartials(), base: '/', generated },
+      )
+      expect(html, `${p} no muestra la fecha del catálogo`).toContain(generated)
+    }
+  })
+
+  it('esa fecha sale del totales.json commiteado, no de un literal', () => {
+    const { generated } = JSON.parse(readFileSync(resolve(process.cwd(), 'public/totales.json'), 'utf8'))
+    expect(readGenerated()).toBe(`Catálogo generado el ${generated}.`)
+  })
+
   it('el CTA apunta al Geoportal INDEC y abre en otra pestaña (SITIO-R5)', () => {
     const cta = readPartials().cta
     expect(cta).toContain('https://geonode.indec.gob.ar/')
@@ -97,7 +130,9 @@ describe('el plugin del shell, tal como lo enchufa el build', () => {
     )
 
     expect(html).not.toMatch(/<!--#shell:/)
+    expect(html).not.toMatch(/\{\{[a-z]+\}\}/)
     expect(html).toContain('Instituto Nacional de Estadística y Censos')
+    expect(html).toContain(readGenerated())
     expect(html).toContain('Más info, más mapas, más capas en Geoportal INDEC')
     expect(html).toContain(`href="${viteConfig.base}notas/"`)
   })
