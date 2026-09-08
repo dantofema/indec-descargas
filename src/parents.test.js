@@ -45,3 +45,42 @@ describe('parentsOf', () => {
     expect(codigos(sinAglo)).toEqual(['dep:06840', 'jur:06'])
   })
 })
+
+describe('los padres de un objeto sin catálogo', () => {
+  const index = codeIndex([
+    { t: 'jur', c: '06', n: 'Buenos Aires' },
+    { t: 'dep', c: '06469', n: 'Malvinas Argentinas' },
+    { t: 'loc', c: '06469080', n: 'Grand Bourg' },
+  ])
+
+  it('un radio cuelga de su fracción, su departamento y su jurisdicción', () => {
+    const padres = parentsOf({ t: 'rad', c: '064690801' }, index)
+    expect(padres.map((p) => [p.t, p.c])).toEqual([
+      ['frac', '0646908'], ['dep', '06469'], ['jur', '06'],
+    ])
+  })
+
+  it('el padre que no está en el catálogo se ofrece igual, sin nombre', () => {
+    const [frac] = parentsOf({ t: 'rad', c: '064690801' }, index)
+    expect(frac.n).toBeNull()
+  })
+
+  it('una vía cuelga de su localidad censal: su código empieza con el clc', () => {
+    const padres = parentsOf({ t: 'via', c: '0646908000600' }, index)
+    expect(padres.map((p) => [p.t, p.c])).toEqual([
+      ['loc', '06469080'], ['dep', '06469'], ['jur', '06'],
+    ])
+  })
+
+  it('una fracción cuelga de su departamento y su jurisdicción', () => {
+    expect(parentsOf({ t: 'frac', c: '0646908' }, index).map((p) => p.t)).toEqual(['dep', 'jur'])
+  })
+
+  // DES-R8: los códigos del INDEC no cierran entre capas, así que un prefijo
+  // válido puede apuntar a un objeto que el catálogo no tiene.
+  it('un padre de catálogo que no existe se descarta, y uno sintético no', () => {
+    const vacio = codeIndex([])
+    const padres = parentsOf({ t: 'rad', c: '064690801' }, vacio)
+    expect(padres.map((p) => p.t)).toEqual(['frac'])
+  })
+})
