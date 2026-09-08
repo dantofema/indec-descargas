@@ -3,7 +3,7 @@ import { fetchPage } from './features.js'
 import { renderTable, renderPager } from './table.js'
 import { nonEmptyChildrenOf } from './catalog.js'
 import { childOf } from './download.js'
-import { fmt } from './ui.js'
+import { fmt, costPanel } from './ui.js'
 import { noteFor, noteHref, NOTE_BY_LAYER } from './notes.js'
 
 /**
@@ -190,20 +190,13 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
 
   /** El costo medido y el botón para cargar la página igual. */
   function costPane(key) {
-    const wrap = document.createElement('div')
-    const p = document.createElement('p')
-    p.className = 'note'
-    p.textContent = VIAS_COST_NOTICE
-    const b = document.createElement('button')
-    b.type = 'button'
-    b.className = 'btn ghost mini'
-    b.textContent = 'Cargar igual'
-    b.addEventListener('click', () => {
-      confirmed.add(key)
-      load(key, pages.get(key) ?? 0)
+    return costPanel({
+      message: VIAS_COST_NOTICE,
+      onClick: () => {
+        confirmed.add(key)
+        load(key, pages.get(key) ?? 0)
+      },
     })
-    wrap.append(p, b)
-    return wrap
   }
 
   async function load(key, page) {

@@ -19,6 +19,31 @@ export function downloadButton(href, label, extra = '') {
   return a
 }
 
+/**
+ * El panel de una capa cara: qué cuesta y un botón para pedirla igual
+ * (NAV-R7, SITIO-R3). Lo usan los dos lugares donde el sitio cobra una
+ * espera medida —la pestaña de vías y la ficha de una vía—, y vive acá
+ * para que sigan siendo el mismo panel: son la misma promesa hecha en dos
+ * pantallas, y dos copias del markup es cómo terminan viéndose distinto.
+ *
+ * El `id` es opcional porque sólo uno de los dos necesita que un test lo
+ * agarre sin ambigüedad: en la fila 3 hay pestañas que también son `button`.
+ */
+export function costPanel({ message, onClick, id }) {
+  const wrap = document.createElement('div')
+  const p = document.createElement('p')
+  p.className = 'note'
+  p.textContent = message
+  const b = document.createElement('button')
+  b.type = 'button'
+  if (id) b.id = id
+  b.className = 'btn ghost mini'
+  b.textContent = 'Cargar igual'
+  b.addEventListener('click', () => onClick(b))
+  wrap.append(p, b)
+  return wrap
+}
+
 /** Botón muerto con el motivo al lado, para cuando la descarga no se ofrece. */
 export function disabledButton(label, reason) {
   const wrap = document.createElement('div')

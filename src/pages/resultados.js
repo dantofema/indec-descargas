@@ -14,7 +14,7 @@
 import { loadCatalog } from '../catalog.js'
 import { selfUrl, TYPES, LAYER_OF_TYPE, TYPE_OF_LAYER, featureUrl, isCode } from '../download.js'
 import { initMap, showObject } from '../map.js'
-import { fmt, downloadButton, disabledButton, setStatus } from '../ui.js'
+import { fmt, downloadButton, disabledButton, setStatus, costPanel } from '../ui.js'
 import { childRows } from '../children.js'
 import { createSearchBox } from '../searchbox.js'
 import { codeIndex, parentsOf } from '../parents.js'
@@ -234,22 +234,15 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
 
 /** El costo medido y el botón que sí dispara el pedido (SITIO-R3, NAV-R7). */
 function loadFeatureButton(obj) {
-  const wrap = document.createElement('div')
-  const p = document.createElement('p')
-  p.className = 'note'
-  p.textContent = VIAS_VIEW_NOTICE
-  const b = document.createElement('button')
-  b.type = 'button'
-  b.id = 'load-feature'
-  b.className = 'btn ghost mini'
-  b.textContent = 'Cargar igual'
-  b.addEventListener('click', () => {
-    b.disabled = true
-    b.textContent = 'Cargando…'
-    drawObject(obj)
+  return costPanel({
+    message: VIAS_VIEW_NOTICE,
+    id: 'load-feature',
+    onClick: (b) => {
+      b.disabled = true
+      b.textContent = 'Cargando…'
+      drawObject(obj)
+    },
   })
-  wrap.append(p, b)
-  return wrap
 }
 
 /**

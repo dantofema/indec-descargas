@@ -68,8 +68,8 @@ async function drawFromUrl(request, url) {
     if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
 
     // Recién acá: un dibujo que falla deja el mapa como estaba, y uno que
-    // tarda —12,4 s medidos en vías— lo deja como estaba mientras tanto,
-    // en vez de mostrar un mapa vacío que parece un error.
+    // tarda lo deja como estaba mientras tanto, en vez de mostrar un mapa
+    // vacío que parece un error.
     if (layer) {
       layer.remove()
       layer = null
