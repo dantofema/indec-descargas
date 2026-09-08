@@ -338,8 +338,8 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-/* Panel de texto de la fila de notas: ancho de lectura, no el de la ficha
-   entera. */
+/* Panel de texto de una nota, en /notas/: ancho de lectura, no el de la
+   página entera. */
 .nota-body { max-width: 72ch; }
 .nota-body p { margin: 0 0 .7rem; }
 
