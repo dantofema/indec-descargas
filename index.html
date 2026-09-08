@@ -5,65 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Descargas del Marco Geoestadístico Nacional — INDEC</title>
     <meta name="description" content="Descargá capas del Marco Geoestadístico Nacional del INDEC en GeoPackage: departamentos, radios y fracciones censales, localidades y vías de circulación." />
-    <link rel="stylesheet" href="./src/style.css" />
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body data-pagina="home">
     <!--#shell:header-->
 
-    <main>
-      <div class="search">
-        <div class="search-row">
-          <!-- Las opciones las llena main.js desde TYPE_ORDER y TYPES: el
-               orden y las etiquetas tienen una sola fuente. -->
-          <select id="type" aria-label="Tipo de objeto"></select>
-          <input
-            id="q"
-            type="search"
-            autocomplete="off"
-            placeholder="Escribí un nombre. Por ejemplo: Tres de Febrero"
-            aria-label="Buscar un objeto geográfico"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-controls="results"
-            aria-expanded="false"
-          />
-        </div>
-        <ul id="results" class="results" role="listbox" hidden></ul>
-      </div>
-
-      <p id="status" class="status">Cargando el catálogo…</p>
-
-      <section id="detail" class="detail" hidden>
-        <div class="row row-identity">
-          <div id="map" class="map"></div>
-          <div class="identity">
-            <h2 id="detail-name"></h2>
-            <p id="detail-meta" class="meta"></p>
-            <div id="detail-self"></div>
+    <main class="home">
+      <section class="hero">
+        <h1>La cartografía del INDEC más fácil de descargar y usarla en tus proyectos</h1>
+        <p class="subtitle">Buscá una provincia, departamento, localidad, municipio o aglomerado y descargalo en GeoPackage. Sin saber WFS, sin cuenta, sin instalar nada.</p>
+        <div class="search">
+          <div class="search-row">
+            <!-- Las opciones las llena el buscador desde TYPE_ORDER y TYPES:
+                 el orden y las etiquetas tienen una sola fuente. -->
+            <select id="type" aria-label="Tipo de objeto"></select>
+            <input
+              id="q"
+              type="search"
+              autocomplete="off"
+              placeholder="Escribí un nombre. Por ejemplo: Tres de Febrero"
+              aria-label="Buscar un objeto geográfico"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="results"
+              aria-expanded="false"
+            />
           </div>
+          <ul id="results" class="results" role="listbox" hidden></ul>
         </div>
+        <p id="status" class="status"></p>
+      </section>
 
-        <div class="row row-bulk">
-          <div id="row-parents" hidden>
-            <p class="block-title">De qué forma parte</p>
-            <ul id="parents" class="rel"></ul>
-          </div>
-          <div>
-            <p class="block-title">Qué contiene, capa entera</p>
-            <ul id="children" class="rel"></ul>
-          </div>
-        </div>
-
-        <div class="row" id="row-browse" hidden>
-          <p class="block-title">Recorrer y descargar de a uno</p>
-          <div id="browse"></div>
-        </div>
+      <section class="totales">
+        <h2>Qué hay adentro</h2>
+        <ul id="totals" class="totales-grid"></ul>
       </section>
     </main>
 
     <!--#shell:cta-->
     <!--#shell:footer-->
 
-    <script type="module" src="./src/main.js"></script>
+    <script type="module" src="/src/pages/home.js"></script>
   </body>
 </html>

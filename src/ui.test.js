@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { downloadButton } from './ui.js'
 
 describe('downloadButton', () => {
-  // main.js y children.js llaman downloadButton con dos argumentos: si el
+  // resultados.js y children.js llaman downloadButton con dos argumentos: si el
   // armado de className cambia, tienen que seguir recibiendo exactamente
   // esto.
   it('sin variante da exactamente la clase btn', () => {

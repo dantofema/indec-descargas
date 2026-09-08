@@ -38,7 +38,9 @@ function typeOption(value, label) {
 export function createSearchBox({ input, select, list, onPick }) {
   let objects = null
 
-  select.append(
+  // `replaceChildren` y no `append`: los módulos de página se auto-invocan
+  // y tienen que poder cablearse de nuevo sin duplicar las opciones.
+  select.replaceChildren(
     typeOption('', 'Todos los tipos'),
     ...TYPE_ORDER.map((t) => typeOption(t, TYPES[t].plural)),
   )

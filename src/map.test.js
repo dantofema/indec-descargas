@@ -259,7 +259,7 @@ describe('lo dibujado no se borra hasta que hay con qué reemplazarlo', () => {
 // Fix round 1, hallazgo 1 (importante): la línea de metadatos de la fila 1
 // describe el objeto de la ficha, siempre, y nunca acumula. Antes,
 // showFeature disparaba el mismo callback que showObject y cada "Ver"
-// pegaba otro tramo de texto sin límite a `#detail-meta` (ver main.js).
+// pegaba otro tramo de texto sin límite a `#detail-meta` (ver pages/resultados.js).
 describe('la identidad del objeto no la toca un Ver', () => {
   it('showObject sí avisa las propiedades del objeto: esa línea lo describe', async () => {
     const p = showObject(objeto)

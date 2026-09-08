@@ -38,7 +38,7 @@ describe('readPartials', () => {
 })
 
 describe('las páginas del sitio', () => {
-  const paginas = ['index.html', 'notas/index.html', 'servicios/index.html']
+  const paginas = ['index.html', 'resultados/index.html', 'notas/index.html', 'servicios/index.html']
 
   it('todas traen header, CTA y footer, y todas resuelven', () => {
     for (const p of paginas) {

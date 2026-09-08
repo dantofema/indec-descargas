@@ -59,9 +59,11 @@ main { padding-top: 1.75rem; }
 /* Marca en el nav cuál página estás mirando. El body trae `data-pagina`
    —cada página lo pone en su propio <body>— y el link, `data-nav` —lo pone
    el shell, en build—: el puente entre los dos es CSS puro, sin JS, así
-   que no hay estado que se pueda desincronizar del body real. La tarea 8
-   suma el par de resultados acá al crear esa página. */
+   que no hay estado que se pueda desincronizar del body real.
+   /resultados/ marca "Inicio": no es una entrada propia del nav, es la
+   ficha a la que lleva el buscador del home. */
 body[data-pagina="home"] .site-nav [data-nav="home"],
+body[data-pagina="resultados"] .site-nav [data-nav="home"],
 body[data-pagina="notas"] .site-nav [data-nav="notas"],
 body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   color: var(--fg);
@@ -80,6 +82,31 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   font-size: .9rem;
 }
 .cta a:hover { background: var(--hl); }
+
+/* El home: el hero con el buscador arriba y los totales abajo. */
+.home .hero { margin: 1.5rem 0 3rem; }
+.home h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .6rem; max-width: 24ch; }
+.home .subtitle { font-size: 1.05rem; max-width: 60ch; }
+.home .totales h2 { font-size: 1.15rem; margin: 0 0 1rem; }
+.totales { margin: 0 0 3rem; }
+
+/* Ocho tiles que se acomodan solos: sin breakpoint propio, la grilla
+   reparte lo que haya de ancho. */
+.totales-grid {
+  list-style: none; padding: 0; margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: .75rem;
+}
+.totales-tile {
+  display: flex; flex-direction: column; gap: .15rem;
+  padding: .9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.totales-tile svg { color: var(--accent); margin-bottom: .35rem; }
+.totales-n { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.totales-label { color: var(--muted); font-size: .85rem; }
 
 .search { position: relative; }
 
@@ -205,6 +232,10 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 .ejemplo code { background: none; padding: 0; }
 
 .identity { display: flex; flex-direction: column; justify-content: center; }
+/* El nombre y el "Copiar enlace" comparten fila: el botón acompaña al
+   objeto que se está mirando, no al bloque entero. */
+.identity-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; }
+.identity-head h2 { margin: 0 0 .3rem; }
 
 .block-title {
   font-size: .78rem; text-transform: uppercase; letter-spacing: .06em;

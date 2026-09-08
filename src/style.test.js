@@ -203,4 +203,10 @@ describe('el nav marca la página activa', () => {
   it('servicios', () => {
     expect(css).toMatch(/\[data-pagina="servicios"\][^{]*\[data-nav="servicios"\]/)
   })
+
+  // /resultados/ no es una entrada del nav: es la ficha a la que lleva el
+  // buscador del home, así que marca "Inicio".
+  it('resultados marca Inicio', () => {
+    expect(css).toMatch(/\[data-pagina="resultados"\][^{]*\[data-nav="home"\]/)
+  })
 })

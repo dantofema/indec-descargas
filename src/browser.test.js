@@ -612,4 +612,84 @@ describe('createBrowser', () => {
     expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
     expect(container.textContent).toMatch(/sin código/i)
   })
+
+  // Task 8: /resultados/ abre la capa que dice la URL. El browser no sabe
+  // nada de la URL —sólo recibe qué capa abrir y avisa cuál quedó abierta—,
+  // pero sin estas dos puntas la barra y la pestaña no se pueden atar.
+  describe('la capa inicial y el aviso de qué pestaña quedó activa', () => {
+    const crearBrowserDePrueba = ({ onTab } = {}) => createBrowser({
+      container, onView: () => {}, onError: () => {}, ...(onTab ? { onTab } : {}),
+    })
+
+    const pestañaActiva = () => container
+      .querySelector('[role="tab"][aria-selected="true"]')
+      ?.firstChild.textContent
+
+    beforeEach(() => { global.fetch = vi.fn(async () => paginaOk()) })
+
+    it('abre la capa que se le pide en vez de la primera', () => {
+      const b = crearBrowserDePrueba()
+      b.show(dep, 'radios')
+      expect(pestañaActiva()).toBe('Radios censales')
+    })
+
+    it('una capa que el objeto no tiene cae en la primera, no en una pestaña vacía', () => {
+      const b = crearBrowserDePrueba()
+      b.show(dep, 'departamentos')
+      expect(pestañaActiva()).toBe('Fracciones censales')
+    })
+
+    // Una capa en cero no es pestaña (NAV-R9): pedirla por URL tiene que
+    // caer en la primera, no dejar la fila con una pestaña que no existe.
+    it('una capa en cero tampoco se abre: cae en la primera', () => {
+      const b = crearBrowserDePrueba()
+      b.show({ t: 'dep', c: '94028', n: 'Antártida Argentina', ch: { fracciones: 3, vias: 0 } }, 'vias')
+      expect(pestañaActiva()).toBe('Fracciones censales')
+    })
+
+    it('sin capa pedida sigue abriendo la primera, como siempre', () => {
+      const b = crearBrowserDePrueba()
+      b.show(dep)
+      expect(pestañaActiva()).toBe('Fracciones censales')
+    })
+
+    it('avisa qué pestaña quedó activa, para que la URL la pueda guardar', () => {
+      const onTab = vi.fn()
+      const b = crearBrowserDePrueba({ onTab })
+      b.show(dep, 'radios')
+      expect(onTab).toHaveBeenCalledWith('radios')
+    })
+
+    it('también avisa la primera, cuando nadie pidió ninguna', () => {
+      const onTab = vi.fn()
+      const b = crearBrowserDePrueba({ onTab })
+      b.show(dep)
+      expect(onTab).toHaveBeenCalledWith('fracciones')
+    })
+
+    it('avisa cada vez que el usuario cambia de pestaña', () => {
+      const onTab = vi.fn()
+      const b = crearBrowserDePrueba({ onTab })
+      b.show(dep)
+      onTab.mockClear()
+      container.querySelectorAll('[role="tab"]')[1].click()
+      expect(onTab).toHaveBeenCalledWith('radios')
+    })
+
+    // NAV-R7 llega hasta acá: un enlace con `capa=vias` abre el panel de
+    // costo, no le cobra al que lo abre hasta 99 s que nunca pidió.
+    it('la capa lenta pedida por URL abre el panel de costo y no la pide', () => {
+      const b = crearBrowserDePrueba()
+      b.show(depVias, 'vias')
+      expect(container.textContent).toMatch(/99 segundos/)
+      expect(boton(/cargar/i)).not.toBe(undefined)
+      const pedidas = global.fetch.mock.calls.map(([url]) => String(url))
+      expect(pedidas.filter((u) => u.includes('vias_de_circulacion'))).toEqual([])
+    })
+
+    it('sin onTab no se rompe: es opcional', () => {
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      expect(() => b.show(dep, 'radios')).not.toThrow()
+    })
+  })
 })

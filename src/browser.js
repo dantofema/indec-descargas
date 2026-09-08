@@ -87,8 +87,12 @@ const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geomet
  * `show` devuelve si dibujó algo: quién puede recorrerse lo decide esta
  * fila, no quien la cablea. Duplicar la decisión afuera es cómo aparece una
  * fila visible y vacía.
+ *
+ * `onTab` avisa qué pestaña quedó activa —la primera al abrir, y cada
+ * cambio después—. El browser no sabe que existe una URL: la página que lo
+ * cablea es la que decide qué hacer con ese aviso.
  */
-export function createBrowser({ container, onView, onError }) {
+export function createBrowser({ container, onView, onError, onTab = () => {} }) {
   let obj = null
   let active = null
   let pages = new Map()
@@ -109,7 +113,14 @@ export function createBrowser({ container, onView, onError }) {
     inFlight = null
   }
 
-  function show(next) {
+  /**
+   * `initialLayer` es la capa que pide la URL. Se abre sólo si el objeto la
+   * tiene y no está en cero: una capa que no es pestaña dejaría la fila
+   * mostrando un panel vacío, y caer en la primera es mejor respuesta que
+   * un error (lo mismo que hace `permalink.parse` con una capa que no
+   * existe).
+   */
+  function show(next, initialLayer = null) {
     abortInFlight('se eligió otro objeto')
     obj = next
     active = null
@@ -129,13 +140,14 @@ export function createBrowser({ container, onView, onError }) {
     body.className = 'pane'
     container.append(tabsBox, body)
 
-    createTabs({
+    const tabs = createTabs({
       container: tabsBox,
       items: kids.map(({ key, count }) => ({
         key, label: childOf(key).label, badge: fmt(count),
       })),
       onSelect: (key) => {
         active = key
+        onTab(key)
         if (LAZY_KEYS.has(key) && !confirmed.has(key)) {
           // Este camino no pasa por `load()` —muestra el panel de costo, no
           // pide nada—, pero es tan "cambiar de pestaña" como cualquier
@@ -148,6 +160,11 @@ export function createBrowser({ container, onView, onError }) {
         load(key, pages.get(key) ?? 0)
       },
     })
+
+    // `createTabs` ya seleccionó la primera al construirse, y corta el
+    // reclic sobre la activa: pedir la primera explícitamente no dispara
+    // nada de más, y pedir otra aborta el pedido de la primera (NAV-R8).
+    if (kids.some(({ key }) => key === initialLayer)) tabs.select(initialLayer)
     return true
   }
 
@@ -215,11 +232,11 @@ export function createBrowser({ container, onView, onError }) {
    * que los ~12 s medidos están corriendo y no que la interfaz se colgó.
    *
    * `onView` es una interfaz pública genérica: no podemos asumir que quien
-   * la implementa ya capturó sus propios errores (hoy `main.js` sí lo hace,
-   * pero no es parte del contrato). Un rechazo sin `.catch` acá quedaría
-   * como Unhandled Rejection. `onError` ya existe para justo esto —avisar
-   * un fallo sin cortar el resto de la ficha—, así que lo reusamos en vez
-   * de tragarnos el error con un `.catch(() => {})` mudo.
+   * la implementa ya capturó sus propios errores (hoy `pages/resultados.js`
+   * sí lo hace, pero no es parte del contrato). Un rechazo sin `.catch` acá
+   * quedaría como Unhandled Rejection. `onError` ya existe para justo esto
+   * —avisar un fallo sin cortar el resto de la ficha—, así que lo reusamos
+   * en vez de tragarnos el error con un `.catch(() => {})` mudo.
    */
   function markRow(tableEl, rows, row, childKey) {
     const idx = rows.indexOf(row)

@@ -10,6 +10,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: resolve(import.meta.dirname, 'index.html'),
+        resultados: resolve(import.meta.dirname, 'resultados/index.html'),
         notas: resolve(import.meta.dirname, 'notas/index.html'),
         servicios: resolve(import.meta.dirname, 'servicios/index.html'),
       },
