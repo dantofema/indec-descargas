@@ -111,6 +111,12 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
     const losTres = [...porNombre.values()].filter((s) => s.size === 3).length
     expect(noteFor('gobierno-local').paragraphs.join(' ')).toContain(`${losTres} nombres del catálogo`)
   })
+
+  it('gobierno local dice que el IGN publica otro número', () => {
+    const texto = noteFor('gobierno-local').paragraphs.join(' ')
+    expect(texto).toContain('2.114')
+    expect(texto).toContain('529')
+  })
 })
 
 describe('las fuentes externas (NOTA-R2, mitad nueva)', () => {
