@@ -36,7 +36,7 @@ function typeOption(value, label) {
  * pide hasta que alguien toca el campo.
  */
 export function createSearchBox({ input, select, list, onPick }) {
-  let objetos = null
+  let objects = null
 
   select.append(
     typeOption('', 'Todos los tipos'),
@@ -46,8 +46,8 @@ export function createSearchBox({ input, select, list, onPick }) {
   const combo = createCombobox({ input, list, renderOption, onSelect: onPick })
 
   function runSearch() {
-    if (!objetos) return
-    combo.render(search(objetos, input.value, { type: select.value }))
+    if (!objects) return
+    combo.render(search(objects, input.value, { type: select.value }))
   }
 
   // El `change` también busca: cambiar de tipo tiene que acotar lo que ya
@@ -57,7 +57,7 @@ export function createSearchBox({ input, select, list, onPick }) {
 
   return {
     setObjects(next) {
-      objetos = next
+      objects = next
       runSearch()
     },
   }

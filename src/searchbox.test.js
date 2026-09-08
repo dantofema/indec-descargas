@@ -68,4 +68,13 @@ describe('createSearchBox', () => {
     el.list.children[0].click()
     expect(onPick).toHaveBeenCalledWith(objetos[0])
   })
+
+  it('lo escrito antes de que llegue el catálogo se busca solo cuando llega', () => {
+    // El home pide el catálogo recién cuando alguien toca el campo, así que
+    // escribir primero y recibirlo después es el caso normal, no el raro.
+    escribir('tres de febrero')
+    expect(el.list.children).toHaveLength(0)
+    searchbox.setObjects(objetos)
+    expect(el.list.children).toHaveLength(2)
+  })
 })
