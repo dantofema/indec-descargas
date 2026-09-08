@@ -89,6 +89,9 @@ const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geomet
  * fila, no quien la cablea. Duplicar la decisión afuera es cómo aparece una
  * fila visible y vacía.
  *
+ * `clearSelection` saca la marca de la fila vista sin tocar nada más: es
+ * para quien deja de mirar una fila sin dejar de recorrer la capa.
+ *
  * `onTab` avisa qué pestaña quedó activa —la primera al abrir, y cada
  * cambio después—. El browser no sabe que existe una URL: la página que lo
  * cablea es la que decide qué hacer con ese aviso.
@@ -284,6 +287,23 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
       })
   }
 
+  /**
+   * Saca la marca de "estás mirando esta fila" y nada más: no toca la
+   * pestaña activa, ni la página en la que va cada una, ni las capas lentas
+   * ya aceptadas. Es lo que necesita "Volver a <objeto>", que devuelve
+   * ficha y mapa al padre dejando la fila 3 donde estaba: una fila marcada
+   * mientras la ficha describe al padre es el mismo desacuerdo que NAV-R10
+   * vino a matar, por el otro lado.
+   *
+   * Quita el atributo en vez de ponerlo en `false`, así la tabla queda como
+   * la dibujó `renderTable`, que no lo escribe hasta que alguien ve una
+   * fila.
+   */
+  function clearSelection() {
+    body?.querySelectorAll('tbody tr[aria-selected]')
+      .forEach((tr) => tr.removeAttribute('aria-selected'))
+  }
+
   function metaParagraph(texto) {
     const p = document.createElement('p')
     p.className = 'meta'
@@ -305,5 +325,5 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
     return wrap
   }
 
-  return { show }
+  return { show, clearSelection }
 }

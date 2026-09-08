@@ -172,6 +172,29 @@ describe('createBrowser', () => {
       expect([...trs()].filter((_, i) => i !== 2).every((tr) => tr.getAttribute('aria-selected') !== 'true')).toBe(true)
     })
 
+    // El contrato de `clearSelection`: saca la marca y NADA más. Si de paso
+    // reiniciara páginas o confirmaciones sería `show` con otro nombre, que
+    // es justo lo que "Volver" no puede volver a llamar.
+    it('clearSelection la saca sin tocar la página ni la confirmación', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+      boton(/Siguiente/).click()
+      await vi.waitFor(() => expect(container.textContent).toContain('21'))
+      container.querySelectorAll('tbody tr')[2].querySelector('button').click()
+      expect(container.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
+
+      const pedidosAntes = global.fetch.mock.calls.length
+      b.clearSelection()
+
+      expect(container.querySelectorAll('tbody tr[aria-selected]')).toHaveLength(0)
+      expect(container.querySelector('[role="tab"][aria-selected="true"]').textContent)
+        .toContain('Fracciones censales')
+      expect(container.textContent).toContain('21')
+      expect(global.fetch.mock.calls).toHaveLength(pedidosAntes)
+    })
+
     it('ver otra fila mueve la marca, no la duplica', async () => {
       global.fetch = vi.fn(async () => paginaOk())
       const b = createBrowser({ container, onView: () => {}, onError: () => {} })

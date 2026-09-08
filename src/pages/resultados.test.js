@@ -505,6 +505,22 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
     await verPrimeraFila()
     expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
   })
+
+  // El otro lado del invariante de NAV-R10: la marca dice "estás mirando
+  // esta fila", así que no puede sobrevivir a un "Volver" que devuelve la
+  // ficha y el mapa al padre. Antes de que "Volver" dejara de pasar por
+  // `browser.show`, el reset la borraba de arrastre —al precio que motivó
+  // el hallazgo I4—; ahora hay que sacarla a mano.
+  it('y deja de estarlo al volver a la ficha del objeto', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
+
+    document.querySelector('#back-to-object').click()
+
+    expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
+    expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(0)
+  })
 })
 
 // "Volver a <objeto>" llamaba a `selectObject`, que llama a `browser.show`,

@@ -140,6 +140,9 @@ function backButton() {
     // se está mirando; si el redibujo falla, `drawObject` lo vuelve a
     // poner.
     setStatus(el.status, '')
+    // La marca de la tabla dice "estás mirando esta fila": si sobrevive al
+    // "Volver", la fila 3 contradice a la ficha y al mapa (NAV-R10).
+    browser.clearSelection()
     showObjectIdentity(current)
     drawObject(current)
   })
