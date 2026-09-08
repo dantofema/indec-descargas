@@ -29,10 +29,18 @@ funcionalidades no exista.
 ### SITIO-R3 — `capa=vias` en el permalink abre el panel de costo sin pedir nada
 
 Un enlace que apunta a la pestaña de vías la abre en su panel de costo —el mismo que exige
-NAV-R7 al abrirla a mano— sin disparar ningún pedido contra el GeoServer.
+NAV-R7 al abrirla a mano— sin disparar ningún pedido de vías contra el GeoServer.
+
+Al armarse, la fila de pestañas selecciona la primera y pide su página; el salto a vías, en el
+mismo tick, la aborta antes de que llegue (NAV-R8). O sea que abrir el enlace sí dispara un
+pedido —el de la primera pestaña, abortado— y nunca uno de vías, que es el caro. Verificado el
+2026-09-08: `?t=dep&c=06840&capa=vias` dispara un solo pedido, el de fracciones.
 
 **Por qué:** si no, un enlace compartido le cobra al que lo abre hasta 99 segundos medidos
-(NAV-R7) que nunca pidió: sólo lo abrió porque alguien se lo mandó.
+(NAV-R7) que nunca pidió: sólo lo abrió porque alguien se lo mandó. El pedido abortado de la
+primera pestaña no le cuesta nada —es una capa rápida, 0,65-0,89 s medidos, y muere en el mismo
+tick—, así que no hace falta un camino aparte para evitarlo; lo que la regla no puede permitir
+es el pedido de vías, y ése no se hace.
 
 ### SITIO-R4 — Parámetros inválidos muestran el buscador, nunca una ficha rota
 
