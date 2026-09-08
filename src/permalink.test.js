@@ -10,7 +10,9 @@ describe('parse', () => {
   })
 
   it('lee tipo y código', () => {
-    expect(parse('?t=dep&c=06840')).toEqual({ status: 'ok', type: 'dep', code: '06840', layer: null })
+    expect(parse('?t=dep&c=06840')).toEqual(
+      { status: 'ok', type: 'dep', code: '06840', layer: null, layerRequested: false },
+    )
   })
 
   it('conserva los ceros a la izquierda del código', () => {
@@ -19,12 +21,24 @@ describe('parse', () => {
 
   it('lee la capa cuando es una de las declaradas', () => {
     expect(parse('?t=dep&c=06840&capa=radios')).toEqual(
-      { status: 'ok', type: 'dep', code: '06840', layer: 'radios' },
+      { status: 'ok', type: 'dep', code: '06840', layer: 'radios', layerRequested: true },
     )
   })
 
   it('ignora una capa que no existe en vez de fallar: la ficha sirve igual', () => {
     expect(parse('?t=dep&c=06840&capa=inventada').layer).toBeNull()
+  })
+
+  // `layer: null` solo no alcanza: la página lo usa para decidir si
+  // reescribe la barra, y "no nombró capa" y "nombró una que no existe" le
+  // piden cosas opuestas. Sin distinguirlos, `?capa=radioss` abre
+  // fracciones y deja la barra —y el botón "Copiar enlace"— diciendo
+  // `capa=radioss`, que es una capa que la página no muestra.
+  it('distingue no nombrar capa de nombrar una que no existe', () => {
+    expect(parse('?t=dep&c=06840').layerRequested).toBe(false)
+    expect(parse('?t=dep&c=06840&capa=radios').layerRequested).toBe(true)
+    expect(parse('?t=dep&c=06840&capa=radioss').layerRequested).toBe(true)
+    expect(parse('?t=dep&c=06840&capa=radioss').layer).toBeNull()
   })
 
   it('rechaza un tipo desconocido', () => {
@@ -79,7 +93,8 @@ describe('format', () => {
   it('ida y vuelta: lo que formatea es lo que parsea', () => {
     for (const layer of [null, 'vias']) {
       const obj = { t: 'loc', c: '06840010' }
-      expect(parse(search(format(obj, layer)))).toEqual({ status: 'ok', type: obj.t, code: obj.c, layer })
+      expect(parse(search(format(obj, layer))))
+        .toEqual({ status: 'ok', type: obj.t, code: obj.c, layer, layerRequested: layer !== null })
     }
   })
 })

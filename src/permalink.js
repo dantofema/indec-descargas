@@ -31,8 +31,21 @@ export function parse(search) {
   // Una capa que no existe se ignora en vez de invalidar el enlace: el
   // objeto sigue siendo mostrable y abrir su primera pestaña es una
   // respuesta mejor que un error.
+  //
+  // `layerRequested` va aparte porque `layer: null` mezcla dos cosas que la
+  // página necesita distinguir: "el enlace no nombró capa" —y entonces la
+  // pestaña que se abre sola no se escribe en la barra— y "nombró una que
+  // no existe" —y entonces la barra ya afirmó algo falso, así que hay que
+  // reescribirla con la que se abrió en su lugar—. Las claves de la URL no
+  // cambian: esto es del objeto que devuelve `parse`, no del cable.
   const layer = p.get('capa')
-  return { status: 'ok', type: t, code: c, layer: layer && Object.hasOwn(CHILD_LAYERS, layer) ? layer : null }
+  return {
+    status: 'ok',
+    type: t,
+    code: c,
+    layer: layer && Object.hasOwn(CHILD_LAYERS, layer) ? layer : null,
+    layerRequested: p.has('capa'),
+  }
 }
 
 /**

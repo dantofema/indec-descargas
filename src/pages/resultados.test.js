@@ -554,6 +554,16 @@ describe('la URL es el estado', () => {
     expect(window.location.search).toBe('?t=dep&c=06840&capa=fracciones')
   })
 
+  // El caso hermano: una capa que no existe en ninguna parte. La página
+  // hacía lo mismo que arriba —abrir la primera pestaña— pero dejaba la
+  // barra intacta, así que seguía diciendo `capa=radioss`, una capa que no
+  // se está mostrando, y "Copiar enlace" propagaba ese enlace roto.
+  it('una capa que no existe también, en vez de dejar la barra mintiendo', async () => {
+    await montar('?t=dep&c=06840&capa=radioss')
+    expect($('[role="tab"][aria-selected="true"]').textContent).toContain('Fracciones censales')
+    expect(window.location.search).toBe('?t=dep&c=06840&capa=fracciones')
+  })
+
   it('cambiar de pestaña reescribe la URL sin navegar', async () => {
     await montar('?t=dep&c=06840')
     document.querySelectorAll('[role="tab"]')[1].click()

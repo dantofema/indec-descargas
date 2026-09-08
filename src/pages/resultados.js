@@ -41,8 +41,8 @@ let current = null
  * usuario: no se escribe, así el enlace que alguien comparte queda como lo
  * abrió y `capa=` aparece recién cuando se cambia de pestaña. La excepción
  * es un enlace que sí nombró una capa: ahí la barra ya afirmó qué se está
- * viendo, y si el objeto no tiene esa capa hay que dejarla diciendo la que
- * se abrió en su lugar.
+ * viendo, y si el objeto no tiene esa capa —o si esa capa no existe— hay
+ * que dejarla diciendo la que se abrió en su lugar.
  */
 let writeTab = false
 
@@ -167,13 +167,19 @@ function showRow(layer, row) {
 /**
  * Dibuja la ficha del objeto que pide la URL. `initialLayer` es la capa que
  * el enlace quiere abierta; el browser la ignora si el objeto no la tiene.
+ *
+ * `layerRequested` es si el enlace nombró alguna capa, la tenga el objeto o
+ * no y exista o no: es lo que decide si la pestaña que se abre se escribe
+ * en la barra. No alcanza con mirar `initialLayer`, que es `null` también
+ * cuando la capa nombrada no existe —y ahí la barra ya afirmó algo falso
+ * que hay que corregir (ver `permalink.parse`)—.
  */
-function selectObject(obj, initialLayer = null) {
+function selectObject(obj, initialLayer = null, layerRequested = initialLayer !== null) {
   // Antes de `show`: el `onTab` del browser dispara en el mismo momento en
   // que se arma la primera pestaña, y necesita saber de quién es la ficha y
   // si esa primera pestaña se escribe en la barra (ver `writeTab`).
   current = obj
-  writeTab = initialLayer !== null
+  writeTab = layerRequested
   el.q.value = obj.n
   setStatus('')
 
@@ -316,7 +322,7 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
       if (!obj) return setStatus(`No hay ningún objeto con el código ${url.code} en el catálogo.`, true)
 
       initMap('map') // recién acá: sin objeto no hay nada que dibujar
-      selectObject(obj, url.layer)
+      selectObject(obj, url.layer, url.layerRequested)
       el.q.focus()
     })
     .catch((err) => {
