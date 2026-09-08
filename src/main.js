@@ -1,10 +1,9 @@
-import { search, TYPE_ORDER } from './search.js'
 import { loadCatalog } from './catalog.js'
 import { selfUrl, TYPES, childOf } from './download.js'
 import { initMap, showObject, showFeature, onFeature } from './map.js'
 import { fmt, downloadButton } from './ui.js'
 import { childRows } from './children.js'
-import { createCombobox } from './combobox.js'
+import { createSearchBox } from './searchbox.js'
 import { codeIndex, parentsOf } from './parents.js'
 import { createBrowser } from './browser.js'
 import { specOf } from './columns.js'
@@ -26,8 +25,7 @@ const el = {
   generated: document.querySelector('#generated'),
 }
 
-let catalog = null
-let index = null   // se llena junto con `catalog`
+let index = null
 
 function setStatus(text, isError = false) {
   el.status.textContent = text
@@ -101,53 +99,9 @@ function selectObject(obj) {
   document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
 }
 
-/** Cada resultado muestra el nombre y, al lado, de qué tipo es. */
-function renderOption(obj) {
-  const frag = document.createDocumentFragment()
-  const name = document.createElement('span')
-  name.textContent = obj.n
-  const kind = document.createElement('span')
-  kind.className = 'kind'
-  kind.textContent = obj.p && obj.p !== obj.n
-    ? `${TYPES[obj.t].label} · ${obj.p}`
-    : TYPES[obj.t].label
-  frag.append(name, kind)
-  return frag
-}
-
-const combo = createCombobox({
-  input: el.q,
-  list: el.results,
-  renderOption,
-  onSelect: selectObject,
+const searchbox = createSearchBox({
+  input: el.q, select: el.type, list: el.results, onPick: selectObject,
 })
-
-/**
- * Las opciones del filtro salen de TYPE_ORDER y TYPES, no del HTML: el
- * orden y las etiquetas quedan en un solo lugar. El valor vacío es
- * "todos", que es donde arranca (BUS-R1).
- */
-function typeOption(value, label) {
-  const option = document.createElement('option')
-  option.value = value
-  option.textContent = label
-  return option
-}
-
-el.type.append(
-  typeOption('', 'Todos los tipos'),
-  ...TYPE_ORDER.map((t) => typeOption(t, TYPES[t].plural)),
-)
-
-function runSearch() {
-  if (!catalog) return
-  combo.render(search(catalog.objects, el.q.value, { type: el.type.value }))
-}
-
-// El `change` también busca: cambiar de tipo tiene que acotar lo que ya
-// está escrito, sin obligar a volver a tipear.
-el.q.addEventListener('input', runSearch)
-el.type.addEventListener('change', runSearch)
 
 initMap('map')
 
@@ -169,8 +123,8 @@ document.addEventListener('object:selected', (e) => {
 
 loadCatalog()
   .then((c) => {
-    catalog = c
     index = codeIndex(c.objects)
+    searchbox.setObjects(c.objects)
     setStatus('')
     el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
     el.q.focus()
