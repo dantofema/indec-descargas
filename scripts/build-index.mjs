@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { writeFile, mkdir, readFile, access, rename } from 'node:fs/promises'
 import { parse } from 'csv-parse/sync'
-import { buildCatalog } from './lib/aggregate.mjs'
+import { buildCatalog, buildTotales } from './lib/aggregate.mjs'
 import { assertMinRows } from './lib/dump.mjs'
 
 const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
 const CACHE_DIR = new URL('./.cache/', import.meta.url)
 const OUT = new URL('../public/catalog.json', import.meta.url)
+const OUT_TOTALES = new URL('../public/totales.json', import.meta.url)
 
 /** Qué columnas se piden de cada capa. Menos columnas, menos bytes. */
 const DUMPS = {
@@ -106,6 +107,10 @@ async function main() {
   await writeFile(OUT, JSON.stringify(catalog))
   const size = JSON.stringify(catalog).length
   console.error(`Escrito public/catalog.json (${(size / 1024).toFixed(0)} KB)`)
+
+  const totales = buildTotales(catalog)
+  await writeFile(OUT_TOTALES, JSON.stringify(totales, null, 2) + '\n')
+  console.error(`Escrito public/totales.json`, totales)
 }
 
 main().catch((err) => {

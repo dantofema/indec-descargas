@@ -196,3 +196,38 @@ describe('buildCatalog: la provincia del hijo sale de cpr, no de cde', () => {
     })
   }
 })
+
+import { buildTotales } from './aggregate.mjs'
+
+describe('buildTotales', () => {
+  const catalog = {
+    generated: '2026-09-06',
+    objects: [
+      { t: 'jur', c: '06', n: 'Buenos Aires', ch: { departamentos: 2, fracciones: 10, radios: 100, localidades: 5, vias: 1000 } },
+      { t: 'jur', c: '02', n: 'CABA', ch: { departamentos: 1, fracciones: 3, radios: 30, localidades: 1, vias: 200 } },
+      { t: 'dep', c: '06840', n: 'Tres de Febrero', ch: { radios: 40 } },
+      { t: 'dep', c: '02001', n: 'Comuna 1', ch: {} },
+      { t: 'loc', c: '068400', n: 'x', ch: { vias: 9 } },
+      { t: 'gl', c: '060840', n: 'y' },
+      { t: 'aglo', c: '0001', n: 'z', ch: { localidades: 2, vias: 5 } },
+    ],
+  }
+
+  it('cuenta por tipo los objetos buscables', () => {
+    const t = buildTotales(catalog)
+    expect(t).toMatchObject({ jur: 2, dep: 2, loc: 1, gl: 1, aglo: 1 })
+  })
+
+  it('las capas sin objeto propio se suman sobre las jurisdicciones, no sobre todo', () => {
+    // Sumar sobre todos los objetos contaría los radios de Tres de Febrero
+    // dos veces: una en el departamento y otra en su provincia.
+    const t = buildTotales(catalog)
+    expect(t.fracciones).toBe(13)
+    expect(t.radios).toBe(130)
+    expect(t.vias).toBe(1200)
+  })
+
+  it('arrastra la fecha del catálogo, para que el home no diga una distinta', () => {
+    expect(buildTotales(catalog).generated).toBe('2026-09-06')
+  })
+})
