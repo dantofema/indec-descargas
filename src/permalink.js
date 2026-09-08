@@ -18,7 +18,7 @@ export function parse(search) {
   if (t === null || c === null) {
     return { estado: 'invalido', motivo: 'faltan el tipo o el código del objeto en el enlace' }
   }
-  if (!(t in TYPES)) {
+  if (!Object.hasOwn(TYPES, t)) {
     return { estado: 'invalido', motivo: `tipo de objeto desconocido en el enlace: ${t}` }
   }
   // El código es lo único que se interpola dentro del CQL_FILTER: entra por
@@ -32,7 +32,7 @@ export function parse(search) {
   // objeto sigue siendo mostrable y abrir su primera pestaña es una
   // respuesta mejor que un error.
   const capa = p.get('capa')
-  return { estado: 'ok', t, c, capa: capa && capa in CHILD_LAYERS ? capa : null }
+  return { estado: 'ok', t, c, capa: capa && Object.hasOwn(CHILD_LAYERS, capa) ? capa : null }
 }
 
 /** El enlace permanente de un objeto, opcionalmente con su capa abierta. */

@@ -41,15 +41,13 @@ export function assertCode(code) {
 }
 
 export function typeOf(obj) {
-  const type = TYPES[obj?.t]
-  if (!type) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
-  return type
+  if (!Object.hasOwn(TYPES, obj?.t)) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
+  return TYPES[obj.t]
 }
 
 export function childOf(childKey) {
-  const child = CHILD_LAYERS[childKey]
-  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
-  return child
+  if (!Object.hasOwn(CHILD_LAYERS, childKey)) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  return CHILD_LAYERS[childKey]
 }
 
 const GPKG = 'geopackage'

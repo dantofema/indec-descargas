@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selfUrl, childUrl, filename, featureUrl, GEOSERVER, TYPES } from './download.js'
+import { selfUrl, childUrl, filename, featureUrl, typeOf, childOf, GEOSERVER, TYPES } from './download.js'
 
 const treFeb = { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero' }
 const buenosAires = { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires' }
@@ -155,5 +155,17 @@ describe('filename', () => {
   // inyecta opciones en la URL de descarga.
   it('rechaza un código inválido igual que sus hermanas', () => {
     expect(() => filename({ t: 'dep', c: '06840;filename:otro' })).toThrow(/código/i)
+  })
+})
+
+describe('typeOf', () => {
+  it('tira con un nombre de la cadena de prototipos, no devuelve el constructor de Object', () => {
+    expect(() => typeOf({ t: 'constructor' })).toThrow(/tipo de objeto desconocido/)
+  })
+})
+
+describe('childOf', () => {
+  it('tampoco se deja engañar', () => {
+    expect(() => childOf('toString')).toThrow(/capa hija desconocida/)
   })
 })

@@ -45,6 +45,18 @@ describe('parse', () => {
     expect(parse('?t=xx&c=06840').motivo).toMatch(/tipo/i)
     expect(parse('?t=dep&c=abc').motivo).toMatch(/código|codigo/i)
   })
+
+  it('un nombre de la cadena de prototipos no es un tipo: `in` decía que sí', () => {
+    for (const t of ['constructor', 'toString', 'hasOwnProperty', 'valueOf']) {
+      expect(parse(`?t=${t}&c=06840`).estado, t).toBe('invalido')
+    }
+  })
+
+  it('tampoco es una capa', () => {
+    for (const capa of ['constructor', 'toString', '__proto__']) {
+      expect(parse(`?t=dep&c=06840&capa=${capa}`).capa, capa).toBeNull()
+    }
+  })
 })
 
 describe('format', () => {
