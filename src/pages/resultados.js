@@ -152,11 +152,9 @@ function showObjectIdentity(obj) {
  * `count` sólo importa en vías: ahí el código identifica una calle entera y
  * `row` describe uno solo de los tramos que el mapa está dibujando, así que
  * la ficha dice cuántos son en vez de repetir campos de un tramo suelto
- * como si fueran de la calle (ver más abajo). El default es `null`, no `1`:
- * afirmar "un solo tramo" sin tener un conteo real sería mentir sobre una
- * calle que puede tener ochenta.
+ * como si fueran de la calle (ver más abajo).
  */
-function showFeatureIdentity(layerKey, row, count = null) {
+function showFeatureIdentity(layerKey, row, count) {
   const spec = specOf(layerKey)
   const codigo = String(row[spec.idField] ?? '')
 
@@ -178,17 +176,10 @@ function showFeatureIdentity(layerKey, row, count = null) {
   // comparten, así que `row` describe uno solo de los que el mapa está
   // dibujando. Los campos de tramo —alturas, id— mienten sobre la calle, así
   // que en su lugar la ficha dice cuántos tramos son.
-  //
-  // `count` en null es "no lo sé": la ficha calla en vez de inventar un
-  // número, porque decir "un solo tramo" sobre una calle de 80 es
-  // exactamente la contradicción entre ficha y mapa que NAV-R11 vino a
-  // eliminar.
   if (layerKey === 'vias') {
-    el.meta.textContent = count === null
-      ? `Código ${codigo}`
-      : count > 1
-        ? `Código ${codigo} · el INDEC la publica partida en ${fmt(count)} tramos`
-        : `Código ${codigo} · un solo tramo`
+    el.meta.textContent = count > 1
+      ? `Código ${codigo} · el INDEC la publica partida en ${fmt(count)} tramos`
+      : `Código ${codigo} · un solo tramo`
   }
 
   el.note.replaceChildren(noteLink(NOTE_BY_LAYER[layerKey], `Qué es ${singular.toLowerCase()} →`))

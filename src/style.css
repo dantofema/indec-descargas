@@ -383,15 +383,12 @@ td.acts .note { white-space: normal; max-width: 20rem; }
    (`anchorField` en columns.js) — no `:first-child`: el primer campo
    publicado por el GeoServer es `id`, un número interno que no identifica
    nada para quien mira. El fondo propio evita que el contenido de las
-   columnas que van pasando por detrás se transparente; el segundo, que se
-   note el corte con el resto de la fila cuando está seleccionada. */
+   columnas que van pasando por detrás se transparente. */
 table.wide th.col-anchor, table.wide td.col-anchor {
   position: sticky;
   left: 0;
   background: var(--bg);
 }
-table.wide tbody tr[aria-selected="true"] td.col-anchor { background: var(--hl); }
-tbody tr[aria-selected="true"] { background: var(--hl); }
 
 /* Anterior / dónde estoy / siguiente, debajo de la tabla. */
 .pager { display: flex; align-items: center; gap: 1rem; margin: .75rem 0 0; }

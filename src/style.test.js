@@ -165,12 +165,6 @@ describe('columna fija de vías: ancla la que declara la capa, no la primera', (
     expect(bloques[0]).toMatch(/position:\s*sticky/)
     expect(css).not.toMatch(/table\.wide\s+(th|td):first-child/)
   })
-
-  it('la variante de fila seleccionada también ancla por clase, no por :first-child', () => {
-    const bloques = rule('table.wide tbody tr[aria-selected="true"] td.col-anchor')
-    expect(bloques.length).toBe(1)
-    expect(css).not.toMatch(/aria-selected="true"\]\s*td:first-child/)
-  })
 })
 
 describe('lo que cambia sin mouse', () => {

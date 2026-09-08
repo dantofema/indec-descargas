@@ -5,9 +5,12 @@
  * Fracciones y radios no traen nombre en el Marco Geoestadístico: se
  * identifican por número y por su código. No se les inventa un rótulo.
  *
- * `titleField` es el campo con el nombre publicado, cuando existe: la ficha
- * de una fila (NAV-R11) lo usa como título en vez de "<capa> <código>". Sólo
- * lo declaran las capas con nombre publicado —nunca fracciones ni radios—.
+ * `titleField` es el campo con el nombre publicado, cuando existe. Lo lee la
+ * ficha de un objeto sin catálogo —fracción, radio o vía—, que no tiene un
+ * nombre que venga del catálogo y arma su título con esto o, si la capa no
+ * lo declara, con "<capa> <código>" (NAV-R4). Las capas que además son tipos
+ * del catálogo lo declaran igual: su ficha usa el nombre del catálogo, pero
+ * la declaración sigue siendo cierta sobre el dato que publica el INDEC.
  */
 
 // El Marco Geoestadístico clasifica el radio en urbano, rural o mixto: son
@@ -30,8 +33,6 @@ export const LAYER_SPECS = {
   departamentos: {
     sortBy: 'cde',
     idField: 'cde',
-    // El Marco publica nombre para esta capa: la ficha lo usa como título
-    // de la fila en vez de inventar "Departamento <código>" (NAV-R11).
     titleField: 'nam',
     columns: [
       { field: 'nam', label: 'Nombre', kind: 'text' },

@@ -126,3 +126,56 @@ describe('showObject: la que está vigente sí avisa del error', () => {
     await expect(p).rejects.toThrow(/geometría/)
   })
 })
+
+// Fix round 1, hallazgo 5: hoy `showObject` se llama una sola vez por carga
+// de página —elegir otro objeto navega, no vuelve a llamar `showObject` en
+// la misma instancia—, así que esta rama es defensiva y no una carrera que
+// pase en producción todavía. Se prueba igual: el día que algo dibuje una
+// segunda vez en la misma página, el mapa tiene que seguir sin quedar en
+// blanco mientras llega la geometría nueva, y borrar la defensa porque hoy
+// nadie la ejercita es cómo vuelve el bug.
+describe('lo dibujado no se borra hasta que hay con qué reemplazarlo', () => {
+  it('un dibujo que falla deja el mapa como estaba', async () => {
+    const primero = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await primero
+
+    const segundo = showObject(otro)
+    pendientes[1].resolve({ ok: false, status: 503 })
+    await expect(segundo).rejects.toThrow(/503/)
+    expect(capa.remove).not.toHaveBeenCalled()
+  })
+
+  it('una respuesta sin geometría tampoco borra lo que había', async () => {
+    const primero = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await primero
+
+    const segundo = showObject(otro)
+    pendientes[1].resolve(respuesta({ features: [] }))
+    await expect(segundo).rejects.toThrow(/geometría/)
+    expect(capa.remove).not.toHaveBeenCalled()
+  })
+
+  it('mientras el pedido está en vuelo, lo dibujado sigue ahí', async () => {
+    const primero = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await primero
+
+    showObject(otro)
+    await Promise.resolve()
+    expect(capa.remove).not.toHaveBeenCalled()
+  })
+
+  it('un dibujo que sale bien sí reemplaza al anterior', async () => {
+    const primero = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await primero
+
+    const segundo = showObject(otro)
+    pendientes[1].resolve(respuesta())
+    await segundo
+    expect(capa.remove).toHaveBeenCalledTimes(1)
+    expect(geoJSON).toHaveBeenCalledTimes(2)
+  })
+})

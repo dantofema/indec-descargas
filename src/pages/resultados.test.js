@@ -61,8 +61,7 @@ function filtrar(tipo) {
 // Una fila con propiedades de verdad: `cod_indec`/`cde`/`clc` son los
 // `idField` de las cinco capas hijas, y tienen que ser dígitos —pasan por
 // `assertCode`—. Sirve tanto para la geometría del objeto de la ficha
-// (fila 1) como para la página que carga la fila 3 y el "Ver" que dibuja
-// una fila.
+// (fila 1) como para la página que carga la fila 3.
 const filaDeVerdad = {
   cod_indec: '068400101', cde: '06840', clc: '068401',
   cfn: '01', cro: '01', tro: 'U', nam: 'Nombre de prueba', gna: 'Tipo',
