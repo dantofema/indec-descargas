@@ -67,8 +67,12 @@ export const NOTES = [
     total: 66515,
     paragraphs: [
       'Son 66.515 y es la unidad más chica del Marco Geoestadístico. Tampoco tiene nombre: número de radio, número de la fracción que lo contiene, si es urbano o rural, y su código.',
+      'La columna Tipo sale del campo tro y tiene tres valores, no dos: el Marco Geoestadístico clasifica cada radio en urbano, rural o mixto. Medidos contra el GeoServer: 54.459 urbanos, 9.347 rurales y 2.683 mixtos —y 26 radios que no traen ninguno—. Conviene tomarla con cuidado: es una clasificación operativa del censo, no una descripción del paisaje, y el radio mixto existe justamente porque en muchos lugares el corte no cae en ningún lado.',
       'Es una capa grande pero rápida: los 23.901 radios de la provincia de Buenos Aires bajan en 22 MB y 6,9 segundos medidos, y el archivo llega completo. No hay tope de descarga.',
       'Se llega a los radios desde el objeto que los contiene, y se descarga por cod_indec.',
+    ],
+    sources: [
+      { label: 'Marco Geoestadístico', href: 'https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf' },
     ],
   },
   {

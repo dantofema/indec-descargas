@@ -10,7 +10,12 @@
  * lo declaran las capas con nombre publicado —nunca fracciones ni radios—.
  */
 
-const urbanoRural = (v) => (v === 'U' ? 'Urbano' : v === 'R' ? 'Rural' : v)
+// El Marco Geoestadístico clasifica el radio en urbano, rural o mixto: son
+// tres, no dos. Los 2.683 mixtos medidos mostraban una "M" cruda en la
+// tabla. Cualquier otro valor pasa sin traducir —el INDEC no documentó un
+// cuarto, y los 26 radios que no traen ninguno son un dato que falta, no un
+// rótulo que inventar (DES-R8)—.
+const urbanoRural = (v) => (v === 'U' ? 'Urbano' : v === 'R' ? 'Rural' : v === 'M' ? 'Mixto' : v)
 
 /** Las vías se muestran con los 21 campos publicados, en el orden del GeoServer. */
 const VIA_FIELDS = [

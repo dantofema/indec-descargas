@@ -93,6 +93,14 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
     expect(texto).toContain('CALLE SN')
   })
 
+  it('radio censal explica qué significa su columna Tipo, con los tres valores', () => {
+    const texto = noteFor('radio-censal').paragraphs.join(' ')
+    expect(texto).toContain('mixto')
+    expect(texto).toContain('54.459')
+    expect(texto).toContain('9.347')
+    expect(texto).toContain('2.683')
+  })
+
   it('los nombres que son los tres tipos a la vez salen del catálogo, no de la memoria', () => {
     const porNombre = new Map()
     for (const o of catalog.objects) {
