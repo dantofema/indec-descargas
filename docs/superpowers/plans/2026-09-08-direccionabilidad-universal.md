@@ -591,6 +591,21 @@ git commit -m "feat: un radio, una fracción y un tramo tienen ficha propia"
 
 ### Task 4: «Ver» navega
 
+Es la tarea más grande del plan y conviene saberlo antes de empezar. Medido el 2026-09-08 sobre el árbol:
+
+| Pieza que muere | Referencias en `src/` |
+|---|---|
+| `onFeature` | 10 |
+| `back-to-object` | 7 |
+| `clearSelection` | 7 |
+| `describeFeature` | 4 |
+| `markRow` | 3 |
+| **Citas a `NAV-R10`** (en `src/` y `docs/`) | **30** |
+
+Más nueve bloques de `src/pages/resultados.test.js` que ejercitan el «Ver» que previsualiza y el «Volver» que restaura —entre ellos `'Ver dibuja la fila en el mapa y la deja marcada'`, `'dos Ver seguidos no acumulan'`, `'"volver" restaura la ficha del objeto y lo redibuja'` y el `describe('"Volver" no tira abajo la fila 3')`—. Esos tests prueban comportamiento que deja de existir: **se borran, no se adaptan.** Adaptarlos sería inventarles un objeto nuevo.
+
+El grep de `NAV-R10` del Step 9 no es una formalidad: son treinta lugares, y este repo ya tuvo once comentarios huérfanos el día que murió NAV-R6.
+
 **Files:**
 - Modify: `src/pages/resultados.js` (`onView`; muere `showRow`, `backButton`, `describeFeature`)
 - Modify: `src/browser.js` (`markRow` deja de marcar y de esperar)
