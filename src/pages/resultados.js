@@ -18,7 +18,7 @@ import { fmt, downloadButton, disabledButton, setStatus } from '../ui.js'
 import { childRows } from '../children.js'
 import { createSearchBox } from '../searchbox.js'
 import { codeIndex, parentsOf } from '../parents.js'
-import { createBrowser } from '../browser.js'
+import { createBrowser, VIAS_VIEW_NOTICE } from '../browser.js'
 import { specOf } from '../columns.js'
 import { noteFor, noteHref, NOTE_BY_TYPE, NOTE_BY_LAYER } from '../notes.js'
 import { parse, format } from '../permalink.js'
@@ -224,7 +224,32 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   el.rowBrowse.hidden = !browser.show(obj, initialLayer)
   writeTab = true
   el.detail.hidden = false
-  drawObject(obj)
+  // SITIO-R3: nada de vías se pide sin un acto explícito. Un enlace a un
+  // tramo abre mostrando el costo medido y un botón, igual que la pestaña
+  // (NAV-R7). Lo que sí funciona sin red es la descarga: sólo necesita el
+  // código, que ya está en la URL.
+  if (obj.t === 'via') el.self.append(loadFeatureButton(obj))
+  else drawObject(obj)
+}
+
+/** El costo medido y el botón que sí dispara el pedido (SITIO-R3, NAV-R7). */
+function loadFeatureButton(obj) {
+  const wrap = document.createElement('div')
+  const p = document.createElement('p')
+  p.className = 'note'
+  p.textContent = VIAS_VIEW_NOTICE
+  const b = document.createElement('button')
+  b.type = 'button'
+  b.id = 'load-feature'
+  b.className = 'btn ghost mini'
+  b.textContent = 'Cargar igual'
+  b.addEventListener('click', () => {
+    b.disabled = true
+    b.textContent = 'Cargando…'
+    drawObject(obj)
+  })
+  wrap.append(p, b)
+  return wrap
 }
 
 /**

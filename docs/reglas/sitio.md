@@ -26,11 +26,20 @@ browser. El costo aceptado es un reload por objeto nuevo —`catalog.json` sale 
 browser y el mapa se reinicia— a cambio de que la pieza más fácil de romper de esta clase de
 funcionalidades no exista.
 
-### SITIO-R3 — `capa=vias` en el permalink abre el panel de costo sin pedir vías
+### SITIO-R3 — Nada de vías se pide sin un acto explícito del usuario
 
 Un enlace que apunta a la pestaña de vías la abre en su panel de costo —el mismo que exige
 NAV-R7 al abrirla a mano— sin disparar ningún pedido de vías contra el GeoServer. La página sí
 hace los pedidos que haría cualquier otra ficha.
+
+Vale para los dos caminos que llevan a vías desde un enlace. Un enlace con `capa=vias` abre la
+pestaña en su panel de costo sin pedir nada, y un enlace a un tramo —`?t=via&c=…`— abre su ficha
+mostrando el costo medido y un botón, sin pedir nada tampoco. En los dos casos la descarga
+funciona igual, porque sólo necesita el código.
+
+**Por qué el permalink de un tramo también:** traer un feature de vías con geometría tarda 12,4
+segundos medidos. Ese es el mismo problema que esta regla ya resolvió para la pestaña, con el
+mismo agravante: la espera se la come quien recibe el enlace, no quien lo mandó.
 
 Medido el 2026-09-08 sobre la página montada, `?t=dep&c=06840&capa=vias` dispara **tres**
 pedidos: `catalog.json`, la página de fracciones —la primera pestaña, que `createTabs`

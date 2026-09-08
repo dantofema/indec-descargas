@@ -364,6 +364,65 @@ describe('el "Ver" de una fila hija (NAV-R11)', () => {
   })
 })
 
+describe('la ficha de una vía (SITIO-R3)', () => {
+  // El mock de más arriba devuelve un solo feature: el caso de "en cuántos
+  // tramos" necesita dos con el mismo `cod_indec`, así que esta pestaña
+  // amplía el mock para la URL de vías sin tocar el resto de los tests.
+  beforeEach(() => {
+    fetchSpy = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+      const properties = { ...filaDeVerdad, cod_indec: '0684001001810' }
+      return { ok: true, status: 200, json: async () => ({ totalFeatures: 2, features: [{ properties }, { properties }] }) }
+    })
+    global.fetch = fetchSpy
+  })
+
+  const pidioVias = () => fetchSpy.mock.calls
+    .map(([u]) => String(u))
+    .some((u) => u.includes('vias_de_circulacion'))
+
+  it('no dispara ningún pedido de vías al montarse', async () => {
+    await montar('?t=via&c=0684001001810')
+    expect(pidioVias()).toBe(false)
+  })
+
+  it('muestra el costo medido y un botón para cargar igual', async () => {
+    await montar('?t=via&c=0684001001810')
+    expect($('#detail').textContent).toContain('12 segundos')
+    expect($('#load-feature')).not.toBeNull()
+  })
+
+  it('la descarga funciona antes de pedir nada: sólo necesita el código', async () => {
+    await montar('?t=via&c=0684001001810')
+    expect($('#detail-self a').href).toContain('0684001001810')
+  })
+
+  it('muestra sus padres sin pedir nada: salen del código', async () => {
+    await montar('?t=via&c=0684001001810')
+    // Localidad censal 06840010, departamento 06840 y jurisdicción 06.
+    expect($('#parents').children.length).toBe(3)
+    expect(pidioVias()).toBe(false)
+  })
+
+  it('recién el botón dispara el pedido', async () => {
+    await montar('?t=via&c=0684001001810')
+    $('#load-feature').click()
+    await vi.waitFor(() => expect(pidioVias()).toBe(true))
+  })
+
+  // Verificado el 2026-09-08: un `cod_indec` de vías identifica la calle, no
+  // el tramo, y hasta 80 filas lo comparten. La ficha describe la calle.
+  it('cargada, dice en cuántos tramos está partida la calle', async () => {
+    await montar('?t=via&c=0684001001810')
+    $('#load-feature').click()
+    await vi.waitFor(() => expect($('#detail-meta').textContent).toContain('tramos'))
+    // El fixture de vías tiene que devolver más de un feature para este caso:
+    // si hoy devuelve uno solo, duplicalo en el mock con el mismo cod_indec.
+    expect($('#detail-meta').textContent).toMatch(/partida en \d+ tramos/)
+  })
+})
+
 describe('los enlaces a las notas (NOTA-R3)', () => {
   it('la ficha enlaza la nota del tipo del objeto', async () => {
     await montar('?t=dep&c=06840')

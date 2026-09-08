@@ -65,19 +65,21 @@ vacía en un tercio de las fichas del sitio.
 ### NAV-R7 — Vías no auto-carga: muestra el costo medido y un botón para cargar igual
 
 Al abrir la pestaña de vías no se dispara ningún pedido. En su lugar se muestra el costo medido
-y un botón para cargar de todos modos. El "Ver" de una fila de vías también avisa la espera
-mientras trae el feature completo.
+y un botón para cargar de todos modos. La ficha de una vía tampoco pide nada al abrirse: muestra
+el mismo costo medido y su botón (SITIO-R3). Antes ese aviso vivía en el "Ver" de la fila, que
+traía el feature; desde que "Ver" navega (NAV-R11), la espera es de la ficha de destino y el
+aviso se mudó con ella.
 
 **Por qué:** vías es lenta para todo, no sólo para descargar, y esto no lo sabía el diseño
 original. Medido el 2026-09-06 contra el GeoServer del INDEC: una página de 20 filas sin
 geometría tarda 14–20 s filtrando por departamento, 17–18 s filtrando por localidad censal
 (`clc=06840010` dio 18,0 s y `clc=82084010`, 17,2 s) y 88–99 s filtrando por provincia; traer un
-solo feature con geometría —lo que hace "Ver"— tarda 12,4 s. Los mismos pedidos sobre radios
-tardan 0,65 s y 0,89 s. No es el payload (10 KB) ni el orden: es una tabla de 477.588 filas sin
-índice útil para los campos por los que se filtra. Auto-cargar esa pestaña, o dejar que "Ver"
-trabaje en silencio, cuelga la interfaz sin avisar; borrar la pestaña porque es lenta sería
-peor, porque el usuario la pidió por nombre. Avisar y dejar elegir es lo único que no le miente
-a nadie.
+solo feature con geometría —lo que hace la ficha de una vía— tarda 12,4 s. Los mismos pedidos
+sobre radios tardan 0,65 s y 0,89 s. No es el payload (10 KB) ni el orden: es una tabla de
+477.588 filas sin índice útil para los campos por los que se filtra. Auto-cargar esa pestaña, o
+dejar que la ficha de una vía trabaje en silencio, cuelga la interfaz sin avisar; borrar la
+pestaña porque es lenta sería peor, porque el usuario la pidió por nombre. Avisar y dejar elegir
+es lo único que no le miente a nadie.
 
 El caso de la localidad censal no es marginal: es el 58% de las fichas donde el aviso aparece
 —4.023 de los 6.977 objetos del catálogo son localidades con vías como única capa hija—, así que

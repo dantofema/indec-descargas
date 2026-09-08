@@ -72,10 +72,12 @@ const timeoutOf = (childKey, parentType) => {
 }
 
 /**
- * Medido contra el GeoServer real el 2026-09-06: un solo feature con
- * geometría —lo que pide el botón "Ver"— tarda 12,4 s en vías, contra
- * 0,65 s en radios. Sin este aviso, el clic deja la interfaz "muerta" ese
- * rato sin que el usuario sepa si se colgó.
+ * Medido contra el GeoServer real el 2026-09-06: traer una vía con geometría
+ * tarda 12,4 s, contra 0,65 s en radios. Lo usa la ficha de una vía, que por
+ * eso no pide nada al abrirse y muestra este costo con un botón (SITIO-R3).
+ *
+ * Vive en este módulo, que no lo consume, porque acá están todos los costos
+ * medidos de vías del repo: partirlos en dos archivos es cómo divergen.
  */
 export const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
 
