@@ -1172,7 +1172,7 @@ git commit -m "feat: la página de servicios geoespaciales del INDEC"
 
 **Interfaces:**
 - Consumes: `search`, `TYPE_ORDER` de `src/search.js`; `TYPES` de `src/download.js`; `createCombobox` de `src/combobox.js`.
-- Produces: `createSearchBox({input, select, list, onPick}) => {setObjects(objetos)}`
+- Produces: `createSearchBox({input, select, list, onPick}) => {setObjects(objects)}`
 
 **Por qué ahora:** el home y `/resultados/` tienen los dos un buscador y hacen con él cosas distintas (uno navega, el otro también). Extraerlo antes del split evita escribirlo dos veces y deja el paso siguiente más chico. Esta tarea **no cambia ningún comportamiento**: `src/main.test.js` tiene que pasar sin tocarlo.
 
@@ -1224,20 +1224,20 @@ describe('createSearchBox', () => {
   })
 
   it('busca una vez que tiene el catálogo', () => {
-    searchbox.setObjects(objetos)
+    searchbox.setObjects(objects)
     escribir('tres de febrero')
     expect(el.list.children).toHaveLength(2)
   })
 
   it('cada resultado dice de qué tipo es: es lo que decide qué límites bajás', () => {
-    searchbox.setObjects(objetos)
+    searchbox.setObjects(objects)
     escribir('tres')
     expect(el.list.textContent).toContain('Departamento')
     expect(el.list.textContent).toContain('Localidad censal')
   })
 
   it('cambiar el tipo vuelve a buscar lo escrito, sin retipear (BUS-R1)', () => {
-    searchbox.setObjects(objetos)
+    searchbox.setObjects(objects)
     escribir('tres')
     el.select.value = 'loc'
     el.select.dispatchEvent(new Event('change', { bubbles: true }))
@@ -1245,7 +1245,7 @@ describe('createSearchBox', () => {
   })
 
   it('elegir avisa con el objeto', () => {
-    searchbox.setObjects(objetos)
+    searchbox.setObjects(objects)
     escribir('tres')
     el.list.children[0].click()
     expect(onPick).toHaveBeenCalledWith(objetos[0])
@@ -1285,7 +1285,7 @@ function typeOption(value, label) { /* … igual que en main.js … */ }
  * pide hasta que alguien toca el campo.
  */
 export function createSearchBox({ input, select, list, onPick }) {
-  let objetos = null
+  let objects = null
 
   select.append(
     typeOption('', 'Todos los tipos'),
@@ -1295,8 +1295,8 @@ export function createSearchBox({ input, select, list, onPick }) {
   const combo = createCombobox({ input, list, renderOption, onSelect: onPick })
 
   function correr() {
-    if (!objetos) return
-    combo.render(search(objetos, input.value, { type: select.value }))
+    if (!objects) return
+    combo.render(search(objects, input.value, { type: select.value }))
   }
 
   input.addEventListener('input', correr)
@@ -1306,7 +1306,7 @@ export function createSearchBox({ input, select, list, onPick }) {
 
   return {
     setObjects(next) {
-      objetos = next
+      objects = next
       correr()
     },
   }
