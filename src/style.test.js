@@ -191,22 +191,29 @@ describe('lo que cambia sin mouse', () => {
 // puente, y el nav activo nunca se marca. Esto lo fija para que no se
 // vuelva a evaporar; las tareas 6 y 8 suman acá el par de servicios y de
 // resultados al crear esas páginas.
+//
+// El selector va entero: `[^{]*` no cruza la llave pero sí cruza la coma,
+// así que con los cuatro pares en una sola lista de selectores los cuatro
+// casos seguían pasando aunque se invirtieran dos pares entre sí.
 describe('el nav marca la página activa', () => {
+  const par = (pagina, nav) =>
+    new RegExp(`\\[data-pagina="${pagina}"\\] \\.site-nav \\[data-nav="${nav}"\\]`)
+
   it('home', () => {
-    expect(css).toMatch(/\[data-pagina="home"\][^{]*\[data-nav="home"\]/)
+    expect(css).toMatch(par('home', 'home'))
   })
 
   it('notas', () => {
-    expect(css).toMatch(/\[data-pagina="notas"\][^{]*\[data-nav="notas"\]/)
+    expect(css).toMatch(par('notas', 'notas'))
   })
 
   it('servicios', () => {
-    expect(css).toMatch(/\[data-pagina="servicios"\][^{]*\[data-nav="servicios"\]/)
+    expect(css).toMatch(par('servicios', 'servicios'))
   })
 
   // /resultados/ no es una entrada del nav: es la ficha a la que lleva el
   // buscador del home, así que marca "Inicio".
   it('resultados marca Inicio', () => {
-    expect(css).toMatch(/\[data-pagina="resultados"\][^{]*\[data-nav="home"\]/)
+    expect(css).toMatch(par('resultados', 'home'))
   })
 })
