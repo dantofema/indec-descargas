@@ -99,7 +99,7 @@ describe('TYPES', () => {
     }
   })
 
-  it('los dos tipos femeninos llevan esta', () => {
+  it('los tipos femeninos llevan esta', () => {
     expect(TYPES.jur.det).toBe('esta')
     expect(TYPES.loc.det).toBe('esta')
   })

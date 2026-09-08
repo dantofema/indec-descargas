@@ -6,9 +6,10 @@ import { TYPES } from './download.js'
  * deriva del código propio. La excepción es el aglomerado de una localidad,
  * que no está en su código y viaja aparte en el catálogo como `ag`.
  *
- * Todo padre derivado se busca en el catálogo antes de ofrecerlo: DES-R8
- * documenta que los códigos no cierran entre capas, así que un prefijo
- * válido puede apuntar a un objeto que no existe.
+ * Todo padre de catálogo se busca antes de ofrecerlo: DES-R8 documenta que
+ * los códigos no cierran entre capas, así que un prefijo válido puede
+ * apuntar a un objeto que no existe. Los tipos que no están en el catálogo
+ * no tienen dónde buscarse: ver `parentsOf`.
  */
 
 /** Índice por tipo y código, para resolver un padre sin recorrer el catálogo. */
