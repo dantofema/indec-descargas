@@ -52,6 +52,17 @@ describe('LAYER_SPECS', () => {
       expect(spec.anchorField, key).toBeUndefined()
     }
   })
+
+  it('sólo declaran título las capas que tienen nombre publicado (NAV-R4)', () => {
+    const con = Object.entries(LAYER_SPECS).filter(([, s]) => s.titleField).map(([k]) => k)
+    expect(con.sort()).toEqual(['departamentos', 'localidades', 'vias'])
+  })
+
+  it('el campo del título siempre es una columna que se pide al GeoServer', () => {
+    for (const [key, spec] of Object.entries(LAYER_SPECS)) {
+      if (spec.titleField) expect(queryFields(key)).toContain(spec.titleField)
+    }
+  })
 })
 
 describe('specOf', () => {

@@ -302,21 +302,14 @@ describe('recorrer los hijos', () => {
 
   // Fix round 1, hallazgo 1 (importante): `el.meta.textContent += ...` en
   // el handler de onFeature acumulaba con cada "Ver", incluso repetido
-  // sobre la misma fila. La línea de metadatos describe el objeto de la
-  // ficha, siempre, y nunca acumula —mirar una fila ya se señala marcando
-  // la fila en la tabla, no reescribiendo el nombre de al lado del mapa—.
-  it('dos Ver seguidos no acumulan ni repiten la línea de identidad del objeto', async () => {
+  // sobre la misma fila. Con NAV-R10 la línea de metadatos SÍ cambia al ver
+  // una fila —pasa a describirla a ella, no al objeto padre (ver el
+  // describe 'el "Ver" de una fila hija' más abajo)—, pero lo que este test
+  // sigue probando es que no acumula: dos "Ver" seguidos sobre la misma
+  // fila dejan la misma línea, no la línea pegada dos veces.
+  it('dos Ver seguidos no acumulan ni repiten la ficha de la fila', async () => {
     await montar('?t=dep&c=06840')
     await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
-    // Deja asentar el onFeature que dispara el showObject del departamento.
-    await new Promise((r) => setTimeout(r, 0))
-
-    const metaBase = $('#detail-meta').textContent
-    const ocurrencias = (texto) => metaBase.split(texto).length - 1
-    // Prueba que el aviso de onFeature sí llegó a pegarse una vez —si no,
-    // el test siguiente pasaría aunque nadie hubiera arreglado nada—.
-    expect(metaBase).toContain('cod_indec: 068400101')
-    expect(ocurrencias('cod_indec')).toBe(1)
 
     // El mock de este archivo sólo trae una fila (`totalFeatures: 1`): dos
     // "Ver" seguidos sobre la misma fila alcanzan para probar que no
@@ -324,11 +317,12 @@ describe('recorrer los hijos', () => {
     const fila = $('#browse tbody tr')
     fila.querySelector('button').click()
     await new Promise((r) => setTimeout(r, 0))
-    expect($('#detail-meta').textContent).toBe(metaBase)
+    const metaTrasVer = $('#detail-meta').textContent
+    expect(metaTrasVer).toContain('Código: 068400101')
 
     fila.querySelector('button').click()
     await new Promise((r) => setTimeout(r, 0))
-    expect($('#detail-meta').textContent).toBe(metaBase)
+    expect($('#detail-meta').textContent).toBe(metaTrasVer)
   })
 })
 
@@ -351,6 +345,144 @@ describe('un objeto con una capa hija en cero', () => {
     await new Promise((r) => setTimeout(r, 0))
     const pedidos = global.fetch.mock.calls.map(([url]) => String(url))
     expect(pedidos.filter((u) => u.includes('vias_de_circulacion'))).toEqual([])
+  })
+})
+
+// NAV-R10: la ficha describe siempre lo que el mapa está dibujando. "Ver"
+// en una fila hija tiene que reemplazar la ficha del padre por la de esa
+// fila, con los campos de su propia capa —no seguir hablando del padre—.
+describe('el "Ver" de una fila hija (NAV-R10)', () => {
+  // Tres filas de radios: dos con código completo —para la carrera— y una
+  // tercera cuyo feature (el pedido de "Ver", no el de la página) vuelve
+  // sin cod_indec: el GeoServer puede devolver un feature sin el campo
+  // identificador aunque la tabla sí lo traía (DES-R8), y la ficha tiene
+  // que seguir en pie igual, con la descarga apagada.
+  const filas = [
+    { cod_indec: '068400101', cfn: '01', cro: '01', tro: 'U' },
+    { cod_indec: '068400102', cfn: '01', cro: '02', tro: 'R' },
+    { cod_indec: '068400103', cfn: '02', cro: '03', tro: 'U' },
+  ]
+  const SIN_CODIGO = '068400103'
+  // La fila 0 tarda más que las demás a propósito: es la "lenta" del test
+  // de la carrera. Que sea fija (no algo que cada test configura) es lo que
+  // deja escrito el body de ese test tal cual lo pide el brief.
+  const DEMORA_MS = { [filas[0].cod_indec]: 20 }
+
+  beforeEach(() => {
+    global.fetch = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+
+      // La página de la tabla pide `propertyName`; el "Ver" de una fila
+      // suelta no —son las dos formas de `drawFromUrl`/`fetchPage`—.
+      if (u.includes('propertyName=')) {
+        // Sólo la capa de radios usa las tres filas de este describe; el
+        // caso de localidades (una sola prueba) reusa la fila de siempre,
+        // que ya trae `clc` y `nam`.
+        const enRadios = u.includes('typenames=geonode%3Aradios_censales2')
+        const pagina = enRadios ? filas : [filaDeVerdad]
+        return {
+          ok: true, status: 200,
+          json: async () => ({ totalFeatures: pagina.length, features: pagina.map((p) => ({ properties: p })) }),
+        }
+      }
+
+      const codigo = u.match(/cod_indec%3D%27(\d+)%27/)?.[1]
+      const fila = filas.find((f) => f.cod_indec === codigo) ?? filaDeVerdad
+      if (DEMORA_MS[codigo]) await new Promise((r) => setTimeout(r, DEMORA_MS[codigo]))
+
+      const properties = codigo === SIN_CODIGO ? { ...fila, cod_indec: '' } : fila
+      return { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties }] }) }
+    })
+  })
+
+  async function verFila(n) {
+    await vi.waitFor(() => expect(document.querySelectorAll('#browse tbody tr')[n]).toBeTruthy())
+    document.querySelectorAll('#browse tbody tr')[n].querySelector('button').click()
+    // Más que la demora artificial de la fila lenta: alcanza para que
+    // cualquier "Ver" en vuelo en este describe ya haya resuelto.
+    await new Promise((r) => setTimeout(r, 25))
+  }
+  const verPrimeraFila = () => verFila(0)
+  const verFilaSinCodigo = () => verFila(2)
+  const codigoDeFila = (n) => filas[n].cod_indec
+
+  it('la ficha pasa a describir la fila, con los campos de su capa', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    expect(document.querySelector('#detail-name').textContent).toContain('068400101')
+    // Los rótulos salen de specOf('radios'), no de una lista aparte.
+    expect(document.querySelector('#detail-meta').textContent).toContain('Fracción')
+    expect(document.querySelector('#detail-meta').textContent).toContain('Urbano')
+  })
+
+  it('no le inventa nombre a un radio (NAV-R4)', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    expect(document.querySelector('#detail-name').textContent).toBe('Radio censal 068400101')
+  })
+
+  it('usa el nombre publicado cuando la capa lo tiene', async () => {
+    await montar('?t=dep&c=06840&capa=localidades')
+    await verPrimeraFila()
+    expect(document.querySelector('#detail-name').textContent).toBe('Nombre de prueba')
+  })
+
+  it('el botón baja esa fila, no el objeto padre (DES-R9)', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    const href = document.querySelector('#detail-self a').href
+    expect(href).toContain('radios_censales2')
+    expect(href).toContain('068400101')
+  })
+
+  it('una fila sin código no ofrece descarga, y no rompe la ficha (DES-R8)', async () => {
+    // fila cuyo idField viene vacío
+    await montar('?t=dep&c=06840&capa=radios')
+    await verFilaSinCodigo()
+    expect(document.querySelector('#detail-self .is-disabled')).not.toBeNull()
+  })
+
+  it('"volver" restaura la ficha del objeto y lo redibuja', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    document.querySelector('#back-to-object').click()
+    expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
+    expect(document.querySelector('#detail-self a').href).toContain('departamentos')
+  })
+
+  it('una respuesta que perdió la carrera no escribe la ficha', async () => {
+    // showFeature devuelve undefined cuando su pedido fue superado (Task 4).
+    await montar('?t=dep&c=06840&capa=radios')
+    const primera = verFila(0)      // lenta
+    const segunda = verFila(1)      // rápida, la gana
+    await Promise.all([primera, segunda])
+    expect(document.querySelector('#detail-name').textContent).toContain(codigoDeFila(1))
+  })
+
+  it('la fila vista queda marcada en la tabla', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
+  })
+})
+
+describe('los enlaces a las notas (NOTA-R3)', () => {
+  it('la ficha enlaza la nota del tipo del objeto', async () => {
+    await montar('?t=dep&c=06840')
+    expect(document.querySelector('.detail a[href*="/notas/#"]').getAttribute('href'))
+      .toContain('#departamento')
+  })
+
+  it('cada pestaña enlaza la nota de su capa', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    expect(document.querySelector('#browse a[href*="/notas/#"]').getAttribute('href'))
+      .toContain('#radio-censal')
+  })
+
+  it('la fila de notas con pestañas ya no existe', async () => {
+    await montar('?t=dep&c=06840')
+    expect(document.querySelector('#row-notes')).toBeNull()
   })
 })
 

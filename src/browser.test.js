@@ -692,4 +692,55 @@ describe('createBrowser', () => {
       expect(() => b.show(dep, 'radios')).not.toThrow()
     })
   })
+
+  // NAV-R10 / NOTA-R3: la pestaña activa es la única que sabe qué capa se
+  // está recorriendo, así que el enlace a su nota vive acá y no en la
+  // página que cablea. Va como hermano de `body`, no adentro: ningún
+  // reemplazo de `body` —"Cargando…", el errorBox o el panel de costo—
+  // se lo lleva puesto.
+  describe('el enlace a la nota de la pestaña activa', () => {
+    const enlaceNota = () => container.querySelector('a[href*="/notas/#"]')
+
+    it('enlaza la nota de la primera pestaña, antes de que la tabla llegue', () => {
+      global.fetch = vi.fn(() => new Promise(() => {})) // no resuelve en este test
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep) // fracciones es la primera pestaña de `dep`
+      expect(container.textContent).toMatch(/Cargando/)
+      expect(enlaceNota().getAttribute('href')).toContain('#fraccion-censal')
+    })
+
+    it('cambiar de pestaña cambia el enlace, sin acumularlo', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      container.querySelectorAll('[role="tab"]')[1].click() // radios
+      expect(container.querySelectorAll('a[href*="/notas/#"]')).toHaveLength(1)
+      expect(enlaceNota().getAttribute('href')).toContain('#radio-censal')
+    })
+
+    it('sigue visible si la página falla', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+        b.show(dep)
+        await vi.advanceTimersByTimeAsync(31_000)
+        expect(container.querySelector('button.retry')).not.toBe(null)
+        expect(enlaceNota().getAttribute('href')).toContain('#fraccion-censal')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('en la capa lenta, el panel de costo tampoco se lleva el enlace', () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(depVias)
+      container.querySelectorAll('[role="tab"]')[1].click() // vías
+      expect(container.textContent).toMatch(/no tiene un índice útil/)
+      expect(enlaceNota().getAttribute('href')).toContain('#via-de-circulacion')
+    })
+  })
 })

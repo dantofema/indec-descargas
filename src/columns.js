@@ -4,6 +4,10 @@
  *
  * Fracciones y radios no traen nombre en el Marco Geoestadístico: se
  * identifican por número y por su código. No se les inventa un rótulo.
+ *
+ * `titleField` es el campo con el nombre publicado, cuando existe: la ficha
+ * de una fila (NAV-R10) lo usa como título en vez de "<capa> <código>". Sólo
+ * lo declaran las capas con nombre publicado —nunca fracciones ni radios—.
  */
 
 const urbanoRural = (v) => (v === 'U' ? 'Urbano' : v === 'R' ? 'Rural' : v)
@@ -21,6 +25,9 @@ export const LAYER_SPECS = {
   departamentos: {
     sortBy: 'cde',
     idField: 'cde',
+    // El Marco publica nombre para esta capa: la ficha lo usa como título
+    // de la fila en vez de inventar "Departamento <código>" (NAV-R10).
+    titleField: 'nam',
     columns: [
       { field: 'nam', label: 'Nombre', kind: 'text' },
       { field: 'cde', label: 'Código', kind: 'code' },
@@ -29,6 +36,7 @@ export const LAYER_SPECS = {
   fracciones: {
     sortBy: 'cod_indec',
     idField: 'cod_indec',
+    // Sin titleField: el Marco no publica nombre para fracciones (NAV-R4).
     columns: [
       { field: 'cfn', label: 'Fracción', kind: 'num' },
       { field: 'cod_indec', label: 'Código', kind: 'code' },
@@ -37,6 +45,7 @@ export const LAYER_SPECS = {
   radios: {
     sortBy: 'cod_indec',
     idField: 'cod_indec',
+    // Sin titleField: el Marco no publica nombre para radios (NAV-R4).
     columns: [
       { field: 'cro', label: 'Radio', kind: 'num' },
       { field: 'cfn', label: 'Fracción', kind: 'num' },
@@ -47,6 +56,7 @@ export const LAYER_SPECS = {
   localidades: {
     sortBy: 'clc',
     idField: 'clc',
+    titleField: 'nam',
     columns: [
       { field: 'nam', label: 'Nombre', kind: 'text' },
       { field: 'gna', label: 'Tipo', kind: 'text' },
@@ -59,6 +69,7 @@ export const LAYER_SPECS = {
     // sin desempate el paginado podría repetir o saltear filas entre páginas.
     sortBy: 'cod_indec,id',
     idField: 'cod_indec',
+    titleField: 'fna',
     // Única capa con 21 columnas: la tabla necesita scroll horizontal.
     // Lo declara la capa, no lo adivina table.js contando.
     wide: true,

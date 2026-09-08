@@ -12,14 +12,15 @@
  * tocaron.
  */
 import { loadCatalog } from '../catalog.js'
-import { selfUrl, TYPES, childOf } from '../download.js'
+import { selfUrl, TYPES, childOf, featureUrl, isCode } from '../download.js'
 import { initMap, showObject, showFeature, onFeature } from '../map.js'
-import { fmt, downloadButton } from '../ui.js'
+import { fmt, downloadButton, disabledButton } from '../ui.js'
 import { childRows } from '../children.js'
 import { createSearchBox } from '../searchbox.js'
 import { codeIndex, parentsOf } from '../parents.js'
 import { createBrowser } from '../browser.js'
 import { specOf } from '../columns.js'
+import { noteFor, noteHref, NOTE_BY_TYPE, NOTE_BY_LAYER } from '../notes.js'
 import { parse, format } from '../permalink.js'
 
 /**
@@ -66,6 +67,15 @@ function queryEls() {
     generated: document.querySelector('#generated'),
     copyLink: document.querySelector('#copy-link'),
   })
+
+  // El enlace "Qué es..." del objeto (NOTA-R3) no tiene id en el HTML: se
+  // crea acá una sola vez, junto a `el.meta`, y `selectObject` sólo
+  // reemplaza su contenido en cada ficha —nunca agrega un segundo enlace.
+  if (el.meta && !el.note) {
+    el.note = document.createElement('p')
+    el.note.className = 'note-link'
+    el.meta.insertAdjacentElement('afterend', el.note)
+  }
 }
 
 function setStatus(text, isError = false) {
@@ -98,6 +108,62 @@ function renderParents(obj) {
   el.parents.replaceChildren(...rows)
 }
 
+/** El enlace "Qué es..." del objeto de la ficha (NOTA-R3). */
+function objectNoteLink(obj) {
+  const a = document.createElement('a')
+  a.href = noteHref(NOTE_BY_TYPE[obj.t])
+  a.textContent = `Qué es ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()} →`
+  return a
+}
+
+/** Vuelve a la ficha del objeto, en la pestaña desde la que se vino. */
+function backButton(capa) {
+  const b = document.createElement('button')
+  b.type = 'button'
+  b.id = 'back-to-object'
+  b.className = 'btn ghost mini'
+  b.textContent = `Volver a ${current.n}`
+  b.addEventListener('click', () => selectObject(current, capa))
+  return b
+}
+
+/**
+ * La ficha de una fila hija. Los campos salen de `specOf`, la misma spec
+ * que arma la tabla: ficha y tabla leen lo mismo, así que no pueden decir
+ * cosas distintas de la misma fila.
+ *
+ * Se reemplaza entera, no se le agrega nada a lo que había: es lo que
+ * separa esto del bug viejo, donde cada "Ver" le pegaba otro tramo de texto
+ * a #detail-meta sin límite.
+ */
+function showRow(capa, row) {
+  const spec = specOf(capa)
+  const codigo = String(row[spec.idField] ?? '')
+
+  // El singular sale del `label` de la nota de esa capa, que ya está en
+  // singular ("Radio censal"). Derivarlo de CHILD_LAYERS con un replace
+  // daría "Radios censale": el plural del INDEC no se deshace con un regex.
+  const singular = noteFor(NOTE_BY_LAYER[capa]).label
+
+  el.name.textContent = spec.titleField && row[spec.titleField]
+    ? row[spec.titleField]
+    : `${singular} ${codigo}`
+
+  el.meta.textContent = spec.columns
+    .filter((c) => row[c.field] !== undefined && row[c.field] !== '')
+    .map((c) => `${c.label}: ${c.map ? c.map(row[c.field]) : row[c.field]}`)
+    .join(' · ')
+
+  // Una fila sin código no es un error de programa: es un dato que el INDEC
+  // no publicó (DES-R8). Se dice, y la ficha sigue en pie.
+  el.self.replaceChildren(
+    isCode(codigo)
+      ? downloadButton(featureUrl(capa, codigo), `Descargar ${singular.toLowerCase()}`)
+      : disabledButton('Descargar', 'El INDEC no publicó el código de esta fila.'),
+    backButton(capa),
+  )
+}
+
 /**
  * Dibuja la ficha del objeto que pide la URL. `initialLayer` es la capa que
  * el enlace quiere abierta; el browser la ignora si el objeto no la tiene.
@@ -115,6 +181,7 @@ function selectObject(obj, initialLayer = null) {
   el.meta.textContent = obj.p && obj.p !== obj.n
     ? `${TYPES[obj.t].label} · ${obj.p} · código ${obj.c}`
     : `${TYPES[obj.t].label} · código ${obj.c}`
+  el.note.replaceChildren(objectNoteLink(obj))
 
   el.self.replaceChildren(
     downloadButton(selfUrl(obj), `Descargar ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()}`),
@@ -213,6 +280,12 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
     onView: (row, key) => {
       const spec = specOf(key)
       return showFeature(childOf(key).layer, spec.idField, String(row[spec.idField]))
+        .then((props) => {
+          // `undefined` significa que este pedido perdió la carrera: un
+          // "Ver" de vías de 12 s que llegó tarde no pisa lo que se está
+          // mirando (NAV-R10).
+          if (props) showRow(key, { ...row, ...props })
+        })
         .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
     },
     onError: () => {},

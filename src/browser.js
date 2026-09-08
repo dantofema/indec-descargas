@@ -4,6 +4,7 @@ import { renderTable, renderPager } from './table.js'
 import { nonEmptyChildrenOf } from './catalog.js'
 import { childOf } from './download.js'
 import { fmt } from './ui.js'
+import { noteFor, noteHref, NOTE_BY_LAYER } from './notes.js'
 
 /**
  * Capas que no cargan solas al abrir su pestaña. Medido contra el
@@ -100,6 +101,7 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
   let confirmed = new Set()
   let token = 0
   let body = null
+  let noteBox = null
   // El pedido en vuelo, para poder abortarlo y no sólo ignorarlo.
   let inFlight = null
 
@@ -136,9 +138,15 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
     if (!kids.length) return false
 
     const tabsBox = document.createElement('div')
+    // Enlace a la nota de la capa activa (NOTA-R3): va arriba de la tabla,
+    // como hermano de `body` y no adentro, así ningún `body.replaceChildren`
+    // de `load`/`costPane`/`errorBox` se lo lleva puesto —sigue visible
+    // mientras la página carga o si falla—.
+    noteBox = document.createElement('p')
+    noteBox.className = 'note-link'
     body = document.createElement('div')
     body.className = 'pane'
-    container.append(tabsBox, body)
+    container.append(tabsBox, noteBox, body)
 
     const tabs = createTabs({
       container: tabsBox,
@@ -148,6 +156,7 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
       onSelect: (key) => {
         active = key
         onTab(key)
+        noteBox.replaceChildren(layerNoteLink(key))
         if (LAZY_KEYS.has(key) && !confirmed.has(key)) {
           // Este camino no pasa por `load()` —muestra el panel de costo, no
           // pide nada—, pero es tan "cambiar de pestaña" como cualquier
@@ -166,6 +175,15 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
     // nada de más, y pedir otra aborta el pedido de la primera (NAV-R8).
     if (kids.some(({ key }) => key === initialLayer)) tabs.select(initialLayer)
     return true
+  }
+
+  /** El enlace "Qué es..." de la capa que se está recorriendo (NOTA-R3). */
+  function layerNoteLink(key) {
+    const a = document.createElement('a')
+    const slug = NOTE_BY_LAYER[key]
+    a.href = noteHref(slug)
+    a.textContent = `Qué es ${noteFor(slug).label.toLowerCase()} →`
+    return a
   }
 
   /** El costo medido y el botón para cargar la página igual. */

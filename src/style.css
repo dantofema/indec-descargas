@@ -253,6 +253,11 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 #map .leaflet-control-attribution { background: #fff; }
 .meta { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
 
+/* Enlace chico a la nota del objeto o de la capa activa (NOTA-R3): agrega
+   contexto sin competir con las descargas que están al lado. */
+.note-link { font-size: .85rem; margin: 0 0 .75rem; }
+.note-link a { color: var(--accent); }
+
 .rel { list-style: none; padding: 0; margin: 0; }
 .rel li {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
