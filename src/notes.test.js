@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { NOTES, NOTE_BY_TYPE, NOTE_BY_LAYER, noteFor, noteHref } from './notes.js'
 import { TYPES, CHILD_LAYERS } from './download.js'
+import { fmt } from './ui.js'
 
 const catalog = JSON.parse(readFileSync(resolve(process.cwd(), 'public/catalog.json'), 'utf8'))
 const porTipo = (t) => catalog.objects.filter((o) => o.t === t).length
@@ -69,6 +70,34 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
   it('los dos objetos que son tipo y capa a la vez dan lo mismo por los dos caminos', () => {
     const dobles = NOTES.filter((n) => n.type && n.layer)
     expect(dobles.map((n) => n.slug).sort()).toEqual(['departamento', 'localidad-censal'])
+  })
+
+  // El campo `total` estaba gateado y la prosa que repite ese mismo número,
+  // no. Hoy están todos bien; el problema es mañana: al regenerar el
+  // catálogo `total` falla, alguien lo corrige, y la prosa sigue diciendo
+  // el número viejo sin que nada se ponga rojo.
+  //
+  // Las dos notas que se mudaron intactas (ver notes.js) no afirman su
+  // total en prosa —/notas/ ya lo muestra como dato, leído del mismo campo
+  // `total`—, así que están exceptuadas por nombre. La lista es cerrada en
+  // los dos sentidos: el caso de abajo la pone roja si alguna de las dos
+  // empieza a afirmarlo, y una nota nueva entra al gate sola.
+  const SIN_TOTAL_EN_PROSA = new Set(['localidad-censal', 'via-de-circulacion'])
+
+  it('el número que la prosa afirma es el mismo que verifica el catálogo', () => {
+    for (const n of NOTES) {
+      if (SIN_TOTAL_EN_PROSA.has(n.slug)) continue
+      expect(n.paragraphs.join(' '), `la prosa de ${n.slug} no dice ${fmt(n.total)}`)
+        .toContain(fmt(n.total))
+    }
+  })
+
+  it('las exceptuadas lo están porque no afirman su total, no por costumbre', () => {
+    for (const slug of SIN_TOTAL_EN_PROSA) {
+      const n = noteFor(slug)
+      expect(n.paragraphs.join(' '), `${slug} ya afirma su total: sacala de la excepción`)
+        .not.toContain(fmt(n.total))
+    }
   })
 
   it('los nombres que son los tres tipos a la vez salen del catálogo, no de la memoria', () => {

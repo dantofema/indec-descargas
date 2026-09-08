@@ -18,7 +18,11 @@ sola vez, en vez de que cada ficha la repita a su manera.
 ### NOTA-R2 — Una nota afirma sólo lo verificable contra el catálogo o el GeoServer
 
 Los totales que una nota declara se comparan con `public/catalog.json` en la suite: un número
-que se desvía del catálogo pone la suite roja.
+que se desvía del catálogo pone la suite roja. Vale para el dato y para la prosa: la nota que
+repite su total escribiéndolo con letras también se compara, así que corregir el campo y dejar
+el párrafo viejo no pasa. Las dos notas que se mudaron intactas no afirman su total en prosa
+—`/notas/` ya lo muestra como dato— y están exceptuadas por nombre; si alguna vez lo afirman,
+la excepción se cae sola.
 
 **Por qué:** una nota es la voz del sitio sobre datos ajenos, no la opinión del sitio sobre sí
 mismo. Un número inventado ahí es peor que no tener nota: el sitio no tiene forma de saber si
