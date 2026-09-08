@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, leerPartials } from './shell.mjs'
+import { injectShell, readPartials } from './shell.mjs'
 
 const partials = { header: '<nav>H</nav>', cta: '<aside>C</aside>', footer: '<footer>F</footer>' }
 const opts = { partials, base: '/indec-descargas/' }
@@ -31,9 +31,9 @@ describe('injectShell', () => {
   })
 })
 
-describe('leerPartials', () => {
+describe('readPartials', () => {
   it('trae los tres partials del shell', () => {
-    expect(Object.keys(leerPartials()).sort()).toEqual(['cta', 'footer', 'header'])
+    expect(Object.keys(readPartials()).sort()).toEqual(['cta', 'footer', 'header'])
   })
 })
 
@@ -46,12 +46,12 @@ describe('las páginas del sitio', () => {
       for (const m of ['header', 'cta', 'footer']) {
         expect(html, `${p} no trae el marcador ${m}`).toContain(`<!--#shell:${m}-->`)
       }
-      expect(() => injectShell(html, { partials: leerPartials(), base: '/' })).not.toThrow()
+      expect(() => injectShell(html, { partials: readPartials(), base: '/' })).not.toThrow()
     }
   })
 
   it('el CTA apunta al Geoportal INDEC y abre en otra pestaña (SITIO-R5)', () => {
-    const cta = leerPartials().cta
+    const cta = readPartials().cta
     expect(cta).toContain('https://geonode.indec.gob.ar/')
     expect(cta).toContain('target="_blank"')
     expect(cta).toContain('rel="noopener"')

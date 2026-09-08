@@ -745,7 +745,7 @@ git commit -m "fix: el mapa acredita al IGN y no a Leaflet, y showFeature devuel
 **Interfaces:**
 - Produces:
   - `injectShell(html, {partials, base}) => string` — reemplaza `<!--#shell:nombre-->` y todo `{{base}}`.
-  - `leerPartials(dir?) => Record<string,string>` — lee `src/shell/*.html`. La usan el plugin y los tests.
+  - `readPartials(dir?) => Record<string,string>` — lee `src/shell/*.html`. La usan el plugin y los tests.
   - `shellPlugin() => Plugin` — el plugin de Vite.
 
 **Por qué `{{base}}`:** los enlaces del nav apuntan a `/indec-descargas/notas/` en producción y a `/notas/` en `npm run dev`. Vite reescribe rutas de assets, no de `href` arbitrarios, así que la sustitución la hace el mismo plugin con el `base` ya resuelto.
@@ -759,7 +759,7 @@ git commit -m "fix: el mapa acredita al IGN y no a Leaflet, y showFeature devuel
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, leerPartials } from './shell.mjs'
+import { injectShell, readPartials } from './shell.mjs'
 
 const partials = { header: '<nav>H</nav>', cta: '<aside>C</aside>', footer: '<footer>F</footer>' }
 const opts = { partials, base: '/indec-descargas/' }
@@ -789,9 +789,9 @@ describe('injectShell', () => {
   })
 })
 
-describe('leerPartials', () => {
+describe('readPartials', () => {
   it('trae los tres partials del shell', () => {
-    expect(Object.keys(leerPartials()).sort()).toEqual(['cta', 'footer', 'header'])
+    expect(Object.keys(readPartials()).sort()).toEqual(['cta', 'footer', 'header'])
   })
 })
 
@@ -804,12 +804,12 @@ describe('las páginas del sitio', () => {
       for (const m of ['header', 'cta', 'footer']) {
         expect(html, `${p} no trae el marcador ${m}`).toContain(`<!--#shell:${m}-->`)
       }
-      expect(() => injectShell(html, { partials: leerPartials(), base: '/' })).not.toThrow()
+      expect(() => injectShell(html, { partials: readPartials(), base: '/' })).not.toThrow()
     }
   })
 
   it('el CTA apunta al Geoportal INDEC y abre en otra pestaña (SITIO-R5)', () => {
-    const cta = leerPartials().cta
+    const cta = readPartials().cta
     expect(cta).toContain('https://geonode.indec.gob.ar/')
     expect(cta).toContain('target="_blank"')
     expect(cta).toContain('rel="noopener"')
@@ -852,7 +852,7 @@ export function injectShell(html, { partials, base }) {
 }
 
 /** Los partials del shell, por nombre de archivo sin extensión. */
-export function leerPartials(dir = SHELL_DIR) {
+export function readPartials(dir = SHELL_DIR) {
   return Object.fromEntries(
     readdirSync(dir)
       .filter((f) => f.endsWith('.html'))
@@ -869,7 +869,7 @@ export function shellPlugin() {
     transformIndexHtml: {
       order: 'pre',
       // Se releen en cada transform para que editar un partial se vea en dev.
-      handler: (html) => injectShell(html, { partials: leerPartials(), base }),
+      handler: (html) => injectShell(html, { partials: readPartials(), base }),
     },
   }
 }
@@ -958,10 +958,10 @@ En `index.html`: reemplazar el `<header class="site-header">…</header>` actual
 Ese test monta el `<body>` de `index.html` en jsdom y ahora encontraría marcadores en vez del footer, así que `#generated` no existiría y `main.js` tiraría. Hacer que resuelva el shell antes de montar:
 
 ```js
-import { injectShell, leerPartials } from '../scripts/shell.mjs'
+import { injectShell, readPartials } from '../scripts/shell.mjs'
 
 const crudo = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8')
-const html = injectShell(crudo, { partials: leerPartials(), base: '/' })
+const html = injectShell(crudo, { partials: readPartials(), base: '/' })
 const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '')
 ```
 
@@ -975,11 +975,11 @@ Ojo con el `match`: el `<body>` ahora tiene atributo `data-pagina`, así que el 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, leerPartials } from '../../scripts/shell.mjs'
+import { injectShell, readPartials } from '../../scripts/shell.mjs'
 import { NOTES } from '../notes.js'
 
 const crudo = readFileSync(resolve(process.cwd(), 'notas/index.html'), 'utf8')
-const html = injectShell(crudo, { partials: leerPartials(), base: '/' })
+const html = injectShell(crudo, { partials: readPartials(), base: '/' })
 const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '')
 
 async function montar(hash = '') {
@@ -1078,7 +1078,7 @@ git commit -m "feat: shell compartido inyectado en build y la página de notas"
 - Modify: `vite.config.js` (tercera entrada), `src/style.css`
 
 **Interfaces:**
-- Consumes: `GEOSERVER` de `src/download.js`, `injectShell`/`leerPartials` en el test.
+- Consumes: `GEOSERVER` de `src/download.js`, `injectShell`/`readPartials` en el test.
 - Produces: nada que otra tarea use. Es una página de contenido.
 
 **Todo el contenido está verificado el 2026-09-08 contra el servidor y está en la §5 del spec. No agregar un dato que no esté ahí.**
@@ -1091,11 +1091,11 @@ git commit -m "feat: shell compartido inyectado en build y la página de notas"
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, leerPartials } from '../../scripts/shell.mjs'
+import { injectShell, readPartials } from '../../scripts/shell.mjs'
 import { GEOSERVER } from '../download.js'
 
 const crudo = readFileSync(resolve(process.cwd(), 'servicios/index.html'), 'utf8')
-const html = injectShell(crudo, { partials: leerPartials(), base: '/' })
+const html = injectShell(crudo, { partials: readPartials(), base: '/' })
 
 describe('la página de servicios', () => {
   it('publica el endpoint real, el mismo del que baja el sitio', () => {

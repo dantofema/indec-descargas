@@ -1,16 +1,17 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 
-// `import.meta.url` va a una variable antes de entrar a `new URL(...)`:
-// escrito como literal (`new URL('../src/shell/', import.meta.url)`), Vite
-// lo reconoce como su patrón de asset URL y lo reescribe contra `base` en
-// vez de resolverlo como ruta de archivo. Sólo pasa cuando este módulo se
-// carga en modo cliente —los tests en jsdom, no los de entorno node—, así
-// que `leerPartials()` tiraba ahí con "The URL must be of scheme file".
-const AQUI = import.meta.url
-const SHELL_DIR = fileURLToPath(new URL('../src/shell/', AQUI))
-const MARCADOR = /<!--#shell:([a-z-]+)-->/g
+// `dirname` + `fileURLToPath` en vez de `new URL('../src/shell/',
+// import.meta.url)`: ese patrón literal es el que Vite reconoce como su
+// sintaxis especial de asset URL y reescribe contra `base` en vez de
+// resolverlo como ruta de archivo —sólo en modo cliente, que es como
+// Vitest carga los módulos bajo `environment: jsdom`—, así que
+// `readPartials()` tiraba ahí con "The URL must be of scheme file". Esta
+// forma nunca pasa por `new URL(str, import.meta.url)`, así que no hay
+// nada que el pattern-matching estático de Vite pueda reescribir.
+const SHELL_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'shell')
+const MARKER = /<!--#shell:([a-z-]+)-->/g
 
 /**
  * El header, el CTA y el footer se escriben una vez y se resuelven en build,
@@ -21,17 +22,17 @@ const MARCADOR = /<!--#shell:([a-z-]+)-->/g
  * nadie ve faltar.
  */
 export function injectShell(html, { partials, base }) {
-  const conShell = html.replace(MARCADOR, (_, nombre) => {
-    if (!(nombre in partials)) throw new Error(`marcador de shell sin partial: ${nombre}`)
-    return partials[nombre]
+  const withShell = html.replace(MARKER, (_, name) => {
+    if (!(name in partials)) throw new Error(`marcador de shell sin partial: ${name}`)
+    return partials[name]
   })
   // Después de inyectar, para que los enlaces del propio partial se
   // resuelvan igual que los de la página.
-  return conShell.replaceAll('{{base}}', base)
+  return withShell.replaceAll('{{base}}', base)
 }
 
 /** Los partials del shell, por nombre de archivo sin extensión. */
-export function leerPartials(dir = SHELL_DIR) {
+export function readPartials(dir = SHELL_DIR) {
   return Object.fromEntries(
     readdirSync(dir)
       .filter((f) => f.endsWith('.html'))
@@ -48,7 +49,7 @@ export function shellPlugin() {
     transformIndexHtml: {
       order: 'pre',
       // Se releen en cada transform para que editar un partial se vea en dev.
-      handler: (html) => injectShell(html, { partials: leerPartials(), base }),
+      handler: (html) => injectShell(html, { partials: readPartials(), base }),
     },
   }
 }

@@ -13,34 +13,34 @@ import { NOTES, noteFor } from '../notes.js'
 import { fmt } from '../ui.js'
 
 /** La nota que corresponde al ancla actual, o la primera si no hay o no existe. */
-function notaActual() {
+function currentNote() {
   return noteFor(location.hash.slice(1)) ?? NOTES[0]
 }
 
-function pintarParrafo(texto) {
+function renderParagraph(texto) {
   const p = document.createElement('p')
   p.textContent = texto
   return p
 }
 
 /** Dibuja el navegador vertical una sola vez: la lista de notas no cambia. */
-function pintarNav() {
+function renderNav() {
   const nav = document.querySelector('#nota-nav')
   if (!nav) return
-  nav.replaceChildren(...NOTES.map((nota) => {
+  nav.replaceChildren(...NOTES.map((note) => {
     const b = document.createElement('button')
     b.type = 'button'
     b.className = 'nota-tab'
     b.setAttribute('role', 'tab')
     b.setAttribute('aria-selected', 'false')
-    b.dataset.slug = nota.slug
-    b.textContent = nota.label
+    b.dataset.slug = note.slug
+    b.textContent = note.label
     // El click repinta al toque: `hashchange` es async (una tarea en cola)
     // y de ahí no alcanza para que el clic se vea de inmediato. El listener
     // de más abajo sigue haciendo falta para atrás/adelante del navegador,
     // que no pasan por acá.
     b.addEventListener('click', () => {
-      location.hash = nota.slug
+      location.hash = note.slug
       render()
     })
     return b
@@ -54,17 +54,17 @@ function render() {
   const cuerpo = document.querySelector('#nota-cuerpo')
   if (!titulo || !total || !cuerpo) return
 
-  const nota = notaActual()
-  titulo.textContent = nota.label
-  total.textContent = `${fmt(nota.total)} en el Marco Geoestadístico.`
-  cuerpo.replaceChildren(...nota.paragraphs.map(pintarParrafo))
+  const note = currentNote()
+  titulo.textContent = note.label
+  total.textContent = `${fmt(note.total)} en el Marco Geoestadístico.`
+  cuerpo.replaceChildren(...note.paragraphs.map(renderParagraph))
 
   document.querySelectorAll('#nota-nav [role="tab"]').forEach((b) => {
-    b.setAttribute('aria-selected', String(b.dataset.slug === nota.slug))
+    b.setAttribute('aria-selected', String(b.dataset.slug === note.slug))
   })
 }
 
-let escuchando = false
+let listening = false
 
 /**
  * Idempotente a propósito: este módulo es el entry de Vite, así que se
@@ -74,11 +74,11 @@ let escuchando = false
  * llamarla de nuevo no duplique nada.
  */
 export function initNotas() {
-  pintarNav()
+  renderNav()
   render()
-  if (!escuchando) {
+  if (!listening) {
     window.addEventListener('hashchange', render)
-    escuchando = true
+    listening = true
   }
 }
 

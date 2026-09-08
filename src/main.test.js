@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, leerPartials } from '../scripts/shell.mjs'
+import { injectShell, readPartials } from '../scripts/shell.mjs'
 
 // El cableado: que el `index.html` real, el catálogo y los módulos encajen.
 // Leaflet va mockeado —necesita un browser de verdad para medir—, todo lo
@@ -36,7 +36,7 @@ const catalogo = {
 // el marcador que lo reemplaza: sin esto `#generated` no existiría y
 // `main.js` tiraría al intentar escribirlo.
 const crudo = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8')
-const html = injectShell(crudo, { partials: leerPartials(), base: '/' })
+const html = injectShell(crudo, { partials: readPartials(), base: '/' })
 const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '')
 
 const $ = (sel) => document.querySelector(sel)

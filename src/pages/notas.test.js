@@ -2,11 +2,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { injectShell, leerPartials } from '../../scripts/shell.mjs'
+import { injectShell, readPartials } from '../../scripts/shell.mjs'
 import { NOTES } from '../notes.js'
 
 const crudo = readFileSync(resolve(process.cwd(), 'notas/index.html'), 'utf8')
-const html = injectShell(crudo, { partials: leerPartials(), base: '/' })
+const html = injectShell(crudo, { partials: readPartials(), base: '/' })
 const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '')
 
 async function montar(hash = '') {

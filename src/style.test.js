@@ -184,3 +184,19 @@ describe('lo que cambia sin mouse', () => {
     expect(bloque).toMatch(/\.results li:hover/)
   })
 })
+
+// El body trae `data-pagina` (cada página lo pone en su propio <body>) y
+// el link del nav, `data-nav` (lo pone el shell, en build): sin un
+// selector que combine los dos, quedan dos mitades de un mecanismo sin el
+// puente, y el nav activo nunca se marca. Esto lo fija para que no se
+// vuelva a evaporar; las tareas 6 y 8 suman acá el par de servicios y de
+// resultados al crear esas páginas.
+describe('el nav marca la página activa', () => {
+  it('home', () => {
+    expect(css).toMatch(/\[data-pagina="home"\][^{]*\[data-nav="home"\]/)
+  })
+
+  it('notas', () => {
+    expect(css).toMatch(/\[data-pagina="notas"\][^{]*\[data-nav="notas"\]/)
+  })
+})

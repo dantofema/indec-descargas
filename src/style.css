@@ -56,6 +56,17 @@ main { padding-top: 1.75rem; }
 .site-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 .site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
 .site-nav a:hover { color: var(--fg); }
+/* Marca en el nav cuál página estás mirando. El body trae `data-pagina`
+   —cada página lo pone en su propio <body>— y el link, `data-nav` —lo pone
+   el shell, en build—: el puente entre los dos es CSS puro, sin JS, así
+   que no hay estado que se pueda desincronizar del body real. Las tareas
+   6 y 8 suman el par de servicios y de resultados acá al crear esas
+   páginas. */
+body[data-pagina="home"] .site-nav [data-nav="home"],
+body[data-pagina="notas"] .site-nav [data-nav="notas"] {
+  color: var(--fg);
+  font-weight: 600;
+}
 
 /* El CTA institucional, entre el contenido y el footer en toda página. */
 .cta { max-width: 60rem; margin: 2rem auto 0; padding: 0 1rem; }
