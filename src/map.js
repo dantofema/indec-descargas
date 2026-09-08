@@ -69,10 +69,10 @@ function beginRequest() {
 
 /**
  * Pide el GeoJSON de `url`, lo dibuja si para cuando llega sigue siendo la
- * petición vigente, y devuelve las propiedades del feature —quien llama
- * decide qué hacer con ellas, ver más abajo por qué—. Es la parte que
- * showObject y showFeature comparten entera: sólo cambia de dónde sale la
- * URL, no qué se hace con ella.
+ * petición vigente, y devuelve las propiedades del primer feature junto con
+ * cuántos vinieron —quien llama decide qué hacer con ellas, ver más abajo
+ * por qué—. Es la parte que showObject y showFeature comparten entera: sólo
+ * cambia de dónde sale la URL, no qué se hace con ella.
  *
  * Una petición superada no escribe nada: ni el mapa, ni la línea de
  * estado. El chequeo va antes de mirar el status, y el try/catch cubre
@@ -106,7 +106,13 @@ async function drawFromUrl(request, url) {
     }).addTo(map)
 
     map.fitBounds(layer.getBounds(), { padding: [16, 16] })
-    return geojson.features[0].properties
+    // El conteo, además de las propiedades del primero: en vías un código no
+    // identifica un tramo sino una calle entera, y sus tramos comparten el
+    // código —80 filas en el caso más partido medido, la AUTOPISTA DEL OESTE
+    // (`0684001002660`)—. Sin este número la ficha describiría el tramo 1
+    // mientras el mapa dibuja los 80, que es justo la contradicción que
+    // NAV-R11 vino a eliminar.
+    return { props: geojson.features[0].properties, count: geojson.features.length }
   } catch (err) {
     if (request !== pending) return undefined
     throw err
@@ -114,25 +120,29 @@ async function drawFromUrl(request, url) {
 }
 
 export async function showObject(obj) {
-  if (!map) return
-  // Sólo el objeto de la búsqueda avisa sus propiedades: esa línea describe
-  // la ficha, y una petición superada devuelve `undefined` (ver arriba).
-  const props = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
-  if (props) featureCallback(props)
+  if (!map) return undefined
+  // Devuelve, además de avisar: la ficha de un objeto sin catálogo se
+  // construye entera con esto —no tiene un nombre que venga del catálogo—,
+  // y el callback es un canal de aviso, no de datos. Una petición superada
+  // devuelve `undefined` (ver arriba).
+  const drawn = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
+  if (drawn) featureCallback(drawn.props)
+  return drawn
 }
 
 /**
  * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
  * desde la tabla de la fila 3, no el objeto de la búsqueda.
  *
- * Devuelve las propiedades para que la ficha pueda describir la fila que
- * se está viendo (NAV-R10). `undefined` significa "este pedido perdió la
- * carrera": quien llama no tiene que escribir nada. `onFeature` sigue
- * siendo sólo del objeto de la búsqueda —esta función no lo dispara—: esa
- * línea describe la identidad del objeto de la ficha y no tiene que
- * cambiar con cada "Ver".
+ * Devuelve sólo las propiedades: su único llamador es ese "Ver", que
+ * describe un objeto por vez y no tiene qué hacer con el conteo. `undefined`
+ * significa "este pedido perdió la carrera": quien llama no escribe nada.
+ *
+ * Muere junto con ese "Ver" en la tarea que lo convierte en navegación: con
+ * `TYPES` extendido, la ficha de cualquier objeto se dibuja con `showObject`.
  */
 export async function showFeature(layerName, field, code) {
   if (!map) return undefined
-  return drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
+  const drawn = await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
+  return drawn?.props
 }

@@ -26,6 +26,11 @@ const catalogo = {
     // (objeto, capa) con cero, y los 11 caen en capas que tienen nota.
     { t: 'loc', c: '94021040', n: 'Grytviken', s: 'grytviken', p: 'Tierra del Fuego',
       ch: { vias: 0 } },
+    // El catálogo real tiene el departamento y la localidad censal
+    // homónimos de Tres de Febrero: este objeto lo agrega acá porque una
+    // vía (Task 5) lo necesita como padre.
+    { t: 'loc', c: '06840010', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires',
+      ch: { vias: 1487 } },
   ],
 }
 
@@ -104,7 +109,7 @@ async function montar(search = '') {
 describe('el recorrido completo', () => {
   it('arranca con el catálogo cargado y sin ficha si el enlace no trae objeto', async () => {
     await montar()
-    expect($('#generated').textContent).toContain('3 objetos')
+    expect($('#generated').textContent).toContain('4 objetos')
     expect($('#generated').textContent).toContain('2026-09-04')
     // Ya no hay tope de descarga: el pie de página no debe mentir sobre uno.
     expect($('#generated').textContent).not.toContain('máximo')
@@ -115,9 +120,13 @@ describe('el recorrido completo', () => {
     await montar()
     buscar('tres')
     expect($('#results').hidden).toBe(false)
-    expect($('#results').children).toHaveLength(1)
+    // El departamento y la localidad censal de Tres de Febrero son
+    // homónimos en el catálogo real: la consulta trae los dos, y el tipo
+    // de cada fila es lo único que los distingue.
+    expect($('#results').children).toHaveLength(2)
     expect($('#results').textContent).toContain('Tres de Febrero')
     expect($('#results').textContent).toContain('Departamento')
+    expect($('#results').textContent).toContain('Localidad censal')
   })
 
   it('la ficha del enlace trae su descarga y sus capas', async () => {
@@ -218,7 +227,8 @@ describe('el filtro por tipo', () => {
   it('vuelve a buscar al cambiar de tipo, sin retipear', async () => {
     await montar()
     buscar('tres')
-    expect($('#results').children).toHaveLength(1)
+    // Sin filtro, el departamento y la localidad homónima aparecen los dos.
+    expect($('#results').children).toHaveLength(2)
     filtrar('jur')
     expect($('#results').children).toHaveLength(0)
     filtrar('dep')
@@ -231,6 +241,9 @@ describe('el filtro por tipo', () => {
 describe('la provincia como término extra', () => {
   it('encuentra el departamento nombrando su provincia', async () => {
     await montar()
+    // Acotado a departamento: la localidad homónima matchea el mismo
+    // término y esta prueba es sobre el departamento, no sobre el empate.
+    filtrar('dep')
     buscar('febrero buenos aires')
     expect($('#results').children).toHaveLength(1)
     expect($('#results').textContent).toContain('Tres de Febrero')
@@ -756,5 +769,53 @@ describe('la URL es el estado', () => {
   it('sin portapapeles el botón de copiar no se muestra', async () => {
     await montar('?t=dep&c=06840')
     expect($('#copy-link').hidden).toBe(true)
+  })
+})
+
+describe('la ficha de un objeto que no está en el catálogo', () => {
+  // El mock por defecto siempre devuelve `filaDeVerdad` sin mirar el
+  // filtro, con su propio cod_indec. Acá la fila que vuelve es el objeto
+  // mismo de la ficha —selfUrl filtra por su código—, así que un GeoServer
+  // de verdad la devuelve con ese código puesto; el mock tiene que hacer
+  // lo mismo para no simular uno que ignora su propio CQL_FILTER.
+  beforeEach(() => {
+    global.fetch = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+      const codigo = u.match(/cod_indec%3D%27(\d+)%27/)?.[1]
+      const properties = codigo ? { ...filaDeVerdad, cod_indec: codigo } : filaDeVerdad
+      return { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties }] }) }
+    })
+  })
+
+  it('un radio se resuelve contra el GeoServer y muestra su identidad', async () => {
+    await montar('?t=rad&c=068402311')
+    expect($('#detail').hidden).toBe(false)
+    expect($('#detail-name').textContent).toContain('068402311')
+    expect($('#detail-self a')).not.toBeNull()
+  })
+
+  it('no muestra fila 3 ni bloque de capas hijas: un radio no contiene nada', async () => {
+    await montar('?t=rad&c=068402311')
+    expect($('#row-browse').hidden).toBe(true)
+    expect($('#row-children').hidden).toBe(true)
+  })
+
+  it('muestra de qué forma parte, derivado del código', async () => {
+    await montar('?t=rad&c=068402311')
+    expect($('#row-parents').hidden).toBe(false)
+    // Fracción 0684023 (sintética), departamento 06840 y jurisdicción 06.
+    expect($('#parents').children.length).toBe(3)
+  })
+
+  it('el buscador no queda diciendo "undefined"', async () => {
+    await montar('?t=rad&c=068402311')
+    expect($('#q').value).toBe('068402311')
+  })
+
+  it('un código con el largo de otro tipo muestra el buscador, no una ficha rota (SITIO-R4)', async () => {
+    await montar('?t=rad&c=0684042')
+    expect($('#detail').hidden).toBe(true)
+    expect($('#status').classList.contains('error')).toBe(true)
   })
 })

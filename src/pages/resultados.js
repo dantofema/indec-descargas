@@ -12,7 +12,7 @@
  * tocaron.
  */
 import { loadCatalog } from '../catalog.js'
-import { selfUrl, TYPES, childOf, featureUrl, isCode } from '../download.js'
+import { selfUrl, TYPES, LAYER_OF_TYPE, childOf, featureUrl, isCode } from '../download.js'
 import { initMap, showObject, showFeature, onFeature } from '../map.js'
 import { fmt, downloadButton, disabledButton, setStatus } from '../ui.js'
 import { childRows } from '../children.js'
@@ -62,6 +62,7 @@ function queryEls() {
     parents: document.querySelector('#parents'),
     rowParents: document.querySelector('#row-parents'),
     rowBrowse: document.querySelector('#row-browse'),
+    rowChildren: document.querySelector('#row-children'),
     browse: document.querySelector('#browse'),
     children: document.querySelector('#children'),
     generated: document.querySelector('#generated'),
@@ -155,7 +156,7 @@ function backButton() {
  * "Volver" tiene que devolver a su lugar.
  */
 function showObjectIdentity(obj) {
-  el.name.textContent = obj.n
+  el.name.textContent = obj.n ?? `${TYPES[obj.t].label} ${obj.c}`
   el.meta.textContent = obj.p && obj.p !== obj.n
     ? `${TYPES[obj.t].label} · ${obj.p} · código ${obj.c}`
     : `${TYPES[obj.t].label} · código ${obj.c}`
@@ -166,22 +167,28 @@ function showObjectIdentity(obj) {
 }
 
 /**
- * La ficha de una fila hija. Los campos salen de `specOf`, la misma spec
- * que arma la tabla: ficha y tabla leen lo mismo, así que no pueden decir
- * cosas distintas de la misma fila.
+ * El panel de identidad de una fila de capa: nombre, metadatos, enlace a la
+ * nota de esa capa y su descarga. Los campos salen de `specOf`, la misma
+ * spec que arma la tabla, así que ficha y tabla no pueden decir cosas
+ * distintas de la misma fila.
  *
- * Se reemplaza entera —nombre, metadatos, enlace a la nota y descarga—, no
- * se le agrega nada a lo que había: es lo que separa esto del bug viejo,
- * donde cada "Ver" le pegaba otro tramo de texto a #detail-meta sin límite.
+ * Se reemplaza entero, nunca se le agrega nada a lo que había: es lo que
+ * separa esto del bug viejo, donde cada "Ver" le pegaba otro tramo de texto
+ * a #detail-meta sin límite.
+ *
+ * `count` sólo importa en vías: ahí el código identifica una calle entera y
+ * `row` describe uno solo de los tramos que el mapa está dibujando, así que
+ * la ficha dice cuántos son en vez de repetir campos de un tramo suelto
+ * como si fueran de la calle (ver más abajo).
  */
-function showRow(layer, row) {
-  const spec = specOf(layer)
+function showFeatureIdentity(layerKey, row, count = 1) {
+  const spec = specOf(layerKey)
   const codigo = String(row[spec.idField] ?? '')
 
   // El singular sale del `label` de la nota de esa capa, que ya está en
   // singular ("Radio censal"). Derivarlo de CHILD_LAYERS con un replace
   // daría "Radios censale": el plural del INDEC no se deshace con un regex.
-  const singular = noteFor(NOTE_BY_LAYER[layer]).label
+  const singular = noteFor(NOTE_BY_LAYER[layerKey]).label
 
   el.name.textContent = spec.titleField && row[spec.titleField]
     ? row[spec.titleField]
@@ -192,19 +199,30 @@ function showRow(layer, row) {
     .map((c) => `${c.label}: ${c.map ? c.map(row[c.field]) : row[c.field]}`)
     .join(' · ')
 
-  // El enlace también: era el único elemento de la ficha que se quedaba
-  // hablando del padre, y dejaba el panel diciendo "Radio censal 068400101"
-  // arriba de "Qué es un departamento →" (NAV-R10).
-  el.note.replaceChildren(noteLink(NOTE_BY_LAYER[layer], `Qué es ${singular.toLowerCase()} →`))
+  // Una vía es la excepción: el código identifica la calle y sus tramos lo
+  // comparten, así que `row` describe uno solo de los que el mapa está
+  // dibujando. Los campos de tramo —alturas, id— mienten sobre la calle, así
+  // que en su lugar la ficha dice cuántos tramos son. Es además el aviso de
+  // duplicados que pide la nota de vías, acá gratis: el pedido ya volvió con
+  // todos.
+  if (layerKey === 'vias') {
+    el.meta.textContent = count > 1
+      ? `Código ${codigo} · el INDEC la publica partida en ${fmt(count)} tramos`
+      : `Código ${codigo} · un solo tramo`
+  }
 
-  // Una fila sin código no es un error de programa: es un dato que el INDEC
-  // no publicó (DES-R8). Se dice, y la ficha sigue en pie.
+  el.note.replaceChildren(noteLink(NOTE_BY_LAYER[layerKey], `Qué es ${singular.toLowerCase()} →`))
+
   el.self.replaceChildren(
     isCode(codigo)
-      ? downloadButton(featureUrl(layer, codigo), `Descargar ${singular.toLowerCase()}`)
+      ? downloadButton(featureUrl(layerKey, codigo), `Descargar ${singular.toLowerCase()}`)
       : disabledButton('Descargar', 'El INDEC no publicó el código de esta fila.'),
-    backButton(),
   )
+}
+
+function showRow(layerKey, row) {
+  showFeatureIdentity(layerKey, row)
+  el.self.append(backButton())
 }
 
 /**
@@ -223,12 +241,17 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   // si esa primera pestaña se escribe en la barra (ver `writeTab`).
   current = obj
   writeTab = layerRequested
-  el.q.value = obj.n
+  // Un objeto sin catálogo no tiene nombre publicado: el campo muestra su
+  // código, que es como se llegó hasta acá.
+  el.q.value = obj.n ?? obj.c
   setStatus(el.status, '')
 
   showObjectIdentity(obj)
   renderParents(obj)
   renderChildren(obj)
+  // La fila 2 tiene dos mitades y cada una decide su visibilidad: un radio
+  // no contiene nada, y una sección vacía enseña a ignorarla.
+  el.rowChildren.hidden = el.children.children.length === 0
   // La visibilidad de la fila la decide quien la dibuja, como la fila 2:
   // recalcular acá el mismo predicado es cómo divergen y queda una fila
   // visible y vacía.
@@ -259,9 +282,18 @@ function describeFeature(props) {
  * a lo que se vino— siguen ahí, así que el fallo se avisa y se sigue.
  */
 function drawObject(obj) {
-  showObject(obj).catch((err) => {
-    setStatus(el.status, `No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
-  })
+  showObject(obj)
+    .then((drawn) => {
+      // Un objeto sin catálogo llega a la página con nada más que su tipo y
+      // su código: los campos que lo describen los trae el mismo pedido que
+      // dibuja el mapa, así que la identidad se completa acá y no antes.
+      if (drawn && !TYPES[obj.t].catalogo) {
+        showFeatureIdentity(LAYER_OF_TYPE[obj.t], drawn.props, drawn.count)
+      }
+    })
+    .catch((err) => {
+      setStatus(el.status, `No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
+    })
 }
 
 /**
@@ -350,9 +382,12 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
       if (url.status === 'empty') return setStatus(el.status, 'Buscá un objeto para verlo en el mapa.')
       if (url.status === 'invalid') return setStatus(el.status, `Ese enlace no se puede abrir: ${url.reason}`, true)
 
-      // `permalink.js` valida sintaxis; la existencia la decide el catálogo,
-      // que es quien la sabe.
-      const obj = c.objects.find((o) => o.t === url.type && o.c === url.code)
+      // El catálogo dice qué objetos se pueden buscar por nombre, no cuáles
+      // existen: fracciones, radios y vías se resuelven contra el GeoServer,
+      // que es quien los tiene.
+      const obj = TYPES[url.type].catalogo
+        ? c.objects.find((o) => o.t === url.type && o.c === url.code)
+        : { t: url.type, c: url.code }
       if (!obj) return setStatus(el.status, `No hay ningún objeto con el código ${url.code} en el catálogo.`, true)
 
       initMap('map') // recién acá: sin objeto no hay nada que dibujar
