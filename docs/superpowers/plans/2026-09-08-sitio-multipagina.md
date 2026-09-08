@@ -54,7 +54,7 @@
 **Interfaces:**
 - Consumes: `TYPES`, `CHILD_LAYERS`, `isCode` de `src/download.js` (ya existen).
 - Produces:
-  - `parse(search: string) => {estado:'vacio'} | {estado:'invalido', motivo:string} | {estado:'ok', t:string, c:string, capa:string|null}`
+  - `parse(search: string) => {status:'empty'} | {status:'invalid', reason:string} | {status:'ok', type:string, code:string, layer:string|null}`
   - `format(obj: {t,c}, capa?: string|null) => string` — href absoluto con `BASE_URL`.
 
 **Qué NO hace este módulo:** no sabe si el objeto existe en el catálogo ni si esa capa le corresponde a ese objeto. No tiene el catálogo. Eso lo decide `pages/resultados.js` (Task 7). Acá sólo se valida la sintaxis.
@@ -70,12 +70,12 @@ const search = (href) => new URL(href, 'http://x').search
 
 describe('parse', () => {
   it('sin parámetros es vacío, no un error', () => {
-    expect(parse('')).toEqual({ estado: 'vacio' })
-    expect(parse('?')).toEqual({ estado: 'vacio' })
+    expect(parse('')).toEqual({ status: 'empty' })
+    expect(parse('?')).toEqual({ status: 'empty' })
   })
 
   it('lee tipo y código', () => {
-    expect(parse('?t=dep&c=06840')).toEqual({ estado: 'ok', t: 'dep', c: '06840', capa: null })
+    expect(parse('?t=dep&c=06840')).toEqual({ status: 'ok', t: 'dep', c: '06840', capa: null })
   })
 
   it('conserva los ceros a la izquierda del código', () => {
@@ -84,7 +84,7 @@ describe('parse', () => {
 
   it('lee la capa cuando es una de las declaradas', () => {
     expect(parse('?t=dep&c=06840&capa=radios')).toEqual(
-      { estado: 'ok', t: 'dep', c: '06840', capa: 'radios' },
+      { status: 'ok', t: 'dep', c: '06840', capa: 'radios' },
     )
   })
 
@@ -93,22 +93,22 @@ describe('parse', () => {
   })
 
   it('rechaza un tipo desconocido', () => {
-    expect(parse('?t=xx&c=06840').estado).toBe('invalido')
+    expect(parse('?t=xx&c=06840').status).toBe('invalid')
   })
 
   it('rechaza un código que no son dígitos: es lo que se interpola en el CQL', () => {
-    expect(parse("?t=dep&c=06840'+OR+1=1").estado).toBe('invalido')
-    expect(parse('?t=dep&c=abc').estado).toBe('invalido')
+    expect(parse("?t=dep&c=06840'+OR+1=1").status).toBe('invalid')
+    expect(parse('?t=dep&c=abc').status).toBe('invalid')
   })
 
   it('rechaza que falte cualquiera de los dos', () => {
-    expect(parse('?t=dep').estado).toBe('invalido')
-    expect(parse('?c=06840').estado).toBe('invalido')
+    expect(parse('?t=dep').status).toBe('invalid')
+    expect(parse('?c=06840').status).toBe('invalid')
   })
 
   it('el motivo dice qué parámetro está mal', () => {
-    expect(parse('?t=xx&c=06840').motivo).toMatch(/tipo/i)
-    expect(parse('?t=dep&c=abc').motivo).toMatch(/código|codigo/i)
+    expect(parse('?t=xx&c=06840').reason).toMatch(/tipo/i)
+    expect(parse('?t=dep&c=abc').reason).toMatch(/código|codigo/i)
   })
 })
 
@@ -125,7 +125,7 @@ describe('format', () => {
   it('ida y vuelta: lo que formatea es lo que parsea', () => {
     for (const capa of [null, 'vias']) {
       const obj = { t: 'loc', c: '06840010' }
-      expect(parse(search(format(obj, capa)))).toEqual({ estado: 'ok', ...obj, capa })
+      expect(parse(search(format(obj, capa)))).toEqual({ status: 'ok', ...obj, capa })
     }
   })
 })
@@ -156,25 +156,25 @@ export function parse(search) {
   const t = p.get('t')
   const c = p.get('c')
 
-  if (t === null && c === null) return { estado: 'vacio' }
+  if (t === null && c === null) return { status: 'empty' }
   if (t === null || c === null) {
-    return { estado: 'invalido', motivo: 'faltan el tipo o el código del objeto en el enlace' }
+    return { status: 'invalid', reason: 'faltan el tipo o el código del objeto en el enlace' }
   }
   if (!(t in TYPES)) {
-    return { estado: 'invalido', motivo: `tipo de objeto desconocido en el enlace: ${t}` }
+    return { status: 'invalid', reason: `tipo de objeto desconocido en el enlace: ${t}` }
   }
   // El código es lo único que se interpola dentro del CQL_FILTER: entra por
   // la misma puerta que `assertCode`, pero sin explotar, porque un enlace
   // mal copiado no es un error de programa.
   if (!isCode(c)) {
-    return { estado: 'invalido', motivo: `el código del enlace no son dígitos: ${c}` }
+    return { status: 'invalid', reason: `el código del enlace no son dígitos: ${c}` }
   }
 
   // Una capa que no existe se ignora en vez de invalidar el enlace: el
   // objeto sigue siendo mostrable y abrir su primera pestaña es una
   // respuesta mejor que un error.
   const capa = p.get('capa')
-  return { estado: 'ok', t, c, capa: capa && capa in CHILD_LAYERS ? capa : null }
+  return { status: 'ok', t, c, capa: capa && capa in CHILD_LAYERS ? capa : null }
 }
 
 /** El enlace permanente de un objeto, opcionalmente con su capa abierta. */
@@ -374,11 +374,11 @@ git commit -m "feat: los totales del home salen del catálogo y no pueden enveje
 **Interfaces:**
 - Consumes: nada del catálogo en runtime. `import.meta.env.BASE_URL` para el href.
 - Produces:
-  - `NOTAS: Array<{slug, label, tipo:string|null, capa:string|null, total:number, paragraphs:string[]}>`
-  - `NOTA_POR_TIPO: Record<'jur'|'dep'|'loc'|'gl'|'aglo', string>`
-  - `NOTA_POR_CAPA: Record<'departamentos'|'fracciones'|'radios'|'localidades'|'vias', string>`
-  - `notaDe(slug) => Nota | undefined`
-  - `notaHref(slug) => string` — `${BASE_URL}notas/#${slug}`
+  - `NOTES: Array<{slug, label, type:string|null, layer:string|null, total:number, paragraphs:string[]}>`
+  - `NOTE_BY_TYPE: Record<'jur'|'dep'|'loc'|'gl'|'aglo', string>`
+  - `NOTE_BY_LAYER: Record<'departamentos'|'fracciones'|'radios'|'localidades'|'vias', string>`
+  - `noteFor(slug) => Note | undefined`
+  - `noteHref(slug) => string` — `${BASE_URL}notas/#${slug}`
 
 **Lo que desaparece:** `notesFor(obj)` y el import de `nonEmptyChildrenOf`. **NAV-R6 muere acá, no más adelante:** `main.js` es el único consumidor de `notesFor`, así que la fila de notas de la ficha se va en esta misma tarea o el sitio queda roto entre tareas. Concretamente: borrar `renderNotes` y su llamada en `selectObject`, las entradas `notes` y `rowNotes` del objeto `el`, y el bloque `<div class="row" id="row-notes">…</div>` de `index.html`; sacar de `src/main.test.js` los casos que afirman la fila de notas. Entre esta tarea y la Task 5 no hay a dónde enlazar —`/notas/` todavía no existe—: es la ventana esperada, y la Task 9 pone los enlaces. `nonEmptyChildrenOf` sigue existiendo en `catalog.js` porque la usan `browser.js` y `children.js`.
 
@@ -392,7 +392,7 @@ Reescribir `src/notes.test.js`:
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { NOTAS, NOTA_POR_TIPO, NOTA_POR_CAPA, notaDe, notaHref } from './notes.js'
+import { NOTES, NOTE_BY_TYPE, NOTE_BY_LAYER, noteFor, noteHref } from './notes.js'
 import { TYPES, CHILD_LAYERS } from './download.js'
 
 const catalog = JSON.parse(readFileSync(resolve(process.cwd(), 'public/catalog.json'), 'utf8'))
@@ -403,63 +403,63 @@ const sumaEnJurisdicciones = (capa) => catalog.objects
 
 describe('las ocho notas', () => {
   it('son ocho, una por objeto del Marco', () => {
-    expect(NOTAS).toHaveLength(8)
+    expect(NOTES).toHaveLength(8)
   })
 
   it('cada slug es único y sirve como ancla', () => {
-    const slugs = NOTAS.map((n) => n.slug)
+    const slugs = NOTES.map((n) => n.slug)
     expect(new Set(slugs).size).toBe(8)
     for (const s of slugs) expect(s).toMatch(/^[a-z][a-z-]*[a-z]$/)
   })
 
   it('ninguna nota está vacía', () => {
-    for (const n of NOTAS) {
+    for (const n of NOTES) {
       expect(n.paragraphs.length).toBeGreaterThan(0)
       for (const p of n.paragraphs) expect(p.trim().length).toBeGreaterThan(40)
     }
   })
 
   it('el href apunta a la página de notas con el ancla', () => {
-    expect(notaHref('radio-censal')).toMatch(/notas\/#radio-censal$/)
+    expect(noteHref('radio-censal')).toMatch(/notas\/#radio-censal$/)
   })
 })
 
 describe('los dos vocabularios llegan a una nota', () => {
   it('todo tipo buscable tiene nota', () => {
     for (const t of Object.keys(TYPES)) {
-      expect(notaDe(NOTA_POR_TIPO[t]), `falta la nota del tipo ${t}`).toBeDefined()
+      expect(noteFor(NOTE_BY_TYPE[t]), `falta la nota del tipo ${t}`).toBeDefined()
     }
   })
 
   it('toda capa hija tiene nota', () => {
     for (const capa of Object.keys(CHILD_LAYERS)) {
-      expect(notaDe(NOTA_POR_CAPA[capa]), `falta la nota de la capa ${capa}`).toBeDefined()
+      expect(noteFor(NOTE_BY_LAYER[capa]), `falta la nota de la capa ${capa}`).toBeDefined()
     }
   })
 
   it('no hay notas huérfanas: cada una la alcanza algún vocabulario', () => {
-    const alcanzables = new Set([...Object.values(NOTA_POR_TIPO), ...Object.values(NOTA_POR_CAPA)])
-    for (const n of NOTAS) expect(alcanzables.has(n.slug), `${n.slug} no la nombra nadie`).toBe(true)
+    const alcanzables = new Set([...Object.values(NOTE_BY_TYPE), ...Object.values(NOTE_BY_LAYER)])
+    for (const n of NOTES) expect(alcanzables.has(n.slug), `${n.slug} no la nombra nadie`).toBe(true)
   })
 })
 
 describe('los números que afirma una nota (NOTA-R2)', () => {
   it('coinciden con el catálogo commiteado', () => {
-    for (const n of NOTAS) {
+    for (const n of NOTES) {
       if (n.tipo) expect(n.total, `total de ${n.slug} por tipo`).toBe(porTipo(n.tipo))
       if (n.capa) expect(n.total, `total de ${n.slug} por capa`).toBe(sumaEnJurisdicciones(n.capa))
     }
   })
 
   it('los dos objetos que son tipo y capa a la vez dan lo mismo por los dos caminos', () => {
-    const dobles = NOTAS.filter((n) => n.tipo && n.capa)
+    const dobles = NOTES.filter((n) => n.tipo && n.capa)
     expect(dobles.map((n) => n.slug).sort()).toEqual(['departamento', 'localidad-censal'])
   })
 })
 
 describe('las dos notas que ya existían', () => {
   it('vías conserva su texto intacto', () => {
-    const vias = notaDe('via-de-circulacion')
+    const vias = noteFor('via-de-circulacion')
     expect(vias.paragraphs[0]).toBe(
       'Esta capa no lista calles: lista tramos. Una misma calle aparece tantas veces como tramos tenga su geometría, y todos comparten nombre, código y altura. En Tres de Febrero, las 1.487 filas son 727 calles; la más partida llega a 80 tramos.',
     )
@@ -467,7 +467,7 @@ describe('las dos notas que ya existían', () => {
   })
 
   it('localidad censal conserva sus tres párrafos intactos', () => {
-    const loc = notaDe('localidad-censal')
+    const loc = noteFor('localidad-censal')
     expect(loc.paragraphs).toHaveLength(3)
     expect(loc.paragraphs[0]).toBe(
       '«Localidad censal» no es lo que en la conversación diaria se llama localidad. Es una unidad del Marco Geoestadístico y a menudo no coincide con el municipio ni con el partido del mismo nombre.',
@@ -480,7 +480,7 @@ describe('las dos notas que ya existían', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run src/notes.test.js`
-Expected: FAIL — `NOTAS` no existe.
+Expected: FAIL — `NOTES` no existe.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -499,7 +499,7 @@ Reescribir `src/notes.js`. Los ocho objetos, en este orden (de lo más grande a 
  * `total` va aparte de `paragraphs` a propósito: así las dos notas que ya
  * existían se mudaron sin tocarles una coma.
  */
-export const NOTAS = [
+export const NOTES = [
   {
     slug: 'jurisdiccion',
     label: 'Jurisdicción',
@@ -594,7 +594,7 @@ export const NOTAS = [
   },
 ]
 
-export const NOTA_POR_TIPO = {
+export const NOTE_BY_TYPE = {
   jur: 'jurisdiccion',
   dep: 'departamento',
   loc: 'localidad-censal',
@@ -602,7 +602,7 @@ export const NOTA_POR_TIPO = {
   aglo: 'aglomerado',
 }
 
-export const NOTA_POR_CAPA = {
+export const NOTE_BY_LAYER = {
   departamentos: 'departamento',
   fracciones: 'fraccion-censal',
   radios: 'radio-censal',
@@ -610,10 +610,10 @@ export const NOTA_POR_CAPA = {
   vias: 'via-de-circulacion',
 }
 
-export const notaDe = (slug) => NOTAS.find((n) => n.slug === slug)
+export const noteFor = (slug) => NOTES.find((n) => n.slug === slug)
 
 /** El ancla de una nota en su página. La ficha enlaza acá (NOTA-R3). */
-export const notaHref = (slug) => `${import.meta.env.BASE_URL}notas/#${slug}`
+export const noteHref = (slug) => `${import.meta.env.BASE_URL}notas/#${slug}`
 ```
 
 Los `paragraphs` de `localidad-censal` y `via-de-circulacion` se copian **literalmente** del `src/notes.js` actual (los tres y los dos párrafos respectivamente). No reescribirlos, no reacomodarlos, no corregirles nada.
@@ -976,7 +976,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { injectShell, leerPartials } from '../../scripts/shell.mjs'
-import { NOTAS } from '../notes.js'
+import { NOTES } from '../notes.js'
 
 const crudo = readFileSync(resolve(process.cwd(), 'notas/index.html'), 'utf8')
 const html = injectShell(crudo, { partials: leerPartials(), base: '/' })
@@ -997,12 +997,12 @@ describe('la página de notas', () => {
     await montar()
     const items = document.querySelectorAll('#nota-nav [role="tab"]')
     expect(items).toHaveLength(8)
-    expect([...items].map((b) => b.textContent.trim())).toEqual(NOTAS.map((n) => n.label))
+    expect([...items].map((b) => b.textContent.trim())).toEqual(NOTES.map((n) => n.label))
   })
 
   it('sin ancla abre la primera', async () => {
     await montar()
-    expect(document.querySelector('#nota-titulo').textContent).toBe(NOTAS[0].label)
+    expect(document.querySelector('#nota-titulo').textContent).toBe(NOTES[0].label)
   })
 
   it('el ancla de la URL elige la nota', async () => {
@@ -1013,7 +1013,7 @@ describe('la página de notas', () => {
 
   it('un ancla que no existe cae en la primera en vez de dejar la página vacía', async () => {
     await montar('#no-existe')
-    expect(document.querySelector('#nota-titulo').textContent).toBe(NOTAS[0].label)
+    expect(document.querySelector('#nota-titulo').textContent).toBe(NOTES[0].label)
   })
 
   it('elegir una nota escribe el ancla, para poder compartirla', async () => {
@@ -1052,7 +1052,7 @@ describe('la página de notas', () => {
 <script type="module" src="/src/pages/notas.js"></script>
 ```
 
-`src/pages/notas.js` exporta `initNotas()` y la llama al cargar. Dibuja un botón por nota en `#nota-nav` (`role="tab"`, `aria-selected`, `data-slug`), y al elegir escribe `location.hash` y pinta título, total (`fmt(nota.total)` de `ui.js`) y párrafos. Lee `location.hash` al iniciar y escucha `hashchange`, para que atrás y adelante funcionen dentro de la página. Un slug desconocido cae en `NOTAS[0]`.
+`src/pages/notas.js` exporta `initNotas()` y la llama al cargar. Dibuja un botón por nota en `#nota-nav` (`role="tab"`, `aria-selected`, `data-slug`), y al elegir escribe `location.hash` y pinta título, total (`fmt(nota.total)` de `ui.js`) y párrafos. Lee `location.hash` al iniciar y escucha `hashchange`, para que atrás y adelante funcionen dentro de la página. Un slug desconocido cae en `NOTES[0]`.
 
 Estilos en `src/style.css`: `.notas-layout` es `display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 2rem;` y colapsa a una columna abajo de `48rem`, como ya hace `.row-bulk`. La nav vertical reusa los tokens que ya existen (`--line`, `--hl`, `--muted`).
 
@@ -1481,8 +1481,8 @@ export function initResultados({ navegar = (href) => window.location.assign(href
     buscador.setObjetos(c.objects)
     el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
 
-    if (url.estado === 'vacio') return setStatus('Buscá un objeto para verlo en el mapa.')
-    if (url.estado === 'invalido') return setStatus(`Ese enlace no se puede abrir: ${url.motivo}`, true)
+    if (url.status === 'empty') return setStatus('Buscá un objeto para verlo en el mapa.')
+    if (url.status === 'invalid') return setStatus(`Ese enlace no se puede abrir: ${url.reason}`, true)
 
     const obj = c.objects.find((o) => o.t === url.t && o.c === url.c)
     if (!obj) return setStatus(`No hay ningún objeto con el código ${url.c} en el catálogo.`, true)
@@ -1602,7 +1602,7 @@ git commit -m "feat: el sitio se parte en home y resultados, y la URL pasa a ser
 - Modify: `src/style.css`
 
 **Interfaces:**
-- Consumes: `showFeature` devolviendo propiedades (Task 4); `specOf`, `queryFields` de `columns.js`; `featureUrl`, `childOf`, `isCode` de `download.js`; `notaHref`, `notaDe`, `NOTA_POR_TIPO`, `NOTA_POR_CAPA` de `notes.js`.
+- Consumes: `showFeature` devolviendo propiedades (Task 4); `specOf`, `queryFields` de `columns.js`; `featureUrl`, `childOf`, `isCode` de `download.js`; `noteHref`, `noteFor`, `NOTE_BY_TYPE`, `NOTE_BY_LAYER` de `notes.js`.
 - Produces: nada que otra tarea use. Es la última de comportamiento.
 
 **El invariante:** la ficha describe siempre lo que el mapa está dibujando. Hoy el mapa dibuja un radio y la ficha sigue hablando del departamento.
@@ -1746,7 +1746,7 @@ function mostrarFila(capa, row) {
   // El singular sale del `label` de la nota de esa capa, que ya está en
   // singular ("Radio censal"). Derivarlo de CHILD_LAYERS con un replace
   // daría "Radios censale": el plural del INDEC no se deshace con un regex.
-  const singular = notaDe(NOTA_POR_CAPA[capa]).label
+  const singular = noteFor(NOTE_BY_LAYER[capa]).label
 
   el.name.textContent = spec.titleField && row[spec.titleField]
     ? row[spec.titleField]
@@ -1787,9 +1787,9 @@ El `onView` del browser pasa a ser:
 
 `{ ...row, ...props }`: la fila de la tabla no trae geometría ni todos los campos; el feature del GeoServer sí. Se prefiere lo que vino del servidor.
 
-En la ficha del objeto (`selectObject`), agregar junto a `el.meta` un enlace `Qué es ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()} →` con `href = notaHref(NOTA_POR_TIPO[obj.t])`.
+En la ficha del objeto (`selectObject`), agregar junto a `el.meta` un enlace `Qué es ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()} →` con `href = noteHref(NOTE_BY_TYPE[obj.t])`.
 
-En `src/browser.js`, dentro del `onSelect` de las pestañas, agregar al panel un enlace chico `Qué es ${notaDe(NOTA_POR_CAPA[key]).label.toLowerCase()} →` con `href = notaHref(NOTA_POR_CAPA[key])`. Va arriba de la tabla y se mantiene visible aunque la tabla esté cargando o haya fallado.
+En `src/browser.js`, dentro del `onSelect` de las pestañas, agregar al panel un enlace chico `Qué es ${noteFor(NOTE_BY_LAYER[key]).label.toLowerCase()} →` con `href = noteHref(NOTE_BY_LAYER[key])`. Va arriba de la tabla y se mantiene visible aunque la tabla esté cargando o haya fallado.
 
 - [ ] **Step 5: Run tests**
 
