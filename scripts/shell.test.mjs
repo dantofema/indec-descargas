@@ -110,6 +110,35 @@ describe('las páginas del sitio', () => {
     expect(cta).toContain('rel="noopener"')
     expect(cta).toContain('Más info, más mapas, más capas en Geoportal INDEC')
   })
+
+  it('ninguna página lleva el bloque institucional del INDEC (SITIO-R9)', () => {
+    for (const p of paginas) {
+      const html = injectShell(readFileSync(resolve(process.cwd(), p), 'utf8'), {
+        partials: readPartials(), base: '/indec-descargas/', generated: '',
+      })
+      expect(html, `${p} todavía trae el nombre del organismo como firma`)
+        .not.toContain('Instituto Nacional de Estadística y Censos')
+      expect(html, `${p} todavía trae la dirección del INDEC`).not.toContain('Roca 609')
+      expect(html, `${p} todavía trae el teléfono del INDEC`).not.toContain('5031-4632')
+    }
+  })
+
+  it('las cuatro páginas dicen que el sitio no es oficial (SITIO-R9)', () => {
+    for (const p of paginas) {
+      const html = injectShell(readFileSync(resolve(process.cwd(), p), 'utf8'), {
+        partials: readPartials(), base: '/indec-descargas/', generated: '',
+      })
+      expect(html, `${p} no lleva el descargo`).toContain('Sitio no oficial')
+      expect(html, `${p} no dice que no representa al INDEC`)
+        .toContain('No pertenece al INDEC ni lo representa')
+    }
+  })
+
+  it('el aviso de límites nombra a quién sí los publica (SITIO-R9)', () => {
+    const footer = readPartials().footer
+    expect(footer).toContain('cada dirección provincial de estadística')
+    expect(footer).toContain('https://www.ign.gob.ar/ut/')
+  })
 })
 
 // SITIO-R6 no vive en `injectShell` sino en el cableado: hasta acá nadie
@@ -136,7 +165,6 @@ describe('el plugin del shell, tal como lo enchufa el build', () => {
 
     expect(html).not.toMatch(/<!--#shell:/)
     expect(html).not.toMatch(/\{\{[a-z]+\}\}/)
-    expect(html).toContain('Instituto Nacional de Estadística y Censos')
     expect(html).toContain(readGenerated())
     expect(html).toContain('Más info, más mapas, más capas en Geoportal INDEC')
     expect(html).toContain(`href="${viteConfig.base}notas/"`)

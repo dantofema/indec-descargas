@@ -99,3 +99,21 @@ leafletjs.com y una bandera de Ucrania (`leaflet-src.js:5762`), y ninguna de las
 del dato que se está viendo. La licencia BSD-2-Clause de Leaflet no exige crédito en la
 interfaz, sólo el aviso de copyright en el código, que sigue donde estaba. La atribución del IGN
 sí queda: esa es del basemap sobre el que se dibuja el objeto.
+
+### SITIO-R9 — El sitio dice que no es del INDEC, en las cuatro páginas
+
+El pie de las cuatro páginas abre con un descargo de que el sitio no es oficial ni representa al
+INDEC. No hay bloque institucional —nombre, dirección, teléfono del organismo— en ninguna página,
+y ningún `<title>` lleva el nombre del INDEC como firma. La atribución de licencia y el enlace a
+la fuente sí quedan: son del dato, no del sitio.
+
+El aviso de límites nombra de dónde salen: son los que usa cada dirección provincial de
+estadística, no los del IGN ni los de la ley, y enlaza a quién sí publica los oficiales. Eso no
+sale del Marco Geoestadístico —el PDF no trae ningún descargo de oficialidad— sino de los
+metadatos de las capas del GeoNode.
+
+**Por qué:** un pie que abre con la dirección y el teléfono del INDEC es el pie que pondría el
+INDEC. Nada en el sitio afirmaba ser oficial y aun así el conjunto —vocabulario del organismo,
+capas del organismo, datos de contacto del organismo— lo daba a entender. La diferencia importa
+cuando alguien baja un límite y lo usa para algo: quién responde por ese archivo es el INDEC, y
+quién no responde por nada es este sitio.
