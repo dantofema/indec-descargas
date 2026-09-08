@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { GEOSERVER, assertCode, selfUrl } from './download.js'
+import { selfUrl } from './download.js'
 
 /**
  * Basemap del IGN. Es TMS, que numera el eje Y al revés que XYZ:
@@ -12,7 +12,6 @@ const ARGENTINA = [[-55.5, -74], [-21.5, -53]]
 
 let map = null
 let layer = null
-let featureCallback = () => {}
 let pending = 0
 
 export function initMap(containerId) {
@@ -31,33 +30,9 @@ export function initMap(containerId) {
   map.attributionControl.setPrefix(false)
 }
 
-/** Registra a quién avisarle cuando llegan las propiedades del objeto. */
-export function onFeature(callback) {
-  featureCallback = callback
-}
-
-/**
- * Arma la URL de un GetFeature en GeoJSON a partir de capa, campo y código
- * sueltos —lo que necesita dibujar una fila cualquiera de una capa hija—.
- * El código pasa por `assertCode`: es lo único que se interpola en el CQL.
- */
-function featureQueryUrl(layerName, field, code) {
-  const p = new URLSearchParams({
-    service: 'WFS',
-    version: '2.0.0',
-    request: 'GetFeature',
-    typenames: layerName,
-    outputFormat: 'application/json',
-    srsName: 'EPSG:4326',
-    CQL_FILTER: `${field}='${assertCode(code)}'`,
-  })
-  return `${GEOSERVER}?${p}`
-}
-
 /** El mapa se creó con `#detail` oculto: Leaflet midió altura cero y hay
  * que avisarle recién ahora que ya es visible. También arranca la marca de
- * carrera que comparten showObject y showFeature —son la misma pelea por
- * "quién es la última selección"—.
+ * carrera que decide "quién es la última selección" (ver drawFromUrl).
  *
  * Lo que había dibujado no se toca acá: se borra recién cuando hay con qué
  * reemplazarlo (ver drawFromUrl). */
@@ -71,8 +46,7 @@ function beginRequest() {
  * Pide el GeoJSON de `url`, lo dibuja si para cuando llega sigue siendo la
  * petición vigente, y devuelve las propiedades del primer feature junto con
  * cuántos vinieron —quien llama decide qué hacer con ellas, ver más abajo
- * por qué—. Es la parte que showObject y showFeature comparten entera: sólo
- * cambia de dónde sale la URL, no qué se hace con ella.
+ * por qué—.
  *
  * Una petición superada no escribe nada: ni el mapa, ni la línea de
  * estado. El chequeo va antes de mirar el status, y el try/catch cubre
@@ -93,7 +67,7 @@ async function drawFromUrl(request, url) {
 
     if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
 
-    // Recién acá: un "Ver" que falla deja el mapa como estaba, y uno que
+    // Recién acá: un dibujo que falla deja el mapa como estaba, y uno que
     // tarda —12,4 s medidos en vías— lo deja como estaba mientras tanto,
     // en vez de mostrar un mapa vacío que parece un error.
     if (layer) {
@@ -119,30 +93,13 @@ async function drawFromUrl(request, url) {
   }
 }
 
+/**
+ * Dibuja el objeto de la ficha, sea de catálogo o resuelto contra el
+ * GeoServer: la ficha de un objeto sin catálogo se construye entera con lo
+ * que esto devuelve —no tiene un nombre que venga del catálogo—. Una
+ * petición superada devuelve `undefined` (ver `drawFromUrl`).
+ */
 export async function showObject(obj) {
   if (!map) return undefined
-  // Devuelve, además de avisar: la ficha de un objeto sin catálogo se
-  // construye entera con esto —no tiene un nombre que venga del catálogo—,
-  // y el callback es un canal de aviso, no de datos. Una petición superada
-  // devuelve `undefined` (ver arriba).
-  const drawn = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
-  if (drawn) featureCallback(drawn.props)
-  return drawn
-}
-
-/**
- * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
- * desde la tabla de la fila 3, no el objeto de la búsqueda.
- *
- * Devuelve sólo las propiedades: su único llamador es ese "Ver", que
- * describe un objeto por vez y no tiene qué hacer con el conteo. `undefined`
- * significa "este pedido perdió la carrera": quien llama no escribe nada.
- *
- * Muere junto con ese "Ver" en la tarea que lo convierte en navegación: con
- * `TYPES` extendido, la ficha de cualquier objeto se dibuja con `showObject`.
- */
-export async function showFeature(layerName, field, code) {
-  if (!map) return undefined
-  const drawn = await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
-  return drawn?.props
+  return drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
 }

@@ -12,8 +12,8 @@
  * tocaron.
  */
 import { loadCatalog } from '../catalog.js'
-import { selfUrl, TYPES, LAYER_OF_TYPE, childOf, featureUrl, isCode } from '../download.js'
-import { initMap, showObject, showFeature, onFeature } from '../map.js'
+import { selfUrl, TYPES, LAYER_OF_TYPE, TYPE_OF_LAYER, featureUrl, isCode } from '../download.js'
+import { initMap, showObject } from '../map.js'
 import { fmt, downloadButton, disabledButton, setStatus } from '../ui.js'
 import { childRows } from '../children.js'
 import { createSearchBox } from '../searchbox.js'
@@ -125,40 +125,8 @@ function objectNoteLink(obj) {
 }
 
 /**
- * Vuelve a la ficha del objeto, dejando la fila 3 donde estaba.
- *
- * Repinta identidad y mapa a mano en vez de volver a `selectObject`: esa
- * pasa por `browser.show`, que reinicia páginas y capas lentas ya
- * aceptadas. Volver desde la página 3 de vías reabría el panel de costo y
- * volvía a cobrar los 14-20 s medidos (NAV-R7); en el resto de las capas,
- * un pedido nuevo al GeoServer por la página 0. El spec sólo promete
- * restaurar la ficha del padre y redibujar su geometría, que es lo que
- * hace esto.
- */
-function backButton() {
-  const b = document.createElement('button')
-  b.type = 'button'
-  b.id = 'back-to-object'
-  b.className = 'btn ghost mini'
-  b.textContent = `Volver a ${current.n}`
-  b.addEventListener('click', () => {
-    // El error del "Ver" del que se vuelve ya no describe nada de lo que
-    // se está mirando; si el redibujo falla, `drawObject` lo vuelve a
-    // poner.
-    setStatus(el.status, '')
-    // La marca de la tabla dice "estás mirando esta fila": si sobrevive al
-    // "Volver", la fila 3 contradice a la ficha y al mapa (NAV-R10).
-    browser.clearSelection()
-    showObjectIdentity(current)
-    drawObject(current)
-  })
-  return b
-}
-
-/**
  * El panel de identidad del objeto: nombre, metadatos, enlace a su nota y
- * su descarga propia. Es lo único que "Ver" reemplaza y lo único que
- * "Volver" tiene que devolver a su lugar.
+ * su descarga propia.
  */
 function showObjectIdentity(obj) {
   el.name.textContent = obj.n ?? `${TYPES[obj.t].label} ${obj.c}`
@@ -185,9 +153,8 @@ function showObjectIdentity(obj) {
  * `row` describe uno solo de los tramos que el mapa está dibujando, así que
  * la ficha dice cuántos son en vez de repetir campos de un tramo suelto
  * como si fueran de la calle (ver más abajo). El default es `null`, no `1`:
- * el "Ver" de la fila 3 llega acá sin conteo —`showFeature` en `map.js` lo
- * descarta a propósito—, y afirmar "un solo tramo" ahí sería mentir sobre
- * una calle que puede tener ochenta.
+ * afirmar "un solo tramo" sin tener un conteo real sería mentir sobre una
+ * calle que puede tener ochenta.
  */
 function showFeatureIdentity(layerKey, row, count = null) {
   const spec = specOf(layerKey)
@@ -212,11 +179,10 @@ function showFeatureIdentity(layerKey, row, count = null) {
   // dibujando. Los campos de tramo —alturas, id— mienten sobre la calle, así
   // que en su lugar la ficha dice cuántos tramos son.
   //
-  // `count` en null es "no lo sé": pasa cuando se llega por el "Ver" de la
-  // fila 3, que pide el feature por `showFeature` y descarta el conteo. Ahí
-  // la ficha calla en vez de inventar un número, porque decir "un solo
-  // tramo" sobre una calle de 80 es exactamente la contradicción entre ficha
-  // y mapa que este plan vino a eliminar.
+  // `count` en null es "no lo sé": la ficha calla en vez de inventar un
+  // número, porque decir "un solo tramo" sobre una calle de 80 es
+  // exactamente la contradicción entre ficha y mapa que NAV-R11 vino a
+  // eliminar.
   if (layerKey === 'vias') {
     el.meta.textContent = count === null
       ? `Código ${codigo}`
@@ -232,11 +198,6 @@ function showFeatureIdentity(layerKey, row, count = null) {
       ? downloadButton(featureUrl(layerKey, codigo), `Descargar ${singular.toLowerCase()}`)
       : disabledButton('Descargar', 'El INDEC no publicó el código de esta fila.'),
   )
-}
-
-function showRow(layerKey, row) {
-  showFeatureIdentity(layerKey, row)
-  el.self.append(backButton())
 }
 
 /**
@@ -273,18 +234,6 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   writeTab = true
   el.detail.hidden = false
   drawObject(obj)
-}
-
-/**
- * El GeoServer devuelve nombres largos y códigos que no están en el
- * catálogo; se muestran tal cual vienen, sin traducir.
- */
-function describeFeature(props) {
-  const interesting = ['fna', 'gna', 'cod_indec', 'sag']
-  const parts = interesting
-    .filter((k) => props[k] && props[k] !== 'N/A')
-    .map((k) => `${k}: ${props[k]}`)
-  if (parts.length) el.meta.textContent += ` · ${parts.join(' · ')}`
 }
 
 /**
@@ -360,19 +309,15 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
    */
   browser = createBrowser({
     container: el.browse,
-    // Devuelve la promesa: es lo que usa browser.js para dejar el botón
-    // "Ver" en estado de carga mientras el GeoServer contesta (ver
-    // markRow en browser.js; en vías tarda ~12 s medidos).
+    /**
+     * Una fila hija es un objeto direccionable como cualquier otro: verla es
+     * ir a su ficha, no reemplazar media ficha de otro objeto. Eso es SITIO-R2
+     * aplicado a un caso más, y es lo que borra el andamiaje entero que
+     * existía para que la ficha y el mapa no se contradijeran (NAV-R11).
+     */
     onView: (row, key) => {
-      const spec = specOf(key)
-      return showFeature(childOf(key).layer, spec.idField, String(row[spec.idField]))
-        .then((props) => {
-          // `undefined` significa que este pedido perdió la carrera: un
-          // "Ver" de vías de 12 s que llegó tarde no pisa lo que se está
-          // mirando (NAV-R10).
-          if (props) showRow(key, { ...row, ...props })
-        })
-        .catch((err) => setStatus(el.status, `No se pudo dibujar en el mapa: ${err.message}`, true))
+      const codigo = String(row[specOf(key).idField])
+      navigate(format({ t: TYPE_OF_LAYER[key], c: codigo }))
     },
     onError: () => {},
     onTab: (layer) => {
@@ -382,7 +327,6 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
     },
   })
 
-  onFeature(describeFeature)
   setupCopyLink(el.copyLink)
 
   const url = parse(window.location.search)

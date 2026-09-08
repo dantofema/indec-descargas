@@ -141,21 +141,20 @@ El conteo cero sigue llegando entero a la fila 2 —DES-R3 lo necesita para dibu
 con su motivo, y es el único lugar del sitio donde el cero se explica—, así que el filtro es una
 pregunta aparte y no un recorte en la fuente.
 
-### NAV-R10 — La ficha describe lo que el mapa está dibujando
+### ~~NAV-R10 — La ficha describe lo que el mapa está dibujando~~
 
-El "Ver" de una fila hija reemplaza el panel de identidad de la ficha por el de esa fila, no
-sólo el dibujo del mapa. Los campos que muestra salen de la misma definición que ya arma la
-tabla: en fracciones y radios eso sigue siendo número y código, sin nombre (NAV-R4); en vías, los
-21 campos publicados (NAV-R3). Ficha y tabla no pueden decir cosas distintas de la misma fila. El
-botón de descarga de esa ficha pasa a ser el de esa fila —en vías, baja la calle entera, no el
-tramo (DES-R9)—. Una fila sin código muestra el botón deshabilitado con su motivo, no una promesa
-que el INDEC no publicó cómo cumplir (DES-R8). Siempre hay una forma de volver a la ficha del
-objeto. Una respuesta que perdió la carrera contra un "Ver" más nuevo no llega a escribir la
-ficha.
+**Muerta:** el "Ver" de una fila dejó de reemplazar media ficha y pasó a navegar, así que ya no
+hay dos objetos en la misma página que puedan contradecirse. La reemplaza NAV-R11.
 
-**Por qué:** antes el mapa podía estar dibujando un radio mientras la ficha de al lado seguía
-describiendo el departamento. El primer intento de arreglar esto agregaba el texto de cada fila
-vista al panel que ya estaba, sin límite ni reemplazo: cada clic dejaba más texto pegado al
-anterior. Reemplazar el panel entero, construido desde la misma definición que ya gobierna la
-tabla, es lo que hace que el arreglo no reviva ese bug: no queda nada por acumular porque no se
-concatena nada.
+### NAV-R11 — Un objeto por página
+
+El "Ver" de una fila hija navega a la ficha de esa fila. No hay previsualización dentro de la
+ficha de otro objeto: la página describe un solo objeto, y el mapa dibuja ése. Volver es el botón
+Atrás del navegador, que funciona porque es navegación de verdad (SITIO-R2).
+
+**Por qué:** NAV-R10 pedía que la ficha siguiera al mapa, y para cumplirlo hacían falta un panel
+de identidad que se reemplazaba, un botón de volver que restauraba el anterior, un chequeo de
+carrera para que un "Ver" de 12 s que llegaba tarde no pisara lo que se estaba mirando, y una
+marca de fila que había que limpiar al volver. Cinco piezas para sostener una promesa que se
+cumple sola si hay un solo objeto por página. Además la ficha estaba arriba de la tabla: el
+cambio ocurría fuera de la pantalla y se sentía que no había pasado nada.

@@ -6,7 +6,7 @@
  * identifican por número y por su código. No se les inventa un rótulo.
  *
  * `titleField` es el campo con el nombre publicado, cuando existe: la ficha
- * de una fila (NAV-R10) lo usa como título en vez de "<capa> <código>". Sólo
+ * de una fila (NAV-R11) lo usa como título en vez de "<capa> <código>". Sólo
  * lo declaran las capas con nombre publicado —nunca fracciones ni radios—.
  */
 
@@ -31,7 +31,7 @@ export const LAYER_SPECS = {
     sortBy: 'cde',
     idField: 'cde',
     // El Marco publica nombre para esta capa: la ficha lo usa como título
-    // de la fila en vez de inventar "Departamento <código>" (NAV-R10).
+    // de la fila en vez de inventar "Departamento <código>" (NAV-R11).
     titleField: 'nam',
     columns: [
       { field: 'nam', label: 'Nombre', kind: 'text' },

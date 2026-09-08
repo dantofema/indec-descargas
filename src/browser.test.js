@@ -157,158 +157,6 @@ describe('createBrowser', () => {
     expect(onView).toHaveBeenCalledWith(filas(20)[1], 'fracciones')
   })
 
-  // Corrección 3 al brief, que se la olvidó pedir: sin esto la fila que se
-  // mandó al mapa se pierde de vista entre otras 19 iguales.
-  describe('marca la fila que se está viendo', () => {
-    it('al hacer clic en Ver, esa fila queda aria-selected y las demás no', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-      const trs = () => container.querySelectorAll('tbody tr')
-      trs()[2].querySelector('button').click()
-
-      expect(trs()[2].getAttribute('aria-selected')).toBe('true')
-      expect([...trs()].filter((_, i) => i !== 2).every((tr) => tr.getAttribute('aria-selected') !== 'true')).toBe(true)
-    })
-
-    // El contrato de `clearSelection`: saca la marca y NADA más. Si de paso
-    // reiniciara páginas o confirmaciones sería `show` con otro nombre, que
-    // es justo lo que "Volver" no puede volver a llamar.
-    it('clearSelection la saca sin tocar la página ni la confirmación', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-      boton(/Siguiente/).click()
-      await vi.waitFor(() => expect(container.textContent).toContain('21'))
-      container.querySelectorAll('tbody tr')[2].querySelector('button').click()
-      expect(container.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
-
-      const pedidosAntes = global.fetch.mock.calls.length
-      b.clearSelection()
-
-      expect(container.querySelectorAll('tbody tr[aria-selected]')).toHaveLength(0)
-      expect(container.querySelector('[role="tab"][aria-selected="true"]').textContent)
-        .toContain('Fracciones censales')
-      expect(container.textContent).toContain('21')
-      expect(global.fetch.mock.calls).toHaveLength(pedidosAntes)
-    })
-
-    it('ver otra fila mueve la marca, no la duplica', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-      const trs = () => container.querySelectorAll('tbody tr')
-      trs()[2].querySelector('button').click()
-      trs()[0].querySelector('button').click()
-
-      expect(trs()[0].getAttribute('aria-selected')).toBe('true')
-      expect(trs()[2].getAttribute('aria-selected')).toBe('false')
-    })
-  })
-
-  // Fix round 1, hallazgo 5: un "Ver" que tarda —12,4 s medidos en vías—
-  // no puede dejar la interfaz muda. El botón avisa que está trabajando y,
-  // en vías, cuánto puede llegar a tardar.
-  describe('Ver deja un estado de carga mientras tarda', () => {
-    it('deshabilita el botón y cambia el texto, y lo restaura al terminar', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      let resolverOnView
-      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
-      const b = createBrowser({ container, onView, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      const button = container.querySelectorAll('tbody tr button')[0]
-      button.click()
-      expect(button.disabled).toBe(true)
-      expect(button.textContent).toBe('Viendo…')
-
-      resolverOnView()
-      await new Promise((r) => setTimeout(r, 0))
-      expect(button.disabled).toBe(false)
-      expect(button.textContent).toBe('Ver')
-    })
-
-    // Fix round 2, hallazgo abierto: `Promise.resolve(onView(...)).finally(...)`
-    // sin `.catch` deja el rechazo sin capturar —el botón se restaura igual
-    // porque `.finally()` corre pase lo que pase, pero la promesa rechazada
-    // queda como Unhandled Rejection—. `createBrowser` recibe `onError` para
-    // justo esto: un consumidor de `onView` puede no capturar sus propios
-    // errores (la interfaz no lo exige), y acá se enruta en vez de tragarlo.
-    it('un onView que rechaza no deja una promesa sin capturar, y el botón se restaura igual', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const falla = new Error('el mapa no se pudo dibujar')
-      const onView = vi.fn(() => Promise.reject(falla))
-      const onError = vi.fn()
-      const b = createBrowser({ container, onView, onError })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      let rechazoSinCapturar = null
-      const detectar = (razon) => { rechazoSinCapturar = razon }
-      process.on('unhandledRejection', detectar)
-
-      const button = container.querySelectorAll('tbody tr button')[0]
-      button.click()
-      // Una vuelta de macrotask: es cuando Node ya barrió los microtasks
-      // pendientes y, si nadie enganchó un `.catch`, dispara el evento.
-      await new Promise((r) => setTimeout(r, 0))
-      process.off('unhandledRejection', detectar)
-
-      expect(rechazoSinCapturar).toBe(null)
-      expect(onError).toHaveBeenCalledWith(falla)
-      expect(button.disabled).toBe(false)
-      expect(button.textContent).toBe('Ver')
-    })
-
-    it('si onView no devuelve una promesa, igual se restaura solo', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      const button = container.querySelectorAll('tbody tr button')[0]
-      button.click()
-      await new Promise((r) => setTimeout(r, 0))
-      expect(button.disabled).toBe(false)
-      expect(button.textContent).toBe('Ver')
-    })
-
-    it('en vías, mientras carga, avisa la espera con el número medido', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      let resolverOnView
-      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
-      const b = createBrowser({ container, onView, onError: () => {} })
-      b.show(depVias)
-      container.querySelectorAll('[role="tab"]')[1].click() // vías
-      boton(/cargar/i).click()
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      container.querySelectorAll('tbody tr button')[0].click()
-      expect(container.textContent).toMatch(/12 segundos/)
-
-      resolverOnView()
-      await new Promise((r) => setTimeout(r, 0))
-      expect(container.textContent).not.toMatch(/12 segundos/)
-    })
-
-    it('en otras capas no aparece el aviso de los 12 segundos de vías', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      let resolverOnView
-      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
-      const b = createBrowser({ container, onView, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      container.querySelectorAll('tbody tr button')[0].click()
-      expect(container.textContent).not.toMatch(/12 segundos/)
-      resolverOnView()
-    })
-  })
-
   // Corrección 2 al brief: medido contra el GeoServer real el 2026-09-06,
   // una página de vías tarda 14-20 s por departamento y 88-99 s por
   // provincia. Auto-cargarla colgaría la interfaz sin que nadie lo pida.
@@ -716,11 +564,10 @@ describe('createBrowser', () => {
     })
   })
 
-  // NAV-R10 / NOTA-R3: la pestaña activa es la única que sabe qué capa se
-  // está recorriendo, así que el enlace a su nota vive acá y no en la
-  // página que cablea. Va como hermano de `body`, no adentro: ningún
-  // reemplazo de `body` —"Cargando…", el errorBox o el panel de costo—
-  // se lo lleva puesto.
+  // NOTA-R3: la pestaña activa es la única que sabe qué capa se está
+  // recorriendo, así que el enlace a su nota vive acá y no en la página que
+  // cablea. Va como hermano de `body`, no adentro: ningún reemplazo de
+  // `body` —"Cargando…", el errorBox o el panel de costo— se lo lleva puesto.
   describe('el enlace a la nota de la pestaña activa', () => {
     const enlaceNota = () => container.querySelector('a[href*="/notas/#"]')
 

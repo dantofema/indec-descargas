@@ -77,7 +77,7 @@ const timeoutOf = (childKey, parentType) => {
  * 0,65 s en radios. Sin este aviso, el clic deja la interfaz "muerta" ese
  * rato sin que el usuario sepa si se colgó.
  */
-const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
+export const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
 
 /**
  * La fila que se recorre: una pestaña por capa hija, y adentro la página que
@@ -88,9 +88,6 @@ const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geomet
  * `show` devuelve si dibujó algo: quién puede recorrerse lo decide esta
  * fila, no quien la cablea. Duplicar la decisión afuera es cómo aparece una
  * fila visible y vacía.
- *
- * `clearSelection` saca la marca de la fila vista sin tocar nada más: es
- * para quien deja de mirar una fila sin dejar de recorrer la capa.
  *
  * `onTab` avisa qué pestaña quedó activa —la primera al abrir, y cada
  * cambio después—. El browser no sabe que existe una URL: la página que lo
@@ -226,7 +223,7 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
       // Llegó tarde: el usuario ya está en otra pestaña o en otra página.
       if (mine !== token || key !== active) return
 
-      const tableEl = renderTable(key, rows, (row, childKey) => markRow(tableEl, rows, row, childKey))
+      const tableEl = renderTable(key, rows, (row, childKey) => onView(row, childKey))
       const panels = [tableEl, renderPager({ page, total, count: rows.length, onPage: (p) => load(key, p) })]
       if (LAZY_KEYS.has(key)) panels.push(metaParagraph(VIAS_COST_REMINDER))
       body.replaceChildren(...panels)
@@ -240,68 +237,6 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
       clearTimeout(timer)
       if (inFlight === controller) inFlight = null
     }
-  }
-
-  /**
-   * Marca la fila vista con `aria-selected` —la regla ya existe en
-   * style.css— y avisa. Se ubica por identidad dentro de `rows`, no por
-   * texto: es la misma referencia que `renderTable` le pasa a `onView`.
-   *
-   * Además deja el botón "Ver" en estado de carga mientras `onView` tarda
-   * —puede devolver una promesa; si no devuelve nada, se restaura en el
-   * siguiente microtask—. En vías es la única forma de que el usuario sepa
-   * que los ~12 s medidos están corriendo y no que la interfaz se colgó.
-   *
-   * `onView` es una interfaz pública genérica: no podemos asumir que quien
-   * la implementa ya capturó sus propios errores (hoy `pages/resultados.js`
-   * sí lo hace, pero no es parte del contrato). Un rechazo sin `.catch` acá
-   * quedaría como Unhandled Rejection. `onError` ya existe para justo esto
-   * —avisar un fallo sin cortar el resto de la ficha—, así que lo reusamos
-   * en vez de tragarnos el error con un `.catch(() => {})` mudo.
-   */
-  function markRow(tableEl, rows, row, childKey) {
-    const idx = rows.indexOf(row)
-    tableEl.querySelectorAll('tbody tr').forEach((tr, i) => {
-      tr.setAttribute('aria-selected', String(i === idx))
-    })
-
-    const button = [...tableEl.querySelectorAll('tbody tr')][idx]?.querySelector('button')
-    let notice = null
-    if (button) {
-      button.disabled = true
-      button.textContent = 'Viendo…'
-      if (childKey === 'vias') {
-        notice = metaParagraph(VIAS_VIEW_NOTICE)
-        button.insertAdjacentElement('afterend', notice)
-      }
-    }
-
-    Promise.resolve(onView(row, childKey))
-      .catch(onError)
-      .finally(() => {
-        if (button) {
-          button.disabled = false
-          button.textContent = 'Ver'
-        }
-        notice?.remove()
-      })
-  }
-
-  /**
-   * Saca la marca de "estás mirando esta fila" y nada más: no toca la
-   * pestaña activa, ni la página en la que va cada una, ni las capas lentas
-   * ya aceptadas. Es lo que necesita "Volver a <objeto>", que devuelve
-   * ficha y mapa al padre dejando la fila 3 donde estaba: una fila marcada
-   * mientras la ficha describe al padre es el mismo desacuerdo que NAV-R10
-   * vino a matar, por el otro lado.
-   *
-   * Quita el atributo en vez de ponerlo en `false`, así la tabla queda como
-   * la dibujó `renderTable`, que no lo escribe hasta que alguien ve una
-   * fila.
-   */
-  function clearSelection() {
-    body?.querySelectorAll('tbody tr[aria-selected]')
-      .forEach((tr) => tr.removeAttribute('aria-selected'))
   }
 
   function metaParagraph(texto) {
@@ -325,5 +260,5 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
     return wrap
   }
 
-  return { show, clearSelection }
+  return { show }
 }

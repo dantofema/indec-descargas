@@ -71,14 +71,18 @@ const filaDeVerdad = {
 
 /** El espía de navegación: la página nunca navega de verdad en jsdom. */
 let navigate
+/** El mismo espía de `global.fetch`, con nombre: lo necesita el "Ver" de una
+ * vía (NAV-R11), que prueba que no pide nada de más contando llamadas. */
+let fetchSpy
 
 beforeEach(() => {
   document.body.innerHTML = ''
   Element.prototype.scrollIntoView = () => {}
   navigate = vi.fn()
-  global.fetch = vi.fn(async (url) => String(url).includes('catalog.json')
+  fetchSpy = vi.fn(async (url) => String(url).includes('catalog.json')
     ? { ok: true, json: async () => catalogo }
     : { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties: filaDeVerdad }] }) })
+  global.fetch = fetchSpy
 })
 
 afterEach(() => { vi.unstubAllGlobals() })
@@ -298,58 +302,6 @@ describe('recorrer los hijos', () => {
     expect(global.fetch).toHaveBeenCalledTimes(llamadasAntes)
     expect($('#browse').textContent).toMatch(/99 segundos/)
   })
-
-  // Corrección 3 al brief original: Ver deja la fila marcada, sin romper el
-  // resto de la ficha si el dibujo en el mapa sale bien.
-  it('Ver dibuja la fila en el mapa y la deja marcada', async () => {
-    await montar('?t=dep&c=06840')
-    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
-
-    const fila = $('#browse tbody tr')
-    fila.querySelector('button').click()
-    expect(fila.getAttribute('aria-selected')).toBe('true')
-
-    await new Promise((r) => setTimeout(r, 0))
-    expect($('#status').hidden).toBe(true)
-  })
-
-  // El control positivo que se perdió en la mudanza a /resultados/: sin
-  // él, el caso de abajo pasaría aunque nadie hubiera arreglado nada,
-  // porque captura `metaTrasVer` recién DESPUÉS del primer "Ver" y no
-  // verifica que `describeFeature` haya corrido nunca. Con el control,
-  // borrar `describeFeature` o su `onFeature(...)` pone la suite roja.
-  it('la ficha del objeto suma los campos del GeoServer, una sola vez', async () => {
-    await montar('?t=dep&c=06840')
-    await vi.waitFor(() => expect($('#detail-meta').textContent).toContain('cod_indec: 068400101'))
-
-    const ocurrencias = (s) => $('#detail-meta').textContent.split(s).length - 1
-    expect(ocurrencias('cod_indec')).toBe(1)
-  })
-
-  // Fix round 1, hallazgo 1 (importante): `el.meta.textContent += ...` en
-  // el handler de onFeature acumulaba con cada "Ver", incluso repetido
-  // sobre la misma fila. Con NAV-R10 la línea de metadatos SÍ cambia al ver
-  // una fila —pasa a describirla a ella, no al objeto padre (ver el
-  // describe 'el "Ver" de una fila hija' más abajo)—, pero lo que este test
-  // sigue probando es que no acumula: dos "Ver" seguidos sobre la misma
-  // fila dejan la misma línea, no la línea pegada dos veces.
-  it('dos Ver seguidos no acumulan ni repiten la ficha de la fila', async () => {
-    await montar('?t=dep&c=06840')
-    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
-
-    // El mock de este archivo sólo trae una fila (`totalFeatures: 1`): dos
-    // "Ver" seguidos sobre la misma fila alcanzan para probar que no
-    // acumula —de hecho es un caso más exigente que dos filas distintas—.
-    const fila = $('#browse tbody tr')
-    fila.querySelector('button').click()
-    await new Promise((r) => setTimeout(r, 0))
-    const metaTrasVer = $('#detail-meta').textContent
-    expect(metaTrasVer).toContain('Código: 068400101')
-
-    fila.querySelector('button').click()
-    await new Promise((r) => setTimeout(r, 0))
-    expect($('#detail-meta').textContent).toBe(metaTrasVer)
-  })
 })
 
 // Fix round 3, hallazgo 3: las dos filas de la misma ficha se
@@ -374,288 +326,42 @@ describe('un objeto con una capa hija en cero', () => {
   })
 })
 
-// NAV-R10: la ficha describe siempre lo que el mapa está dibujando. "Ver"
-// en una fila hija tiene que reemplazar la ficha del padre por la de esa
-// fila, con los campos de su propia capa —no seguir hablando del padre—.
-describe('el "Ver" de una fila hija (NAV-R10)', () => {
-  // Tres filas de radios: dos con código completo —para la carrera— y una
-  // tercera cuyo feature (el pedido de "Ver", no el de la página) vuelve,
-  // en el mock, con `cod_indec` vacío. Esa respuesta no es alcanzable
-  // clickeando: el filtro de ese pedido es una igualdad sobre el mismo
-  // campo (`cod_indec='068400103'`), así que un GeoServer que la conteste
-  // ya está siendo inconsistente consigo mismo. Igual se prueba: el guard
-  // de showRow (DES-R8) es barato, y este repo ya trata los datos del
-  // INDEC como poco confiables en otros lados —más vale que la ficha
-  // aguante también una respuesta rota, no sólo un dato ausente legítimo.
-  const filas = [
-    { cod_indec: '068400101', cfn: '01', cro: '01', tro: 'U' },
-    { cod_indec: '068400102', cfn: '01', cro: '02', tro: 'R' },
-    { cod_indec: '068400103', cfn: '02', cro: '03', tro: 'U' },
-  ]
-  const SIN_CODIGO = '068400103'
-  // La fila 0 tarda más que las demás a propósito: es la "lenta" del test
-  // de la carrera. Que sea fija (no algo que cada test configura) es lo que
-  // deja escrito el body de ese test tal cual lo pide el brief.
-  const DEMORA_MS = { [filas[0].cod_indec]: 20 }
-
-  beforeEach(() => {
-    global.fetch = vi.fn(async (url) => {
-      const u = String(url)
-      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
-
-      // La página de la tabla pide `propertyName`; el "Ver" de una fila
-      // suelta no —son las dos formas de `drawFromUrl`/`fetchPage`—.
-      if (u.includes('propertyName=')) {
-        // Sólo la capa de radios usa las tres filas de este describe; el
-        // caso de localidades (una sola prueba) reusa la fila de siempre,
-        // que ya trae `clc` y `nam`.
-        const enRadios = u.includes('typenames=geonode%3Aradios_censales2')
-        const pagina = enRadios ? filas : [filaDeVerdad]
-        return {
-          ok: true, status: 200,
-          json: async () => ({ totalFeatures: pagina.length, features: pagina.map((p) => ({ properties: p })) }),
-        }
-      }
-
-      const codigo = u.match(/cod_indec%3D%27(\d+)%27/)?.[1]
-      const fila = filas.find((f) => f.cod_indec === codigo) ?? filaDeVerdad
-      if (DEMORA_MS[codigo]) await new Promise((r) => setTimeout(r, DEMORA_MS[codigo]))
-
-      const properties = codigo === SIN_CODIGO ? { ...fila, cod_indec: '' } : fila
-      return { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties }] }) }
-    })
+// NAV-R11: el "Ver" de una fila hija navega a su permalink en vez de
+// reemplazar media ficha con la del padre. Las pestañas y la tabla ya
+// tienen su propio suite en browser.test.js; acá sólo se prueba el
+// cableado real de "Ver".
+describe('el "Ver" de una fila hija (NAV-R11)', () => {
+  it('navega al permalink de esa fila en vez de reemplazar media ficha', async () => {
+    await montar('?t=dep&c=06840')
+    $('tbody tr .acts button').click()
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining('t=frac'))
+    expect(navigate.mock.calls[0][0]).toMatch(/c=\d{7}/)
   })
 
-  async function verFila(n) {
-    await vi.waitFor(() => expect(document.querySelectorAll('#browse tbody tr')[n]).toBeTruthy())
-    document.querySelectorAll('#browse tbody tr')[n].querySelector('button').click()
-    // Más que la demora artificial de la fila lenta: alcanza para que
-    // cualquier "Ver" en vuelo en este describe ya haya resuelto.
-    await new Promise((r) => setTimeout(r, 25))
-  }
-  const verPrimeraFila = () => verFila(0)
-  const verFilaSinCodigo = () => verFila(2)
-  const codigoDeFila = (n) => filas[n].cod_indec
-
-  it('la ficha pasa a describir la fila, con los campos de su capa', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    expect(document.querySelector('#detail-name').textContent).toContain('068400101')
-    // Los rótulos salen de specOf('radios'), no de una lista aparte.
-    expect(document.querySelector('#detail-meta').textContent).toContain('Fracción')
-    expect(document.querySelector('#detail-meta').textContent).toContain('Urbano')
+  it('no toca la ficha: la página se va, no se reescribe', async () => {
+    await montar('?t=dep&c=06840')
+    const antes = $('#detail-name').textContent
+    $('tbody tr .acts button').click()
+    expect($('#detail-name').textContent).toBe(antes)
   })
 
-  it('no le inventa nombre a un radio (NAV-R4)', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    expect(document.querySelector('#detail-name').textContent).toBe('Radio censal 068400101')
+  it('ya no hay botón de volver: lo reemplaza el Atrás del navegador', async () => {
+    await montar('?t=dep&c=06840')
+    $('tbody tr .acts button').click()
+    expect($('#back-to-object')).toBeNull()
   })
 
-  it('usa el nombre publicado cuando la capa lo tiene', async () => {
-    await montar('?t=dep&c=06840&capa=localidades')
-    await verPrimeraFila()
-    expect(document.querySelector('#detail-name').textContent).toBe('Nombre de prueba')
-  })
-
-  it('el botón baja esa fila, no el objeto padre (DES-R9)', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    const href = document.querySelector('#detail-self a').href
-    expect(href).toContain('radios_censales2')
-    expect(href).toContain('068400101')
-  })
-
-  it('una fila sin código no ofrece descarga, y no rompe la ficha (DES-R8)', async () => {
-    // El feature de esta fila vuelve, en el mock, con el idField vacío:
-    // una respuesta de GeoServer inconsistente consigo misma (ver el
-    // comentario del describe), no un click real. El guard no distingue
-    // de dónde salió el dato faltante.
-    await montar('?t=dep&c=06840&capa=radios')
-    await verFilaSinCodigo()
-    expect(document.querySelector('#detail-self .is-disabled')).not.toBeNull()
-  })
-
-  // La ficha tenía un elemento que se quedaba hablando del padre: el
-  // enlace "Qué es...". `showRow` reemplazaba nombre, metadatos y descarga,
-  // y no tocaba el enlace, así que el panel decía "Radio censal 068400101"
-  // y ofrecía "Qué es un departamento →" justo abajo.
-  it('el enlace a la nota pasa a ser el de la capa de la fila (NAV-R10, NOTA-R3)', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    const enlace = document.querySelector('#detail-meta + .note-link a')
-    expect(enlace.getAttribute('href')).toContain('#radio-censal')
-    expect(enlace.textContent).toContain('radio censal')
-  })
-
-  it('y "volver" lo devuelve al del objeto', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    document.querySelector('#back-to-object').click()
-    expect(document.querySelector('#detail-meta + .note-link a').getAttribute('href'))
-      .toContain('#departamento')
-  })
-
-  it('"volver" restaura la ficha del objeto y lo redibuja', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-
-    // La otra mitad, la que el nombre de este caso prometía y no miraba:
-    // el mapa está dibujando la fila, así que volver tiene que pedir la
-    // geometría del objeto de nuevo. Sin esto, borrar el `drawObject` del
-    // handler dejaba la ficha del padre arriba de un radio dibujado.
-    const geometriasDelObjeto = () => global.fetch.mock.calls
-      .filter(([u]) => String(u).includes('typenames=geonode%3Adepartamentos')).length
-    const antes = geometriasDelObjeto()
-
-    document.querySelector('#back-to-object').click()
-
-    expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
-    expect(document.querySelector('#detail-self a').href).toContain('departamentos')
-    expect(geometriasDelObjeto()).toBe(antes + 1)
-  })
-
-  it('una respuesta que perdió la carrera no escribe la ficha', async () => {
-    // showFeature devuelve undefined cuando su pedido fue superado (Task 4).
-    await montar('?t=dep&c=06840&capa=radios')
-    const primera = verFila(0)      // lenta
-    const segunda = verFila(1)      // rápida, la gana
-    await Promise.all([primera, segunda])
-    expect(document.querySelector('#detail-name').textContent).toContain(codigoDeFila(1))
-  })
-
-  it('la fila vista queda marcada en la tabla', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
-  })
-
-  // El otro lado del invariante de NAV-R10: la marca dice "estás mirando
-  // esta fila", así que no puede sobrevivir a un "Volver" que devuelve la
-  // ficha y el mapa al padre. Antes de que "Volver" dejara de pasar por
-  // `browser.show`, el reset la borraba de arrastre —al precio que motivó
-  // el hallazgo I4—; ahora hay que sacarla a mano.
-  it('y deja de estarlo al volver a la ficha del objeto', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await verPrimeraFila()
-    expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(1)
-
-    document.querySelector('#back-to-object').click()
-
-    expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
-    expect(document.querySelectorAll('tbody tr[aria-selected="true"]')).toHaveLength(0)
-  })
-
-  // Fix round 1: `showRow` —el envoltorio que usa este "Ver"— llama a
-  // `showFeatureIdentity` sin conteo, porque `showFeature` (map.js) lo
-  // descarta a propósito: sólo devuelve las propiedades de un feature. Antes
-  // del fix el default de `count` era `1`, así que en vías esto imprimía
-  // "un solo tramo" aunque el mapa hubiera dibujado ochenta —la
-  // contradicción exacta que NAV-R11 dice haber eliminado—. El panel de
-  // costo de vías no auto-carga: hay que confirmar "Cargar igual" primero.
-  it('el "Ver" de una vía no inventa un conteo que no tiene', async () => {
+  it('el "Ver" de una vía tampoco pide la geometría: sólo navega (SITIO-R3)', async () => {
     await montar('?t=dep&c=06840&capa=vias')
-    const cargarIgual = [...document.querySelectorAll('#browse button')]
-      .find((b) => b.textContent === 'Cargar igual')
-    cargarIgual.click()
-    await verPrimeraFila()
-    expect(document.querySelector('#detail-meta').textContent).not.toContain('un solo tramo')
-    expect(document.querySelector('#detail-meta').textContent).not.toContain('tramos')
-  })
-})
-
-// "Volver a <objeto>" llamaba a `selectObject`, que llama a `browser.show`,
-// que hace `pages = new Map()` y `confirmed = new Set()`: volver tiraba
-// abajo la fila 3 entera. En vías eso significaba el panel de costo otra
-// vez y volver a pagar los 14-20 s medidos; en el resto, un pedido nuevo
-// al GeoServer por la página 0. El spec sólo promete que "Volver" restaure
-// la ficha del padre y redibuje su geometría.
-describe('"Volver" no tira abajo la fila 3', () => {
-  // 1.487 es lo que dice el catálogo de este archivo para Tres de Febrero:
-  // el total no se escribe de memoria, sale de la misma fuente que la app.
-  const TOTAL_VIAS = catalogo.objects[0].ch.vias
-
-  /** Veinte filas de una página, con el código llevando el índice global. */
-  const paginaDe = (startIndex) => Array.from({ length: 20 }, (_, i) => ({
-    ...filaDeVerdad,
-    cod_indec: String(68400000 + startIndex + i),
-  }))
-
-  beforeEach(() => {
-    global.fetch = vi.fn(async (url) => {
-      const u = String(url)
-      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
-      if (u.includes('propertyName=')) {
-        const startIndex = Number(u.match(/startIndex=(\d+)/)?.[1] ?? 0)
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            totalFeatures: TOTAL_VIAS,
-            features: paginaDe(startIndex).map((props) => ({ properties: props })),
-          }),
-        }
-      }
-      return { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties: filaDeVerdad }] }) }
-    })
-  })
-
-  /** Cuántas páginas de hijos se le pidieron al GeoServer hasta ahora. */
-  const pedidosDePagina = () => global.fetch.mock.calls
-    .filter(([u]) => String(u).includes('propertyName=')).length
-
-  const pestanaActiva = () => $('#browse [role="tab"][aria-selected="true"]').textContent
-  const donde = () => $('#browse .pager .where').textContent
-  const boton = (texto) => [...document.querySelectorAll('#browse button')]
-    .find((b) => b.textContent === texto)
-
-  async function irAPagina(n) {
-    for (let i = 1; i <= n; i++) {
-      boton('Siguiente').click()
-      await vi.waitFor(() => expect(donde()).toContain(`${i * 20 + 1}\u2013`))
-    }
-  }
-
-  async function verPrimeraFila() {
-    $('#browse tbody tr button').click()
-    await vi.waitFor(() => expect($('#back-to-object')).not.toBe(null))
-  }
-
-  it('en vías conserva pestaña, página y el "Cargar igual" ya aceptado', async () => {
-    await montar('?t=dep&c=06840&capa=vias')
-    expect($('#browse').textContent).toContain('no tiene un índice útil')
-
-    boton('Cargar igual').click()
-    await vi.waitFor(() => expect($('#browse tbody tr')).not.toBe(null))
-    await irAPagina(3)
-    expect(donde()).toContain('61\u201380')
-
-    await verPrimeraFila()
-    expect($('#detail-name').textContent).toBe('Avenida de prueba')
-
-    const pedidosAntes = pedidosDePagina()
-    $('#back-to-object').click()
-
-    expect($('#detail-name').textContent).toBe('Tres de Febrero')
-    expect(pestanaActiva()).toContain('Vías')
-    expect(donde()).toContain('61\u201380')
-    expect($('#browse').textContent).not.toContain('no tiene un índice útil')
-    expect(pedidosDePagina()).toBe(pedidosAntes)
-  })
-
-  it('en el resto de las capas tampoco vuelve a pedir la página 0', async () => {
-    await montar('?t=dep&c=06840&capa=radios')
-    await vi.waitFor(() => expect($('#browse tbody tr')).not.toBe(null))
-    await irAPagina(1)
-
-    await verPrimeraFila()
-    const pedidosAntes = pedidosDePagina()
-    $('#back-to-object').click()
-
-    expect($('#detail-name').textContent).toBe('Tres de Febrero')
-    expect(pestanaActiva()).toContain('Radios censales')
-    expect(donde()).toContain('21\u201340')
-    expect(pedidosDePagina()).toBe(pedidosAntes)
+    // La pestaña abre en su panel de costo; confirmarla para tener tabla.
+    // `#browse button` sola es ambigua: las pestañas también son `<button>`
+    // (ver tabs.js), así que hay que buscar la de "Cargar igual" por texto.
+    ;[...document.querySelectorAll('#browse button')].find((b) => /cargar/i.test(b.textContent)).click()
+    await vi.waitFor(() => expect($('tbody tr')).not.toBeNull())
+    const antes = fetchSpy.mock.calls.length
+    $('tbody tr .acts button').click()
+    expect(fetchSpy.mock.calls.length).toBe(antes)
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining('t=via'))
   })
 })
 

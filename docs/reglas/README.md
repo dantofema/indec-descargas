@@ -8,6 +8,6 @@ documento mienta.
 |---|---|
 | [buscador](buscador.md) | BUS-R1 … BUS-R4 |
 | [descargas](descargas.md) | DES-R1 … DES-R10 |
-| [navegacion](navegacion.md) | NAV-R1 … NAV-R10 |
+| [navegacion](navegacion.md) | NAV-R1 … NAV-R11 |
 | [notas](notas.md) | NOTA-R1 … NOTA-R3 |
 | [sitio](sitio.md) | SITIO-R1 … SITIO-R9 |
