@@ -51,6 +51,20 @@ describe('las páginas del sitio', () => {
     }
   })
 
+  // `index.html` tenía su `<h1>` antes de partir el sitio en cuatro; el
+  // header compartido no trae ninguno, así que /resultados/ —la única
+  // página que es una app— quedó con el `<h2 id="detail-name">` oculto
+  // como único encabezado.
+  it('cada página tiene exactamente un h1', () => {
+    for (const p of paginas) {
+      const html = injectShell(
+        readFileSync(resolve(process.cwd(), p), 'utf8'),
+        { partials: readPartials(), base: '/' },
+      )
+      expect(html.match(/<h1[\s>]/g) ?? [], `${p} no tiene exactamente un h1`).toHaveLength(1)
+    }
+  })
+
   it('el CTA apunta al Geoportal INDEC y abre en otra pestaña (SITIO-R5)', () => {
     const cta = readPartials().cta
     expect(cta).toContain('https://geonode.indec.gob.ar/')

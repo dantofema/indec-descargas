@@ -49,7 +49,10 @@ main { padding-top: 1.75rem; }
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--line);
 }
-.site-header h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+/* El h1 de /resultados/. Vivía en el header cuando el sitio era una sola
+   página; ahora el header es marca y nav compartidos y no lleva ninguno,
+   así que la regla es de la página. */
+.resultados h1 { font-size: 1.4rem; margin: 0 0 1.25rem; }
 .subtitle { color: var(--muted); margin: 0 0 1.5rem; }
 .brand { color: var(--fg); font-weight: 600; text-decoration: none; }
 .brand:hover { text-decoration: underline; }
