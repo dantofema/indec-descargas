@@ -7,8 +7,11 @@
  * de CHILD_LAYERS cuando además se puede recorrer como hija. Departamento y
  * localidad censal son las dos cosas a la vez.
  *
- * `total` va aparte de `paragraphs` a propósito: así las dos notas que ya
- * existían se mudaron sin tocarles una coma.
+ * `total` va aparte de `paragraphs` porque son dos cosas distintas: el
+ * número lo compara la suite contra el catálogo sin parsear una línea de
+ * prosa, y `/notas/` lo muestra como dato. Que además la prosa lo repita es
+ * lo que gatea el caso de abajo, para que corregir el campo y dejar el
+ * párrafo viejo no pase.
  *
  * `sources` es la mitad nueva de NOTA-R2: una nota puede afirmar algo que
  * no sale del catálogo ni del GeoServer si nombra la fuente en el texto y
