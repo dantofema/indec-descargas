@@ -301,6 +301,29 @@ describe('recorrer los hijos', () => {
     expect(global.fetch).toHaveBeenCalledTimes(llamadasAntes)
     expect($('#browse').textContent).toMatch(/99 segundos/)
   })
+
+  // Task 6: la página de la tabla viaja en el permalink, cableado completo
+  // (permalink.parse → resultados.selectObject → browser.show).
+  it('abre la tabla en la página que recuerda el permalink', async () => {
+    await montar('?t=dep&c=06840&capa=radios&pag=4')
+    await vi.waitFor(() => expect($('#browse tbody')).not.toBe(null))
+    const pedidoRadios = fetchSpy.mock.calls.map(([u]) => String(u)).find((u) => u.includes('radios_censales2'))
+    expect(pedidoRadios).toContain('startIndex=60')
+  })
+
+  // Cierra el ciclo: sin esto el Atrás del navegador (Task 4) volvería a la
+  // página 1 en vez de a la que se estaba mirando, la regresión que esta
+  // tarea existe para evitar.
+  it('pasar de página reescribe pag= en la barra, para que el enlace la recuerde', async () => {
+    global.fetch = vi.fn(async (url) => String(url).includes('catalog.json')
+      ? { ok: true, json: async () => catalogo }
+      : { ok: true, status: 200, json: async () => ({ totalFeatures: 42, features: [{ properties: filaDeVerdad }] }) })
+    await montar('?t=dep&c=06840&capa=radios')
+    await vi.waitFor(() => expect($('#browse .pager')).not.toBe(null))
+    const siguiente = [...document.querySelectorAll('#browse .pager button')].find((b) => /siguiente/i.test(b.textContent))
+    siguiente.click()
+    await vi.waitFor(() => expect(window.location.search).toContain('pag=2'))
+  })
 })
 
 // Fix round 3, hallazgo 3: las dos filas de la misma ficha se

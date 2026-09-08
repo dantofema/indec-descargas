@@ -7,9 +7,9 @@
  * buscador **navega**, también estando ya acá. No hay `pushState` ni
  * `popstate` que sincronizar, y atrás y adelante funcionan porque son
  * navegación de verdad. Lo único que escribe la barra sin navegar es
- * cambiar de pestaña, con `replaceState`: la URL sigue describiendo lo que
- * se ve, y atrás no se convierte en un paseo por todas las pestañas que se
- * tocaron.
+ * cambiar de pestaña o de página de la tabla, con `replaceState`: la URL
+ * sigue describiendo lo que se ve, y atrás no se convierte en un paseo por
+ * todas las pestañas y páginas que se tocaron.
  */
 import { loadCatalog } from '../catalog.js'
 import { selfUrl, TYPES, LAYER_OF_TYPE, TYPE_OF_LAYER, featureUrl, isCode } from '../download.js'
@@ -35,14 +35,17 @@ let browser = null
 /** El objeto que la ficha está mostrando. Lo dice la URL, no un clic. */
 let current = null
 /**
- * Si el aviso de pestaña del browser se escribe en la barra o no.
+ * Si los avisos de pestaña y de página del browser se escriben en la barra
+ * o no.
  *
  * La pestaña que el browser abre solo al armarse no es una acción del
  * usuario: no se escribe, así el enlace que alguien comparte queda como lo
  * abrió y `capa=` aparece recién cuando se cambia de pestaña. La excepción
  * es un enlace que sí nombró una capa: ahí la barra ya afirmó qué se está
  * viendo, y si el objeto no tiene esa capa —o si esa capa no existe— hay
- * que dejarla diciendo la que se abrió en su lugar.
+ * que dejarla diciendo la que se abrió en su lugar. La página de esa
+ * primera pestaña corre la misma suerte: se carga sola y avisa por el
+ * mismo aviso que la pestaña, así que la misma guarda decide si se escribe.
  */
 let writeTab = false
 
@@ -200,8 +203,12 @@ function showFeatureIdentity(layerKey, row, count) {
  * en la barra. No alcanza con mirar `initialLayer`, que es `null` también
  * cuando la capa nombrada no existe —y ahí la barra ya afirmó algo falso
  * que hay que corregir (ver `permalink.parse`)—.
+ *
+ * `initialPage` es la página que el enlace recordaba para `initialLayer`:
+ * el browser la ignora si no hay capa, igual que ignora una capa que el
+ * objeto no tiene.
  */
-function selectObject(obj, initialLayer = null, layerRequested = initialLayer !== null) {
+function selectObject(obj, initialLayer = null, layerRequested = initialLayer !== null, initialPage = 0) {
   // Antes de `show`: el `onTab` del browser dispara en el mismo momento en
   // que se arma la primera pestaña, y necesita saber de quién es la ficha y
   // si esa primera pestaña se escribe en la barra (ver `writeTab`).
@@ -221,7 +228,7 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   // La visibilidad de la fila la decide quien la dibuja, como la fila 2:
   // recalcular acá el mismo predicado es cómo divergen y queda una fila
   // visible y vacía.
-  el.rowBrowse.hidden = !browser.show(obj, initialLayer)
+  el.rowBrowse.hidden = !browser.show(obj, initialLayer, initialPage)
   writeTab = true
   el.detail.hidden = false
   // SITIO-R3: nada de vías se pide sin un acto explícito. Un enlace a un
@@ -332,7 +339,18 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
     onTab: (layer) => {
       // Reescribe la barra sin navegar: la URL sigue describiendo lo que se
       // ve, y atrás vuelve a de dónde se vino, no a la pestaña anterior.
-      if (current && writeTab) window.history.replaceState({}, '', format(current, layer))
+      if (current && writeTab) window.history.replaceState({}, '', format(current, layer, 0))
+    },
+    // La página de la tabla viaja en el permalink (SITIO-R2): sin esto, el
+    // Atrás del navegador —que reemplazó al botón "Volver a <objeto>" cuando
+    // "Ver" pasó a navegar (NAV-R11)— devolvería siempre a la página 1.
+    //
+    // El mismo `writeTab` que usa `onTab`: la primera pestaña se auto-carga
+    // sola al armar la fila y dispara su propio `onPage`, así que sin esta
+    // guarda un enlace sin `capa=` terminaría con `capa=` igual apenas
+    // cargara la primera página.
+    onPage: (layer, page) => {
+      if (current && writeTab) window.history.replaceState({}, '', format(current, layer, page))
     },
   })
 
@@ -358,7 +376,7 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
       if (!obj) return setStatus(el.status, `No hay ningún objeto con el código ${url.code} en el catálogo.`, true)
 
       initMap('map') // recién acá: sin objeto no hay nada que dibujar
-      selectObject(obj, url.layer, url.layerRequested)
+      selectObject(obj, url.layer, url.layerRequested, url.page)
       el.q.focus()
     })
     .catch((err) => {

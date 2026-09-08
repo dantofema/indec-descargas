@@ -12,7 +12,7 @@ describe('parse', () => {
 
   it('lee tipo y código', () => {
     expect(parse('?t=dep&c=06840')).toEqual(
-      { status: 'ok', type: 'dep', code: '06840', layer: null, layerRequested: false },
+      { status: 'ok', type: 'dep', code: '06840', layer: null, layerRequested: false, page: 0 },
     )
   })
 
@@ -22,7 +22,7 @@ describe('parse', () => {
 
   it('lee la capa cuando es una de las declaradas', () => {
     expect(parse('?t=dep&c=06840&capa=radios')).toEqual(
-      { status: 'ok', type: 'dep', code: '06840', layer: 'radios', layerRequested: true },
+      { status: 'ok', type: 'dep', code: '06840', layer: 'radios', layerRequested: true, page: 0 },
     )
   })
 
@@ -95,7 +95,7 @@ describe('format', () => {
     for (const layer of [null, 'vias']) {
       const obj = { t: 'loc', c: '06840010' }
       expect(parse(search(format(obj, layer))))
-        .toEqual({ status: 'ok', type: obj.t, code: obj.c, layer, layerRequested: layer !== null })
+        .toEqual({ status: 'ok', type: obj.t, code: obj.c, layer, layerRequested: layer !== null, page: 0 })
     }
   })
 })
@@ -127,5 +127,31 @@ describe('los ocho tipos direccionables', () => {
     // saldría a pedirle al GeoServer un objeto que no puede existir.
     expect(parse('?t=rad&c=0684042')).toMatchObject({ status: 'invalid' })
     expect(parse('?t=dep&c=06840010')).toMatchObject({ status: 'invalid' })
+  })
+})
+
+describe('la página de la tabla en el permalink (SITIO-R2)', () => {
+  it('pag es 1-based en la URL y 0-based adentro', () => {
+    expect(parse('?t=dep&c=06469&capa=radios&pag=4')).toMatchObject({ page: 3 })
+    expect(parse('?t=dep&c=06469&capa=radios&pag=1')).toMatchObject({ page: 0 })
+  })
+
+  it('sin capa no hay página que recordar', () => {
+    expect(parse('?t=dep&c=06469&pag=4')).toMatchObject({ page: 0 })
+  })
+
+  it('una página que no es un entero positivo se ignora en vez de romper el enlace', () => {
+    for (const malo of ['0', '-2', 'tres', '']) {
+      expect(parse(`?t=dep&c=06469&capa=radios&pag=${malo}`)).toMatchObject({ status: 'ok', page: 0 })
+    }
+  })
+
+  it('format no escribe la primera página', () => {
+    expect(format({ t: 'dep', c: '06469' }, 'radios', 0)).not.toContain('pag=')
+    expect(format({ t: 'dep', c: '06469' }, 'radios', 3)).toContain('pag=4')
+  })
+
+  it('sin capa no escribe página, aunque se la pasen', () => {
+    expect(format({ t: 'dep', c: '06469' }, null, 3)).not.toContain('pag=')
   })
 })

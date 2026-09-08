@@ -48,13 +48,25 @@ export function parse(search) {
   // no existe" —y entonces la barra ya afirmó algo falso, así que hay que
   // reescribirla con la que se abrió en su lugar—. Las claves de la URL no
   // cambian: esto es del objeto que devuelve `parse`, no del cable.
-  const layer = p.get('capa')
+  const capa = p.get('capa')
+  const layer = capa && Object.hasOwn(CHILD_LAYERS, capa) ? capa : null
+
+  // 1-based en la URL, 0-based adentro: el paginador dice "1–20 de 1.487", y
+  // un enlace que dijera `pag=0` para la primera página sería un enlace que
+  // no se puede leer. Sin capa abierta no hay tabla que paginar, así que la
+  // página se ignora. Y una página inválida no invalida el enlace: el objeto
+  // sigue siendo mostrable, que es la misma decisión que ya se tomó con una
+  // capa que no existe.
+  const pag = Number(p.get('pag'))
+  const page = layer && Number.isInteger(pag) && pag > 0 ? pag - 1 : 0
+
   return {
     status: 'ok',
     type: t,
     code: c,
-    layer: layer && Object.hasOwn(CHILD_LAYERS, layer) ? layer : null,
+    layer,
     layerRequested: p.has('capa'),
+    page,
   }
 }
 
@@ -64,8 +76,11 @@ export function parse(search) {
  * spec y visible en el enlace que alguien comparte—; lo que cambia de
  * nombre acá es sólo el parámetro de la función.
  */
-export function format(obj, layer = null) {
+export function format(obj, layer = null, page = 0) {
   const p = new URLSearchParams({ t: obj.t, c: obj.c })
   if (layer) p.set('capa', layer)
+  // La primera página no se escribe, igual que no se escribe la pestaña que
+  // se abre sola: la barra dice lo que hace falta y nada más.
+  if (layer && page > 0) p.set('pag', String(page + 1))
   return `${import.meta.env.BASE_URL}resultados/?${p}`
 }

@@ -20,6 +20,13 @@ no tienen nada que ver entre sí.
 Elegir un objeto en el buscador navega, siempre —también estando ya en `/resultados/`— y no hay
 estado del sitio que viva fuera de la URL.
 
+El estado incluye la página de la tabla, no sólo el objeto y la pestaña: `pag=` es 1-based en el
+enlace y no se escribe cuando vale 1. Sin eso, el Atrás del navegador —que es lo que reemplazó al
+botón "Volver a <objeto>" cuando "Ver" pasó a navegar (NAV-R11)— devolvería a la primera página
+de la tabla en vez de a la que se estaba mirando: sería una regresión respecto del botón que
+reemplazó. Recordar la página no es pedirla: una vía con `pag=3` sigue sin disparar nada
+(SITIO-R3).
+
 **Por qué:** con `pushState` habría dos fuentes de verdad que pueden desincronizarse. Navegando
 de verdad, atrás y adelante funcionan sin una línea de código de historia: los resuelve el
 browser. El costo aceptado es un reload por objeto nuevo —`catalog.json` sale de la caché del

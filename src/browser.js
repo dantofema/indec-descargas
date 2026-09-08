@@ -94,8 +94,11 @@ export const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la
  * `onTab` avisa qué pestaña quedó activa —la primera al abrir, y cada
  * cambio después—. El browser no sabe que existe una URL: la página que lo
  * cablea es la que decide qué hacer con ese aviso.
+ *
+ * `onPage` avisa la página que quedó cargada, con la misma lógica: el
+ * browser no sabe que existe una URL, sólo qué se está mirando.
  */
-export function createBrowser({ container, onView, onError, onTab = () => {} }) {
+export function createBrowser({ container, onView, onError, onTab = () => {}, onPage = () => {} }) {
   let obj = null
   let active = null
   let pages = new Map()
@@ -124,7 +127,7 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
    * un error (lo mismo que hace `permalink.parse` con una capa que no
    * existe).
    */
-  function show(next, initialLayer = null) {
+  function show(next, initialLayer = null, initialPage = 0) {
     abortInFlight('se eligió otro objeto')
     obj = next
     active = null
@@ -132,6 +135,11 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
     confirmed = new Set()
     token += 1
     container.replaceChildren()
+
+    // La página inicial es de la capa que el enlace nombró y de ninguna
+    // otra: sembrarla en todas haría que cambiar de pestaña arrancara en la
+    // página 4 de una capa que nadie pidió.
+    if (initialLayer && initialPage > 0) pages.set(initialLayer, initialPage)
 
     // Sin los ceros: una pestaña "Vías de circulación 0" ofrece recorrer lo
     // que no existe, y su panel de costo cobra 17 s medidos por una página
@@ -212,6 +220,7 @@ export function createBrowser({ container, onView, onError, onTab = () => {} }) 
       ms,
     )
     pages.set(key, page)
+    onPage(key, page)
     body.replaceChildren(metaParagraph('Cargando…'))
     try {
       const { rows, total } = await fetchPage(obj, key, page, controller.signal)

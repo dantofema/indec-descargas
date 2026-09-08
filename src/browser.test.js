@@ -613,4 +613,47 @@ describe('createBrowser', () => {
       expect(enlaceNota().getAttribute('href')).toContain('#via-de-circulacion')
     })
   })
+
+  // Task 6: el permalink recuerda la página, no sólo la pestaña. Sin esto el
+  // Atrás del navegador (Task 4) devolvería a la página 1 de la tabla en vez
+  // de a la que se estaba mirando, una regresión respecto del botón "Volver
+  // a <objeto>" que reemplazó.
+  describe('la página inicial y el aviso de cambio de página', () => {
+    beforeEach(() => { global.fetch = vi.fn(async () => paginaOk()) })
+
+    it('abre la pestaña en la página que le piden', async () => {
+      const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
+      browser.show(dep, 'radios', 3)
+      // `dep` tiene dos pestañas: la primera (fracciones) se auto-selecciona
+      // y pide su página 0 antes de que el `select` explícito la aborte y
+      // pida radios (NAV-R8) — por eso se busca el pedido de radios en vez
+      // de asumir que es el primero de la lista.
+      await vi.waitFor(() => {
+        const radios = global.fetch.mock.calls.map(([u]) => String(u)).find((u) => u.includes('radios_censales2'))
+        expect(radios).toContain('startIndex=60')
+      })
+    })
+
+    it('avisa cada cambio de página', async () => {
+      const onPage = vi.fn()
+      const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage })
+      browser.show(dep, 'radios')
+      await vi.waitFor(() => expect(container.querySelector('.pager')).not.toBeNull())
+      boton('Siguiente').click()
+      await vi.waitFor(() => expect(onPage).toHaveBeenCalledWith('radios', 1))
+    })
+
+    // SITIO-R3: recordar la página no es motivo para pedirla.
+    it('una página inicial de vías no dispara ningún pedido', async () => {
+      const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
+      browser.show(depVias, 'vias', 3)
+      await vi.waitFor(() => expect(boton('Cargar igual')).not.toBeNull())
+      // `depVias` también tiene una primera pestaña (fracciones) que se
+      // auto-carga sola, ajena a vías: lo que SITIO-R3 prohíbe es el pedido
+      // de vías, no cualquier pedido (mismo patrón que el test ya existente
+      // "la capa lenta pedida por URL abre el panel de costo y no la pide").
+      const pedidasVias = global.fetch.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('vias_de_circulacion'))
+      expect(pedidasVias).toEqual([])
+    })
+  })
 })
