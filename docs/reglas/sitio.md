@@ -107,10 +107,15 @@ INDEC. No hay bloque institucional —nombre, dirección, teléfono del organism
 y ningún `<title>` lleva el nombre del INDEC como firma. La atribución de licencia y el enlace a
 la fuente sí quedan: son del dato, no del sitio.
 
-El aviso de límites nombra de dónde salen: son los que usa cada dirección provincial de
-estadística, no los del IGN ni los de la ley, y enlaza a quién sí publica los oficiales. Eso no
-sale del Marco Geoestadístico —el PDF no trae ningún descargo de oficialidad— sino de los
-metadatos de las capas del GeoNode.
+El aviso de límites dice que los del INDEC son de uso estadístico y no los oficiales, y enlaza a
+quién sí los publica. No dice de dónde los saca el INDEC: esa afirmación circulaba en el material
+de research pero no se pudo verificar contra ninguna fuente alcanzable —el API y el CSW del
+GeoNode no responden desde acá, y el `Abstract` que sí publica el WMS para `geonode:departamentos`
+dice sólo "Censo Nacional de Población, Hogares y Viviendas 2022."—, así que el sitio no la afirma.
+
+Que no coinciden sí está medido, el 2026-09-08 contra el WFS del IGN: 2.114 municipios contra los
+2.282 gobiernos locales del INDEC, y 3.528 localidades de BAHRA contra las 4.023 localidades
+censales. En departamentos coinciden: 529 los dos.
 
 **Por qué:** un pie que abre con la dirección y el teléfono del INDEC es el pie que pondría el
 INDEC. Nada en el sitio afirmaba ser oficial y aun así el conjunto —vocabulario del organismo,

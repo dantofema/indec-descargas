@@ -136,7 +136,7 @@ describe('las páginas del sitio', () => {
 
   it('el aviso de límites nombra a quién sí los publica (SITIO-R9)', () => {
     const footer = readPartials().footer
-    expect(footer).toContain('cada dirección provincial de estadística')
+    expect(footer).toContain('no son los límites oficiales del territorio')
     expect(footer).toContain('https://www.ign.gob.ar/ut/')
   })
 
