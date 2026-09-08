@@ -2,14 +2,13 @@ import { TYPES } from './download.js'
 
 /**
  * De qué forma parte un objeto. Los códigos del INDEC anidan por prefijo
- * —`cde` empieza con `cpr`, `clc` empieza con `cde`—, así que el padre se
- * deriva del código propio. La excepción es el aglomerado de una localidad,
- * que no está en su código y viaja aparte en el catálogo como `ag`.
+ * —`cde` empieza con `cpr`, `clc` empieza con `cde`, y el `cod_indec` de una
+ * vía empieza con su `clc`—, así que el padre se deriva del código propio,
+ * sin pedir nada. La excepción es el aglomerado de una localidad, que no
+ * está en su código y viaja aparte en el catálogo como `ag`.
  *
- * Todo padre de catálogo se busca antes de ofrecerlo: DES-R8 documenta que
- * los códigos no cierran entre capas, así que un prefijo válido puede
- * apuntar a un objeto que no existe. Los tipos que no están en el catálogo
- * no tienen dónde buscarse: ver `parentsOf`.
+ * Qué se hace después con cada padre derivado —buscarlo o armarlo— lo decide
+ * `parentsOf`, y ahí está explicado por qué.
  */
 
 /** Índice por tipo y código, para resolver un padre sin recorrer el catálogo. */
