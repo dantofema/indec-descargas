@@ -408,7 +408,30 @@ export async function showObject(obj) {
 }
 ```
 
-**`showFeature` se borra en este paso**, junto con `featureQueryUrl`. Con `TYPES` extendido (Task 1), la ficha de una fracción, un radio o una vía se dibuja con `showObject` —`selfUrl` ya sabe armar su URL—, y el único otro llamador era el "Ver" que en la Task 4 pasa a navegar. Borrar los tests de `map.test.js` que la ejercitan.
+**`showFeature` y `featureQueryUrl` NO se borran acá: los borra la Task 4.** Este plan mandaba borrarlas en este paso y estaba mal —lo descubrió el implementador al quedar bloqueado—: su último llamador es el `onView` de `resultados.js`, que se reemplaza recién en la Task 4, así que borrarlas acá deja la suite en 418/431 y el build en error. Ninguna tarea puede dejar la suite en rojo entre commits.
+
+Lo único que `showFeature` necesita en esta tarea es desenvolver el valor nuevo de `drawFromUrl`, para que su llamador no se entere del cambio:
+
+```js
+/**
+ * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
+ * desde la tabla de la fila 3, no el objeto de la búsqueda.
+ *
+ * Devuelve sólo las propiedades: su único llamador es ese "Ver", que
+ * describe un objeto por vez y no tiene qué hacer con el conteo. `undefined`
+ * significa "este pedido perdió la carrera": quien llama no escribe nada.
+ *
+ * Muere junto con ese "Ver" en la Task 4: con `TYPES` extendido, la ficha de
+ * cualquier objeto se dibuja con `showObject`.
+ */
+export async function showFeature(layerName, field, code) {
+  if (!map) return undefined
+  const drawn = await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
+  return drawn?.props
+}
+```
+
+El comentario que anuncia su propia muerte es a propósito: sin él, dentro de dos semanas alguien la ve sin llamadores y no sabe si puede borrarla.
 
 - [ ] **Step 4: Dar un `id` al bloque «Qué contiene», en `resultados/index.html`**
 
@@ -649,7 +672,7 @@ Se van, enteros:
 - `showRow` (el envoltorio de la Task 3; `showFeatureIdentity` **queda**)
 - `backButton`
 - `describeFeature` y la línea `onFeature(describeFeature)`
-- el import de `showFeature`, que la Task 3 ya borró de `map.js`
+- el import de `showFeature`, y además **`showFeature` y `featureQueryUrl` en `src/map.js`**, con los tests de `map.test.js` que las ejercitan. Estaban planificadas para la Task 3 y no se pudieron borrar ahí: su último llamador es el `onView` que esta tarea reemplaza, así que borrarlas antes dejaba la suite en 418/431 y el build en error. Ahora sí quedan sin llamador —la ficha de cualquier objeto se dibuja con `showObject`— y su docblock ya anuncia esta muerte, así que no hay que adivinar si se pueden sacar.
 - el import de `childOf` si ya no se usa
 
 `current` deja de hacer falta para el botón de volver, pero **sigue haciendo falta** para `onTab`: no borrarla.
