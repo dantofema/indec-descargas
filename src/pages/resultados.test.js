@@ -494,6 +494,101 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
   })
 })
 
+// "Volver a <objeto>" llamaba a `selectObject`, que llama a `browser.show`,
+// que hace `pages = new Map()` y `confirmed = new Set()`: volver tiraba
+// abajo la fila 3 entera. En vías eso significaba el panel de costo otra
+// vez y volver a pagar los 14-20 s medidos; en el resto, un pedido nuevo
+// al GeoServer por la página 0. El spec sólo promete que "Volver" restaure
+// la ficha del padre y redibuje su geometría.
+describe('"Volver" no tira abajo la fila 3', () => {
+  // 1.487 es lo que dice el catálogo de este archivo para Tres de Febrero:
+  // el total no se escribe de memoria, sale de la misma fuente que la app.
+  const TOTAL_VIAS = catalogo.objects[0].ch.vias
+
+  /** Veinte filas de una página, con el código llevando el índice global. */
+  const paginaDe = (startIndex) => Array.from({ length: 20 }, (_, i) => ({
+    ...filaDeVerdad,
+    cod_indec: String(68400000 + startIndex + i),
+  }))
+
+  beforeEach(() => {
+    global.fetch = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+      if (u.includes('propertyName=')) {
+        const startIndex = Number(u.match(/startIndex=(\d+)/)?.[1] ?? 0)
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            totalFeatures: TOTAL_VIAS,
+            features: paginaDe(startIndex).map((props) => ({ properties: props })),
+          }),
+        }
+      }
+      return { ok: true, status: 200, json: async () => ({ totalFeatures: 1, features: [{ properties: filaDeVerdad }] }) }
+    })
+  })
+
+  /** Cuántas páginas de hijos se le pidieron al GeoServer hasta ahora. */
+  const pedidosDePagina = () => global.fetch.mock.calls
+    .filter(([u]) => String(u).includes('propertyName=')).length
+
+  const pestanaActiva = () => $('#browse [role="tab"][aria-selected="true"]').textContent
+  const donde = () => $('#browse .pager .where').textContent
+  const boton = (texto) => [...document.querySelectorAll('#browse button')]
+    .find((b) => b.textContent === texto)
+
+  async function irAPagina(n) {
+    for (let i = 1; i <= n; i++) {
+      boton('Siguiente').click()
+      await vi.waitFor(() => expect(donde()).toContain(`${i * 20 + 1}\u2013`))
+    }
+  }
+
+  async function verPrimeraFila() {
+    $('#browse tbody tr button').click()
+    await vi.waitFor(() => expect($('#back-to-object')).not.toBe(null))
+  }
+
+  it('en vías conserva pestaña, página y el "Cargar igual" ya aceptado', async () => {
+    await montar('?t=dep&c=06840&capa=vias')
+    expect($('#browse').textContent).toContain('no tiene un índice útil')
+
+    boton('Cargar igual').click()
+    await vi.waitFor(() => expect($('#browse tbody tr')).not.toBe(null))
+    await irAPagina(3)
+    expect(donde()).toContain('61\u201380')
+
+    await verPrimeraFila()
+    expect($('#detail-name').textContent).toBe('Avenida de prueba')
+
+    const pedidosAntes = pedidosDePagina()
+    $('#back-to-object').click()
+
+    expect($('#detail-name').textContent).toBe('Tres de Febrero')
+    expect(pestanaActiva()).toContain('Vías')
+    expect(donde()).toContain('61\u201380')
+    expect($('#browse').textContent).not.toContain('no tiene un índice útil')
+    expect(pedidosDePagina()).toBe(pedidosAntes)
+  })
+
+  it('en el resto de las capas tampoco vuelve a pedir la página 0', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await vi.waitFor(() => expect($('#browse tbody tr')).not.toBe(null))
+    await irAPagina(1)
+
+    await verPrimeraFila()
+    const pedidosAntes = pedidosDePagina()
+    $('#back-to-object').click()
+
+    expect($('#detail-name').textContent).toBe('Tres de Febrero')
+    expect(pestanaActiva()).toContain('Radios censales')
+    expect(donde()).toContain('21\u201340')
+    expect(pedidosDePagina()).toBe(pedidosAntes)
+  })
+})
+
 describe('los enlaces a las notas (NOTA-R3)', () => {
   it('la ficha enlaza la nota del tipo del objeto', async () => {
     await montar('?t=dep&c=06840')

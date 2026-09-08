@@ -124,15 +124,48 @@ function objectNoteLink(obj) {
   )
 }
 
-/** Vuelve a la ficha del objeto, en la pestaña desde la que se vino. */
-function backButton(layer) {
+/**
+ * Vuelve a la ficha del objeto, dejando la fila 3 donde estaba.
+ *
+ * Repinta identidad y mapa a mano en vez de volver a `selectObject`: esa
+ * pasa por `browser.show`, que reinicia páginas y capas lentas ya
+ * aceptadas. Volver desde la página 3 de vías reabría el panel de costo y
+ * volvía a cobrar los 14-20 s medidos (NAV-R7); en el resto de las capas,
+ * un pedido nuevo al GeoServer por la página 0. El spec sólo promete
+ * restaurar la ficha del padre y redibujar su geometría, que es lo que
+ * hace esto.
+ */
+function backButton() {
   const b = document.createElement('button')
   b.type = 'button'
   b.id = 'back-to-object'
   b.className = 'btn ghost mini'
   b.textContent = `Volver a ${current.n}`
-  b.addEventListener('click', () => selectObject(current, layer))
+  b.addEventListener('click', () => {
+    // El error del "Ver" del que se vuelve ya no describe nada de lo que
+    // se está mirando; si el redibujo falla, `drawObject` lo vuelve a
+    // poner.
+    setStatus('')
+    showObjectIdentity(current)
+    drawObject(current)
+  })
   return b
+}
+
+/**
+ * El panel de identidad del objeto: nombre, metadatos, enlace a su nota y
+ * su descarga propia. Es lo único que "Ver" reemplaza y lo único que
+ * "Volver" tiene que devolver a su lugar.
+ */
+function showObjectIdentity(obj) {
+  el.name.textContent = obj.n
+  el.meta.textContent = obj.p && obj.p !== obj.n
+    ? `${TYPES[obj.t].label} · ${obj.p} · código ${obj.c}`
+    : `${TYPES[obj.t].label} · código ${obj.c}`
+  el.note.replaceChildren(objectNoteLink(obj))
+  el.self.replaceChildren(
+    downloadButton(selfUrl(obj), `Descargar ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()}`),
+  )
 }
 
 /**
@@ -173,7 +206,7 @@ function showRow(layer, row) {
     isCode(codigo)
       ? downloadButton(featureUrl(layer, codigo), `Descargar ${singular.toLowerCase()}`)
       : disabledButton('Descargar', 'El INDEC no publicó el código de esta fila.'),
-    backButton(layer),
+    backButton(),
   )
 }
 
@@ -196,16 +229,7 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   el.q.value = obj.n
   setStatus('')
 
-  el.name.textContent = obj.n
-  el.meta.textContent = obj.p && obj.p !== obj.n
-    ? `${TYPES[obj.t].label} · ${obj.p} · código ${obj.c}`
-    : `${TYPES[obj.t].label} · código ${obj.c}`
-  el.note.replaceChildren(objectNoteLink(obj))
-
-  el.self.replaceChildren(
-    downloadButton(selfUrl(obj), `Descargar ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()}`),
-  )
-
+  showObjectIdentity(obj)
   renderParents(obj)
   renderChildren(obj)
   // La visibilidad de la fila la decide quien la dibuja, como la fila 2:
