@@ -139,6 +139,14 @@ describe('las páginas del sitio', () => {
     expect(footer).toContain('cada dirección provincial de estadística')
     expect(footer).toContain('https://www.ign.gob.ar/ut/')
   })
+
+  it('ningún título firma con el nombre del organismo (SITIO-R9)', () => {
+    for (const p of paginas) {
+      const html = readFileSync(resolve(process.cwd(), p), 'utf8')
+      const titulo = html.match(/<title>([^<]*)<\/title>/)[1]
+      expect(titulo, `${p} firma su título como INDEC`).not.toMatch(/—\s*INDEC\s*$/)
+    }
+  })
 })
 
 // SITIO-R6 no vive en `injectShell` sino en el cableado: hasta acá nadie
