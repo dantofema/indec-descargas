@@ -128,7 +128,7 @@ function selectObject(obj, initialLayer = null) {
   el.rowBrowse.hidden = !browser.show(obj, initialLayer)
   writeTab = true
   el.detail.hidden = false
-  document.dispatchEvent(new CustomEvent('object:selected', { detail: obj }))
+  drawObject(obj)
 }
 
 /**
@@ -143,9 +143,16 @@ function describeFeature(props) {
   if (parts.length) el.meta.textContent += ` · ${parts.join(' · ')}`
 }
 
-/** Es una función con nombre para que `addEventListener` no la duplique. */
-function drawSelected(e) {
-  showObject(e.detail).catch((err) => {
+/**
+ * Dibuja el objeto de la ficha en el mapa. Va después de destapar `#detail`:
+ * Leaflet midió altura cero con el panel oculto y `showObject` lo corrige
+ * con `invalidateSize`, que necesita el contenedor a la vista.
+ *
+ * Un mapa que no se puede dibujar no rompe la ficha: las descargas —que son
+ * a lo que se vino— siguen ahí, así que el fallo se avisa y se sigue.
+ */
+function drawObject(obj) {
+  showObject(obj).catch((err) => {
     setStatus(`No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
   })
 }
@@ -217,7 +224,6 @@ export function initResultados({ navigate = (href) => window.location.assign(hre
   })
 
   onFeature(describeFeature)
-  document.addEventListener('object:selected', drawSelected)
   setupCopyLink(el.copyLink)
 
   const url = parse(window.location.search)

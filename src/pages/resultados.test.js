@@ -392,7 +392,10 @@ describe('la URL es el estado', () => {
   it('capa=vias abre el panel de costo y no pide nada (NAV-R7, SITIO-R3)', async () => {
     await montar('?t=dep&c=06840&capa=vias')
     expect($('#browse').textContent).toContain('no tiene un índice útil')
-    expect(global.fetch).not.toHaveBeenCalledWith(expect.stringContaining('vias_de_circulacion'))
+    // `toHaveBeenCalledWith` compara la lista de argumentos entera y
+    // `features.js` llama `fetch(url, { signal })` con dos: un solo matcher
+    // no matchea nunca y el `not` pasaría siempre.
+    expect(global.fetch.mock.calls.some(([u]) => String(u).includes('vias_de_circulacion'))).toBe(false)
   })
 
   // La pestaña que el browser abre solo al armarse no es una acción del
