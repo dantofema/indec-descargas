@@ -82,7 +82,7 @@ archivo, sin duplicación) más cuatro selectores en `style.css`.
 
 ### Totales del home
 
-`scripts/build-index.mjs` emite además `public/totales.json` (~300 bytes), commiteado como el
+`scripts/build-index.mjs` emite además `public/totales.json` (162 bytes medidos), commiteado como el
 catálogo. Verificado contra `public/catalog.json` del 2026-09-06:
 
 ```json

@@ -1557,7 +1557,7 @@ export function initHome({ navigate = (href) => window.location.assign(href) } =
     onPick: (obj) => navigate(format(obj)),
   })
 
-  // Los totales primero: son 300 bytes y son lo que el home tiene para
+  // Los totales primero: son 162 bytes y son lo que el home tiene para
   // mostrar. El catálogo son 673 KB y no hace falta hasta que alguien
   // toque el campo.
   loadTotales().then(renderTotals).catch(() => { /* el buscador sigue sirviendo */ })
