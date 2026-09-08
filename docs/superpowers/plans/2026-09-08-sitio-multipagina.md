@@ -1164,25 +1164,25 @@ git commit -m "feat: la página de servicios geoespaciales del INDEC"
 ```
 
 ---
-### Task 7: `src/buscador.js` — el buscador deja de vivir en `main.js`
+### Task 7: `src/searchbox.js` — el buscador deja de vivir en `main.js`
 
 **Files:**
-- Create: `src/buscador.js`, `src/buscador.test.js`
+- Create: `src/searchbox.js`, `src/searchbox.test.js`
 - Modify: `src/main.js` (lo usa; el comportamiento no cambia)
 
 **Interfaces:**
 - Consumes: `search`, `TYPE_ORDER` de `src/search.js`; `TYPES` de `src/download.js`; `createCombobox` de `src/combobox.js`.
-- Produces: `createBuscador({input, select, list, onElegir}) => {setObjetos(objetos)}`
+- Produces: `createSearchBox({input, select, list, onPick}) => {setObjects(objetos)}`
 
 **Por qué ahora:** el home y `/resultados/` tienen los dos un buscador y hacen con él cosas distintas (uno navega, el otro también). Extraerlo antes del split evita escribirlo dos veces y deja el paso siguiente más chico. Esta tarea **no cambia ningún comportamiento**: `src/main.test.js` tiene que pasar sin tocarlo.
 
 - [ ] **Step 1: Write the failing test**
 
 ```js
-// src/buscador.test.js
+// src/searchbox.test.js
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createBuscador } from './buscador.js'
+import { createSearchBox } from './searchbox.js'
 import { TYPE_ORDER } from './search.js'
 
 const objetos = [
@@ -1190,7 +1190,7 @@ const objetos = [
   { t: 'loc', c: '06840010', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires', sp: 'buenos aires' },
 ]
 
-let el, onElegir, buscador
+let el, onPick, buscador
 
 beforeEach(() => {
   document.body.innerHTML = `
@@ -1202,8 +1202,8 @@ beforeEach(() => {
     select: document.querySelector('#type'),
     list: document.querySelector('#results'),
   }
-  onElegir = vi.fn()
-  buscador = createBuscador({ ...el, onElegir })
+  onPick = vi.fn()
+  searchbox = createSearchBox({ ...el, onPick })
 })
 
 const escribir = (texto) => {
@@ -1211,7 +1211,7 @@ const escribir = (texto) => {
   el.input.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
-describe('createBuscador', () => {
+describe('createSearchBox', () => {
   it('llena el filtro desde TYPE_ORDER, con "todos" adelante (BUS-R1)', () => {
     const opciones = [...el.select.options]
     expect(opciones[0].value).toBe('')
@@ -1224,20 +1224,20 @@ describe('createBuscador', () => {
   })
 
   it('busca una vez que tiene el catálogo', () => {
-    buscador.setObjetos(objetos)
+    searchbox.setObjects(objetos)
     escribir('tres de febrero')
     expect(el.list.children).toHaveLength(2)
   })
 
   it('cada resultado dice de qué tipo es: es lo que decide qué límites bajás', () => {
-    buscador.setObjetos(objetos)
+    searchbox.setObjects(objetos)
     escribir('tres')
     expect(el.list.textContent).toContain('Departamento')
     expect(el.list.textContent).toContain('Localidad censal')
   })
 
   it('cambiar el tipo vuelve a buscar lo escrito, sin retipear (BUS-R1)', () => {
-    buscador.setObjetos(objetos)
+    searchbox.setObjects(objetos)
     escribir('tres')
     el.select.value = 'loc'
     el.select.dispatchEvent(new Event('change', { bubbles: true }))
@@ -1245,22 +1245,22 @@ describe('createBuscador', () => {
   })
 
   it('elegir avisa con el objeto', () => {
-    buscador.setObjetos(objetos)
+    searchbox.setObjects(objetos)
     escribir('tres')
     el.list.children[0].click()
-    expect(onElegir).toHaveBeenCalledWith(objetos[0])
+    expect(onPick).toHaveBeenCalledWith(objetos[0])
   })
 })
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npx vitest run src/buscador.test.js`
-Expected: FAIL — no se resuelve `./buscador.js`.
+Run: `npx vitest run src/searchbox.test.js`
+Expected: FAIL — no se resuelve `./searchbox.js`.
 
-- [ ] **Step 3: Write `src/buscador.js`**
+- [ ] **Step 3: Write `src/searchbox.js`**
 
-Mover, sin reescribir, estas piezas de `src/main.js`: `renderOption`, `typeOption`, el `el.type.append(...)`, `runSearch` y los dos `addEventListener` de `input`/`change`. La única diferencia es que el catálogo llega por `setObjetos` en vez de por una variable de módulo, y que elegir llama a `onElegir` en vez de a `selectObject`.
+Mover, sin reescribir, estas piezas de `src/main.js`: `renderOption`, `typeOption`, el `el.type.append(...)`, `runSearch` y los dos `addEventListener` de `input`/`change`. La única diferencia es que el catálogo llega por `setObjects` en vez de por una variable de módulo, y que elegir llama a `onPick` en vez de a `selectObject`.
 
 ```js
 import { search, TYPE_ORDER } from './search.js'
@@ -1281,10 +1281,10 @@ function typeOption(value, label) { /* … igual que en main.js … */ }
  * El buscador, sin saber qué se hace con lo que se elige. El home navega y
  * /resultados/ también, pero eso lo decide cada página: acá sólo se busca.
  *
- * El catálogo llega por `setObjetos` porque pesa 673 KB y el home no lo
+ * El catálogo llega por `setObjects` porque pesa 673 KB y el home no lo
  * pide hasta que alguien toca el campo.
  */
-export function createBuscador({ input, select, list, onElegir }) {
+export function createSearchBox({ input, select, list, onPick }) {
   let objetos = null
 
   select.append(
@@ -1292,7 +1292,7 @@ export function createBuscador({ input, select, list, onElegir }) {
     ...TYPE_ORDER.map((t) => typeOption(t, TYPES[t].plural)),
   )
 
-  const combo = createCombobox({ input, list, renderOption, onSelect: onElegir })
+  const combo = createCombobox({ input, list, renderOption, onSelect: onPick })
 
   function correr() {
     if (!objetos) return
@@ -1305,7 +1305,7 @@ export function createBuscador({ input, select, list, onElegir }) {
   select.addEventListener('change', correr)
 
   return {
-    setObjetos(next) {
+    setObjects(next) {
       objetos = next
       correr()
     },
@@ -1318,12 +1318,12 @@ export function createBuscador({ input, select, list, onElegir }) {
 Reemplazar en `main.js` las piezas movidas por:
 
 ```js
-const buscador = createBuscador({
-  input: el.q, select: el.type, list: el.results, onElegir: selectObject,
+const searchbox = createSearchBox({
+  input: el.q, select: el.type, list: el.results, onPick: selectObject,
 })
 ```
 
-y en el `.then` de `loadCatalog`, `buscador.setObjetos(c.objects)`.
+y en el `.then` de `loadCatalog`, `searchbox.setObjects(c.objects)`.
 
 - [ ] **Step 5: Run the full suite**
 
@@ -1333,7 +1333,7 @@ Expected: PASS, **sin tocar `src/main.test.js`**. Si hace falta tocarlo, algo de
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/buscador.js src/buscador.test.js src/main.js
+git add src/searchbox.js src/searchbox.test.js src/main.js
 git commit -m "refactor: el buscador es un módulo, porque ahora lo usan dos páginas"
 ```
 
@@ -1348,12 +1348,12 @@ git commit -m "refactor: el buscador es un módulo, porque ahora lo usan dos pá
 - Delete: `src/main.js`, `src/main.test.js`
 
 **Interfaces:**
-- Consumes: `parse`/`format` (Task 1), `loadTotales` (Task 2), `createBuscador` (Task 7).
+- Consumes: `parse`/`format` (Task 1), `loadTotales` (Task 2), `createSearchBox` (Task 7).
 - Produces:
   - `initHome({navegar}) => void` y `initResultados({navegar}) => void`. `navegar` por defecto es `(href) => window.location.assign(href)`; se inyecta para poder testear sin que jsdom se queje de navegar.
-  - `createBrowser` cambia su firma: `show(obj, capaInicial = null)` y acepta `onTab(key)` entre sus opciones. Sigue devolviendo `{show}` más `boolean` desde `show`.
+  - `createBrowser` cambia su firma: `show(obj, initialLayer = null)` y acepta `onTab(key)` entre sus opciones. Sigue devolviendo `{show}` más `boolean` desde `show`.
 
-**El estado es la URL.** Elegir un objeto **navega**, incluso estando ya en `/resultados/`: `navegar(format(obj))`. No hay `pushState` ni `popstate`. Lo único que escribe la barra sin navegar es cambiar de pestaña, con `history.replaceState`.
+**El estado es la URL.** Elegir un objeto **navega**, incluso estando ya en `/resultados/`: `navigate(format(obj))`. No hay `pushState` ni `popstate`. Lo único que escribe la barra sin navegar es cambiar de pestaña, con `history.replaceState`.
 
 - [ ] **Step 1: Extend `src/browser.js` and its test**
 
@@ -1380,13 +1380,13 @@ it('avisa qué pestaña quedó activa, para que la URL la pueda guardar', () => 
 })
 ```
 
-Implementación en `browser.js`: `createBrowser({container, onView, onError, onTab = () => {}})`; `show(next, capaInicial = null)` pasa a `createTabs` la lista de pestañas y después llama a `select(capaInicial)` **sólo si `capaInicial` está entre las capas no vacías del objeto**; el `onSelect` de `createTabs` llama a `onTab(key)` además de lo que ya hace.
+Implementación en `browser.js`: `createBrowser({container, onView, onError, onTab = () => {}})`; `show(next, initialLayer = null)` pasa a `createTabs` la lista de pestañas y después llama a `select(initialLayer)` **sólo si `initialLayer` está entre las capas no vacías del objeto**; el `onSelect` de `createTabs` llama a `onTab(key)` además de lo que ya hace.
 
 Ojo: `createTabs` ya selecciona la primera al construirse y corta el reclic sobre la activa, así que pedir la primera explícitamente no dispara nada de más.
 
 - [ ] **Step 2: Write the resultados test**
 
-`src/pages/resultados.test.js` nace de `src/main.test.js`: **copiar el archivo entero** y adaptarlo — lee `resultados/index.html` en vez de `index.html`, resuelve el shell (Task 5, Step 6), importa `./resultados.js` y llama a `initResultados({ navegar })` con un spy. Todos los casos que ya cubría se conservan. Se agregan:
+`src/pages/resultados.test.js` nace de `src/main.test.js`: **copiar el archivo entero** y adaptarlo — lee `resultados/index.html` en vez de `index.html`, resuelve el shell (Task 5, Step 6), importa `./resultados.js` y llama a `initResultados({ navigate })` con un spy. Todos los casos que ya cubría se conservan. Se agregan:
 
 ```js
 describe('la URL es el estado', () => {
@@ -1463,14 +1463,14 @@ Expected: FAIL — `ENOENT resultados/index.html`.
 `src/pages/resultados.js` es `src/main.js` movido, con estos cambios:
 
 ```js
-export function initResultados({ navegar = (href) => window.location.assign(href) } = {}) {
+export function initResultados({ navigate = (href) => window.location.assign(href) } = {}) {
   // … todo lo que hoy hace main.js al cargar …
 
-  const buscador = createBuscador({
+  const searchbox = createSearchBox({
     input: el.q, select: el.type, list: el.results,
     // El estado es la URL: elegir un objeto navega, también estando ya acá.
     // Es lo que hace que atrás y adelante funcionen sin una línea de historia.
-    onElegir: (obj) => navegar(format(obj)),
+    onPick: (obj) => navigate(format(obj)),
   })
 
   const url = parse(window.location.search)
@@ -1478,7 +1478,7 @@ export function initResultados({ navegar = (href) => window.location.assign(href
   loadCatalog().then((c) => {
     catalog = c
     index = codeIndex(c.objects)
-    buscador.setObjetos(c.objects)
+    searchbox.setObjects(c.objects)
     el.generated.textContent = `Catálogo generado el ${c.generated} · ${fmt(c.objects.length)} objetos.`
 
     if (url.status === 'empty') return setStatus('Buscá un objeto para verlo en el mapa.')
@@ -1496,7 +1496,7 @@ export function initResultados({ navegar = (href) => window.location.assign(href
 initResultados()
 ```
 
-`selectObject(obj, capaInicial)` pasa `capaInicial` a `browser.show(obj, capaInicial)`. El `onTab` del browser hace:
+`selectObject(obj, initialLayer)` pasa `initialLayer` a `browser.show(obj, initialLayer)`. El `onTab` del browser hace:
 
 ```js
   onTab: (capa) => {
@@ -1547,29 +1547,29 @@ El botón `#copy-link` hace `navigator.clipboard.writeText(window.location.href)
 `src/pages/home.js`:
 
 ```js
-export function initHome({ navegar = (href) => window.location.assign(href) } = {}) {
-  const buscador = createBuscador({
+export function initHome({ navigate = (href) => window.location.assign(href) } = {}) {
+  const searchbox = createSearchBox({
     input: el.q, select: el.type, list: el.results,
-    onElegir: (obj) => navegar(format(obj)),
+    onPick: (obj) => navigate(format(obj)),
   })
 
   // Los totales primero: son 300 bytes y son lo que el home tiene para
   // mostrar. El catálogo son 673 KB y no hace falta hasta que alguien
   // toque el campo.
-  loadTotales().then(pintarTotales).catch(() => { /* el buscador sigue sirviendo */ })
+  loadTotales().then(renderTotals).catch(() => { /* el buscador sigue sirviendo */ })
 
   let pedido = null
-  const traerCatalogo = () => {
+  const fetchCatalog = () => {
     pedido ??= loadCatalog()
-      .then((c) => buscador.setObjetos(c.objects))
+      .then((c) => searchbox.setObjects(c.objects))
       .catch((err) => setStatus(`No se pudo cargar el catálogo: ${err.message}`, true))
   }
-  el.q.addEventListener('focus', traerCatalogo, { once: true })
-  el.q.addEventListener('input', traerCatalogo, { once: true })
+  el.q.addEventListener('focus', fetchCatalog, { once: true })
+  el.q.addEventListener('input', fetchCatalog, { once: true })
 }
 ```
 
-`pintarTotales` dibuja ocho `<li>` con un SVG inline, el número con `fmt()` y la etiqueta, en este orden y con estas claves: `jur` Jurisdicciones, `dep` Departamentos, `fracciones` Fracciones censales, `radios` Radios censales, `loc` Localidades censales, `gl` Gobiernos locales, `aglo` Aglomerados, `vias` Vías de circulación. Los iconos son SVG inline de trazo simple (`stroke="currentColor"`, `fill="none"`), uno por objeto; **no agregar una librería de iconos**.
+`renderTotals` dibuja ocho `<li>` con un SVG inline, el número con `fmt()` y la etiqueta, en este orden y con estas claves: `jur` Jurisdicciones, `dep` Departamentos, `fracciones` Fracciones censales, `radios` Radios censales, `loc` Localidades censales, `gl` Gobiernos locales, `aglo` Aglomerados, `vias` Vías de circulación. Los iconos son SVG inline de trazo simple (`stroke="currentColor"`, `fill="none"`), uno por objeto; **no agregar una librería de iconos**.
 
 `src/pages/home.test.js`: que los ocho tiles se pinten con los números de `totales.json` mockeado; que el catálogo **no** se pida hasta tocar el campo; que elegir llame a `navegar` con el permalink correcto.
 
@@ -1739,7 +1739,7 @@ En `src/pages/resultados.js`:
  * separa esto del bug viejo, donde cada "Ver" le pegaba otro tramo de texto
  * a #detail-meta sin límite.
  */
-function mostrarFila(capa, row) {
+function showRow(capa, row) {
   const spec = specOf(capa)
   const codigo = String(row[spec.idField] ?? '')
 
@@ -1763,12 +1763,12 @@ function mostrarFila(capa, row) {
     isCode(codigo)
       ? downloadButton(featureUrl(capa, codigo), `Descargar ${singular.toLowerCase()}`)
       : disabledButton('Descargar', 'El INDEC no publicó el código de esta fila.'),
-    botonVolver(),
+    backButton(),
   )
 }
 ```
 
-`botonVolver()` es un `<button id="back-to-object" class="btn ghost mini">` que dice `Volver a ${obj.n}` y llama a `selectObject(obj, capaActiva)` de nuevo.
+`backButton()` es un `<button id="back-to-object" class="btn ghost mini">` que dice `Volver a ${obj.n}` y llama a `selectObject(obj, activeLayer)` de nuevo.
 
 El `onView` del browser pasa a ser:
 
@@ -1779,7 +1779,7 @@ El `onView` del browser pasa a ser:
       .then((props) => {
         // `undefined` significa que este pedido perdió la carrera: un "Ver"
         // de vías de 12 s que llegó tarde no pisa lo que se está mirando.
-        if (props) mostrarFila(capa, { ...row, ...props })
+        if (props) showRow(capa, { ...row, ...props })
       })
       .catch((err) => setStatus(`No se pudo dibujar en el mapa: ${err.message}`, true))
   },
@@ -1800,7 +1800,7 @@ Expected: PASS.
 
 Dos mutaciones, una por promesa de la regla:
 
-1. Sacar el `if (props)` de `onView` y devolver siempre `mostrarFila`. El test "una respuesta que perdió la carrera no escribe la ficha" tiene que ponerse rojo.
+1. Sacar el `if (props)` de `onView` y devolver siempre `showRow`. El test "una respuesta que perdió la carrera no escribe la ficha" tiene que ponerse rojo.
 2. Poner `titleField: 'cod_indec'` en la spec de `radios`. El test "no le inventa nombre a un radio" tiene que ponerse rojo.
 
 Volver atrás las dos. **Anotar en el commit qué mutación se aplicó.**
