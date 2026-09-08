@@ -144,6 +144,10 @@ describe('lo dibujado no se borra hasta que hay con qué reemplazarlo', () => {
     pendientes[1].resolve({ ok: false, status: 503 })
     await expect(segundo).rejects.toThrow(/503/)
     expect(capa.remove).not.toHaveBeenCalled()
+    // No sólo "no se borró": lo que queda dibujado sigue siendo la capa del
+    // primer showObject —geoJSON no se volvió a llamar—, no una vacía o a
+    // medio construir.
+    expect(geoJSON).toHaveBeenCalledTimes(1)
   })
 
   it('una respuesta sin geometría tampoco borra lo que había', async () => {
