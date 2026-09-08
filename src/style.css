@@ -32,10 +32,43 @@ main, .site-header, .site-footer {
   margin: 0 auto;
   padding: 0 1rem;
 }
+/* Antes ese aire lo daba el padding-top del header, que ahora es una
+   barra angosta de marca y nav compartida entre páginas. */
+main { padding-top: 1.75rem; }
 
-.site-header { padding-top: 2rem; }
+/* El header comparte marca y nav en todas las páginas (lo resuelve el
+   shell en build, ver scripts/shell.mjs): una fila que se envuelve en vez
+   de apilarse, para que cada página no tenga que decidir su propio layout. */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
 .site-header h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
 .subtitle { color: var(--muted); margin: 0 0 1.5rem; }
+.brand { color: var(--fg); font-weight: 600; text-decoration: none; }
+.brand:hover { text-decoration: underline; }
+.site-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+.site-nav a:hover { color: var(--fg); }
+
+/* El CTA institucional, entre el contenido y el footer en toda página. */
+.cta { max-width: 60rem; margin: 2rem auto 0; padding: 0 1rem; }
+.cta a {
+  display: inline-block;
+  padding: .5rem .9rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: .9rem;
+}
+.cta a:hover { background: var(--hl); }
 
 .search { position: relative; }
 
@@ -96,9 +129,37 @@ main, .site-header, .site-footer {
 
 .row-identity { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .row-bulk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 1.5rem; }
+/* La página de notas colapsa a una columna con el mismo criterio. */
+.notas-layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 2rem; }
 @media (max-width: 48rem) {
-  .row-identity, .row-bulk { grid-template-columns: 1fr; }
+  .row-identity, .row-bulk, .notas-layout { grid-template-columns: 1fr; }
 }
+
+.notas h1 { font-size: 1.4rem; margin: 0 0 1.5rem; }
+
+/* Nav vertical de notas: mismo patrón de tablist que .tabs (ver tabs.js),
+   en columna en vez de en fila. */
+.nota-nav { display: flex; flex-direction: column; gap: .15rem; }
+.nota-tab {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: .9rem;
+  text-align: left;
+  padding: .55rem .7rem;
+  cursor: pointer;
+}
+.nota-tab:hover { background: var(--hl); }
+.nota-tab[aria-selected="true"] {
+  background: var(--hl);
+  border-color: var(--line);
+  color: var(--fg);
+  font-weight: 600;
+}
+.nota-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .identity { display: flex; flex-direction: column; justify-content: center; }
 
