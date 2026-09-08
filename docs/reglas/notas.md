@@ -24,6 +24,17 @@ el párrafo viejo no pasa. Las dos notas que se mudaron intactas no afirman su t
 —`/notas/` ya lo muestra como dato— y están exceptuadas por nombre; si alguna vez lo afirman,
 la excepción se cae sola.
 
+Una nota puede además afirmar algo que no sale del catálogo ni del GeoServer, **si nombra la
+fuente en el texto y deja el enlace a la vista** (`sources` en `notes.js`, dibujado bajo la nota).
+Esa mitad de la regla no tiene gate: ninguna máquina compara prosa castellana con un PDF de la
+UBA. Lo sostiene una afirmación humana, y por eso la nota tiene que decir de quién es el dato en
+vez de absorberlo como si fuera propio. Lo único que la suite acorrala es que no quede una
+afirmación externa huérfana: cada fuente declarada tiene que estar nombrada en algún párrafo.
+
+Lo verificable contra el catálogo o el GeoServer sigue bajo el gate automático, sin excepción:
+que ahora se admita fuente externa no es permiso para dejar de chequear lo que sí se puede
+chequear.
+
 **Por qué:** una nota es la voz del sitio sobre datos ajenos, no la opinión del sitio sobre sí
 mismo. Un número inventado ahí es peor que no tener nota: el sitio no tiene forma de saber si
 alguien lo tomó por cierto antes de que se corrigiera.

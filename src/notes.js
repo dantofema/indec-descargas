@@ -9,6 +9,14 @@
  *
  * `total` va aparte de `paragraphs` a propósito: así las dos notas que ya
  * existían se mudaron sin tocarles una coma.
+ *
+ * `sources` es la mitad nueva de NOTA-R2: una nota puede afirmar algo que
+ * no sale del catálogo ni del GeoServer si nombra la fuente en el texto y
+ * deja el enlace a la vista. Esa mitad no tiene gate que valga: ninguna
+ * máquina compara prosa castellana con un PDF de la UBA. Lo único que la
+ * suite puede acorralar es que no haya afirmación externa huérfana —cada
+ * `label` tiene que aparecer literal en algún párrafo—, y eso es lo que
+ * hace.
  */
 export const NOTES = [
   {
@@ -33,6 +41,10 @@ export const NOTES = [
       'Son 529 en el país, y el nombre cambia según dónde estés parado: en la Ciudad Autónoma de Buenos Aires son las 15 comunas y en la provincia de Buenos Aires, los 135 partidos. El INDEC los publica a todos en la misma capa, con el mismo campo cde.',
       'Contiene fracciones, radios, localidades y vías, así que es el nivel más cómodo para bajar la cadena censal completa de una zona sin pedir una provincia entera.',
       'Los códigos de departamento no cierran entre capas: hay 529 en departamentos, 530 en radios y 527 en vías. Este sitio reporta esas inconsistencias cuando regenera el catálogo y no las corrige, porque corregirlas sería inventar un dato que el INDEC no publicó.',
+      'Que se llame partido, departamento o comuna no es costumbre local: lo fija el Marco Geoestadístico, que define al departamento como la división político-administrativa de segundo nivel y aclara que «se denomina partido en la provincia de Buenos Aires, departamento en el resto de las provincias y comuna en la Ciudad Autónoma de Buenos Aires».',
+    ],
+    sources: [
+      { label: 'Marco Geoestadístico', href: 'https://www.indec.gob.ar/ftp/cuadros/geoestadistica/marco_geoestadistico_nacional.pdf' },
     ],
   },
   {

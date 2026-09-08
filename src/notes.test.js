@@ -130,3 +130,30 @@ describe('las dos notas que ya existían', () => {
     expect(loc.paragraphs[1]).toMatch(/tres objetos distintos con el mismo nombre/)
   })
 })
+
+describe('las fuentes externas (NOTA-R2, mitad nueva)', () => {
+  it('cada fuente declarada está nombrada en el texto de su nota', () => {
+    for (const n of NOTES) {
+      for (const s of n.sources ?? []) {
+        expect(n.paragraphs.join(' '), `${n.slug} enlaza a «${s.label}» sin nombrarla en el texto`)
+          .toContain(s.label)
+      }
+    }
+  })
+
+  it('cada fuente lleva un enlace absoluto y https', () => {
+    for (const n of NOTES) {
+      for (const s of n.sources ?? []) {
+        expect(s.href, `${n.slug} → ${s.label}`).toMatch(/^https:\/\//)
+      }
+    }
+  })
+
+  // La regla amplía qué se puede afirmar, no cuánto se puede inventar: una
+  // nota con `sources` vacío declara una fuente que no existe.
+  it('ninguna nota declara una lista de fuentes vacía', () => {
+    for (const n of NOTES) {
+      if ('sources' in n) expect(n.sources.length, `${n.slug}`).toBeGreaterThan(0)
+    }
+  })
+})

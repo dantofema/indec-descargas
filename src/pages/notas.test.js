@@ -58,4 +58,18 @@ describe('la página de notas', () => {
     await montar('#radio-censal')
     expect(document.querySelector('#nota-total').textContent).toContain('66.515')
   })
+
+  it('la nota que cita fuentes las muestra con su enlace (NOTA-R2)', async () => {
+    const conFuentes = NOTES.find((n) => n.sources?.length)
+    // `montar`, no las dos líneas del brief (`location.hash = ...; initNotas()`
+    // sueltas): acá `initNotas` no está importado a nivel de módulo —sólo
+    // vive dentro de `montar`— y sin `montar` tampoco se monta el shell de
+    // `notas/index.html`, así que `#nota-fuentes` no existe todavía en el
+    // DOM. Es el mismo helper que usa cada test de este archivo.
+    await montar(conFuentes.slug)
+    const enlaces = [...document.querySelectorAll('#nota-fuentes a')]
+    expect(enlaces).toHaveLength(conFuentes.sources.length)
+    expect(enlaces[0].href).toBe(conFuentes.sources[0].href)
+    expect(enlaces[0].textContent).toBe(conFuentes.sources[0].label)
+  })
 })

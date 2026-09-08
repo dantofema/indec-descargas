@@ -23,6 +23,22 @@ function renderParagraph(texto) {
   return p
 }
 
+/**
+ * Las fuentes externas de una nota (NOTA-R2). La lista queda vacía —y por
+ * lo tanto invisible— en las notas que sólo afirman lo que el catálogo y el
+ * GeoServer ya sostienen, que son la mayoría.
+ */
+function renderFuente({ label, href }) {
+  const li = document.createElement('li')
+  const a = document.createElement('a')
+  a.href = href
+  a.textContent = label
+  a.rel = 'noopener'
+  a.target = '_blank'
+  li.append(a)
+  return li
+}
+
 /** Dibuja el navegador vertical una sola vez: la lista de notas no cambia. */
 function renderNav() {
   const nav = document.querySelector('#nota-nav')
@@ -58,6 +74,9 @@ function render() {
   titulo.textContent = note.label
   total.textContent = `${fmt(note.total)} en el Marco Geoestadístico.`
   cuerpo.replaceChildren(...note.paragraphs.map(renderParagraph))
+
+  const fuentes = document.querySelector('#nota-fuentes')
+  if (fuentes) fuentes.replaceChildren(...(note.sources ?? []).map(renderFuente))
 
   document.querySelectorAll('#nota-nav [role="tab"]').forEach((b) => {
     b.setAttribute('aria-selected', String(b.dataset.slug === note.slug))
