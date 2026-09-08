@@ -321,7 +321,13 @@ git commit -m "feat: un radio también forma parte de algo, y su código lo dice
 
 El archivo ya trae los helpers: `montar(search)` monta y espera, `montarSinEsperar(search)`, `$(sel)`, `buscar(texto)`, `filtrar(tipo)`. Usarlos; no escribir helpers nuevos.
 
-Los tests de este plan también usan el espía de `fetch` y el `navigate` falso que el `beforeEach` del archivo ya arma. Si están declarados adentro del `beforeEach` en vez de en el módulo, subirlos al scope del módulo y sólo reasignarlos en el `beforeEach`: es un cambio mecánico y lo necesitan las Tasks 4, 5 y 6. **Verificar cómo se llaman antes de escribir el primer test** en vez de asumir `fetchSpy` y `navigate`.
+**Tres cosas del archivo, verificadas el 2026-09-08. Usalas así, no las adivines:**
+
+1. **`navigate` ya está en el scope del módulo** (`let navigate`, reasignado en el `beforeEach`). Los tests de las Tasks 4 a 7 lo usan directo, sin tocar nada.
+2. **El espía de `fetch` no tiene nombre propio:** el `beforeEach` hace `global.fetch = vi.fn(...)`. Donde este plan escribe `fetchSpy.mock.calls`, poné **`global.fetch.mock.calls`**. No hace falta hoistear nada.
+3. **El mock devuelve siempre un solo feature** (`features: [{ properties: filaDeVerdad }]`). Los tests que necesiten más de uno —el conteo de tramos de una vía, Task 5— tienen que ampliar ese mock para que, cuando la URL pida `vias_de_circulacion`, devuelva varios features con el mismo `cod_indec`. Ampliarlo, no reemplazarlo: el resto de los casos depende de que siga devolviendo uno.
+
+**Y un test existente se va a poner rojo por el fixture nuevo:** `src/pages/resultados.test.js:107` afirma `toContain('3 objetos')`, que es el conteo del catálogo de prueba. Agregarle la localidad censal `06840010` lo lleva a **4**. Actualizar esa expectativa es lo correcto —el catálogo real tiene el departamento y la localidad homónimos, así que el fixture de tres estaba probando un catálogo irreal—; **no saques el objeto del fixture**, que la Task 5 lo necesita como padre de una vía.
 
 Al fixture `catalogo` hay que agregarle la localidad censal de Tres de Febrero, que hoy no está y que estos tests necesitan como padre de una vía:
 
