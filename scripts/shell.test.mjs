@@ -84,6 +84,11 @@ describe('las páginas del sitio', () => {
   // tiene una línea de JS— no necesita ninguna para mostrarla.
   it('las cuatro llevan la fecha del catálogo en el pie (spec §6)', () => {
     const generated = readGenerated()
+    // Sin esto el caso tiene una rama vacía: si `totales.json` pierde el
+    // campo, `readGenerated` devuelve '' y las cuatro aserciones pasan por
+    // `toContain('')` mientras el pie queda sin fecha.
+    expect(generated, 'readGenerated() no devolvió ninguna fecha').not.toBe('')
+
     for (const p of paginas) {
       const html = injectShell(
         readFileSync(resolve(process.cwd(), p), 'utf8'),

@@ -53,8 +53,12 @@ export function readPartials(dir = SHELL_DIR) {
  * no corra, y porque `/servicios/` no tiene una línea de JS: darle una para
  * escribir una fecha en el pie sería un bundle entero por un renglón.
  *
- * Sin fecha devuelve la cadena vacía: el `<p>` queda vacío, como estaba, en
- * vez de publicar el marcador crudo.
+ * Distingue dos faltas que no son la misma. Si el archivo no está, tira y
+ * mata el build: un shell que no puede leer lo que le toca no se publica a
+ * medias, igual que un marcador sin partial (SITIO-R6). Si el archivo está
+ * pero no trae el campo, devuelve la cadena vacía y el `<p>` queda vacío
+ * como estaba —eso es un dato que falta, no el andamiaje roto—, nunca el
+ * marcador crudo a la vista.
  */
 export function readGenerated(file = TOTALES) {
   const { generated } = JSON.parse(readFileSync(file, 'utf8'))
