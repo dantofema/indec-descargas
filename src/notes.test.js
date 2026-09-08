@@ -77,27 +77,20 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
   // catálogo `total` falla, alguien lo corrige, y la prosa sigue diciendo
   // el número viejo sin que nada se ponga rojo.
   //
-  // Las dos notas que se mudaron intactas (ver notes.js) no afirman su
-  // total en prosa —/notas/ ya lo muestra como dato, leído del mismo campo
-  // `total`—, así que están exceptuadas por nombre. La lista es cerrada en
-  // los dos sentidos: el caso de abajo la pone roja si alguna de las dos
-  // empieza a afirmarlo, y una nota nueva entra al gate sola.
-  const SIN_TOTAL_EN_PROSA = new Set(['via-de-circulacion'])
-
+  // Las ocho notas afirman su total en prosa: no hay exceptuadas.
   it('el número que la prosa afirma es el mismo que verifica el catálogo', () => {
     for (const n of NOTES) {
-      if (SIN_TOTAL_EN_PROSA.has(n.slug)) continue
       expect(n.paragraphs.join(' '), `la prosa de ${n.slug} no dice ${fmt(n.total)}`)
         .toContain(fmt(n.total))
     }
   })
 
-  it('las exceptuadas lo están porque no afirman su total, no por costumbre', () => {
-    for (const slug of SIN_TOTAL_EN_PROSA) {
-      const n = noteFor(slug)
-      expect(n.paragraphs.join(' '), `${slug} ya afirma su total: sacala de la excepción`)
-        .not.toContain(fmt(n.total))
-    }
+  it('vías advierte para qué no sirve, con los números medidos', () => {
+    const texto = noteFor('via-de-circulacion').paragraphs.join(' ')
+    expect(texto).toContain('20.613')
+    expect(texto).toContain('97.073')
+    expect(texto).toContain('20,3')
+    expect(texto).toContain('CALLE SN')
   })
 
   it('los nombres que son los tres tipos a la vez salen del catálogo, no de la memoria', () => {
@@ -109,16 +102,6 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
     }
     const losTres = [...porNombre.values()].filter((s) => s.size === 3).length
     expect(noteFor('gobierno-local').paragraphs.join(' ')).toContain(`${losTres} nombres del catálogo`)
-  })
-})
-
-describe('las dos notas que ya existían', () => {
-  it('vías conserva su texto intacto', () => {
-    const vias = noteFor('via-de-circulacion')
-    expect(vias.paragraphs[0]).toBe(
-      'Esta capa no lista calles: lista tramos. Una misma calle aparece tantas veces como tramos tenga su geometría, y todos comparten nombre, código y altura. En Tres de Febrero, las 1.487 filas son 727 calles; la más partida llega a 80 tramos.',
-    )
-    expect(vias.paragraphs[1]).toMatch(/^Se muestra tal como lo publica el INDEC/)
   })
 })
 

@@ -121,7 +121,8 @@ export const NOTES = [
     layer: 'vias',
     total: 477588,
     paragraphs: [
-      'Esta capa no lista calles: lista tramos. Una misma calle aparece tantas veces como tramos tenga su geometría, y todos comparten nombre, código y altura. En Tres de Febrero, las 1.487 filas son 727 calles; la más partida llega a 80 tramos.',
+      'Esta capa no lista calles: lista tramos, y eso es una advertencia, no un detalle. Una misma calle aparece tantas veces como tramos tenga su geometría, y las filas comparten nombre, código y altura: nada en la tabla las distingue salvo un id interno. En Tres de Febrero, las 1.487 filas son 727 calles, y la más partida llega a 80 tramos idénticos.',
+      'Tampoco es un nomenclador de direcciones, aunque el nombre lo sugiera. De los 477.588 tramos, 20.613 se llaman literalmente «CALLE SN» —el INDEC no publicó su nombre— y sólo 97.073, el 20,3%, traen alguna altura. Para buscar una dirección esta capa no alcanza.',
       'Se muestra tal como lo publica el INDEC, sin agrupar, para que lo que ves acá sea lo mismo que baja el archivo. Descargar en cualquier fila de una calle trae la calle entera, con todos sus tramos: el filtro es por código, no por tramo.',
     ],
   },
