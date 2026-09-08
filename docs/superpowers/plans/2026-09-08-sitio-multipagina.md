@@ -995,37 +995,37 @@ describe('la página de notas', () => {
 
   it('lista los ocho objetos en el navegador vertical', async () => {
     await montar()
-    const items = document.querySelectorAll('#nota-nav [role="tab"]')
+    const items = document.querySelectorAll('#note-nav [role="tab"]')
     expect(items).toHaveLength(8)
     expect([...items].map((b) => b.textContent.trim())).toEqual(NOTES.map((n) => n.label))
   })
 
   it('sin ancla abre la primera', async () => {
     await montar()
-    expect(document.querySelector('#nota-titulo').textContent).toBe(NOTES[0].label)
+    expect(document.querySelector('#note-title').textContent).toBe(NOTES[0].label)
   })
 
   it('el ancla de la URL elige la nota', async () => {
     await montar('#gobierno-local')
-    expect(document.querySelector('#nota-titulo').textContent).toBe('Gobierno local')
-    expect(document.querySelector('#nota-cuerpo').textContent).toContain('2.282')
+    expect(document.querySelector('#note-title').textContent).toBe('Gobierno local')
+    expect(document.querySelector('#note-body').textContent).toContain('2.282')
   })
 
   it('un ancla que no existe cae en la primera en vez de dejar la página vacía', async () => {
     await montar('#no-existe')
-    expect(document.querySelector('#nota-titulo').textContent).toBe(NOTES[0].label)
+    expect(document.querySelector('#note-title').textContent).toBe(NOTES[0].label)
   })
 
   it('elegir una nota escribe el ancla, para poder compartirla', async () => {
     await montar()
     document.querySelector('[data-slug="aglomerado"]').click()
     expect(window.location.hash).toBe('#aglomerado')
-    expect(document.querySelector('#nota-titulo').textContent).toBe('Aglomerado')
+    expect(document.querySelector('#note-title').textContent).toBe('Aglomerado')
   })
 
   it('muestra el total del objeto, que es dato y no prosa', async () => {
     await montar('#radio-censal')
-    expect(document.querySelector('#nota-total').textContent).toContain('66.515')
+    expect(document.querySelector('#note-total').textContent).toContain('66.515')
   })
 })
 ```
@@ -1039,11 +1039,11 @@ describe('la página de notas', () => {
 <main class="notas">
   <h1>Qué es cada objeto del Marco Geoestadístico</h1>
   <div class="notas-layout">
-    <nav id="nota-nav" class="nota-nav" role="tablist" aria-label="Objetos"></nav>
+    <nav id="note-nav" class="note-nav" role="tablist" aria-label="Objetos"></nav>
     <article class="nota-panel">
-      <h2 id="nota-titulo"></h2>
-      <p id="nota-total" class="meta"></p>
-      <div id="nota-cuerpo" class="nota-body"></div>
+      <h2 id="note-title"></h2>
+      <p id="note-total" class="meta"></p>
+      <div id="note-body" class="nota-body"></div>
     </article>
   </div>
 </main>
@@ -1052,7 +1052,7 @@ describe('la página de notas', () => {
 <script type="module" src="/src/pages/notas.js"></script>
 ```
 
-`src/pages/notas.js` exporta `initNotas()` y la llama al cargar. Dibuja un botón por nota en `#nota-nav` (`role="tab"`, `aria-selected`, `data-slug`), y al elegir escribe `location.hash` y pinta título, total (`fmt(nota.total)` de `ui.js`) y párrafos. Lee `location.hash` al iniciar y escucha `hashchange`, para que atrás y adelante funcionen dentro de la página. Un slug desconocido cae en `NOTES[0]`.
+`src/pages/notas.js` exporta `initNotas()` y la llama al cargar. Dibuja un botón por nota en `#note-nav` (`role="tab"`, `aria-selected`, `data-slug`), y al elegir escribe `location.hash` y pinta título, total (`fmt(nota.total)` de `ui.js`) y párrafos. Lee `location.hash` al iniciar y escucha `hashchange`, para que atrás y adelante funcionen dentro de la página. Un slug desconocido cae en `NOTES[0]`.
 
 Estilos en `src/style.css`: `.notas-layout` es `display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 2rem;` y colapsa a una columna abajo de `48rem`, como ya hace `.row-bulk`. La nav vertical reusa los tokens que ya existen (`--line`, `--hl`, `--muted`).
 
@@ -1443,7 +1443,7 @@ describe('la URL es el estado', () => {
     const writeText = vi.fn().mockResolvedValue()
     vi.stubGlobal('navigator', { clipboard: { writeText } })
     await montar('?t=dep&c=06840')
-    document.querySelector('#copiar-enlace').click()
+    document.querySelector('#copy-link').click()
     expect(writeText).toHaveBeenCalledWith(window.location.href)
   })
 })
@@ -1458,7 +1458,7 @@ Expected: FAIL — `ENOENT resultados/index.html`.
 
 - [ ] **Step 4: Create `/resultados/`**
 
-`resultados/index.html`: el `<main>` que hoy tiene `index.html` (el bloque `#row-notes` ya no está: se fue en la Task 3), con un agregado — al lado de `#detail-name` va `<button id="copiar-enlace" type="button" class="btn ghost mini">Copiar enlace</button>`. Header, CTA y footer por marcadores. `<body data-pagina="resultados">`. `<title>` propio.
+`resultados/index.html`: el `<main>` que hoy tiene `index.html` (el bloque `#row-notes` ya no está: se fue en la Task 3), con un agregado — al lado de `#detail-name` va `<button id="copy-link" type="button" class="btn ghost mini">Copiar enlace</button>`. Header, CTA y footer por marcadores. `<body data-pagina="resultados">`. `<title>` propio.
 
 `src/pages/resultados.js` es `src/main.js` movido, con estos cambios:
 
@@ -1507,7 +1507,7 @@ initResultados()
   },
 ```
 
-El botón `#copiar-enlace` hace `navigator.clipboard.writeText(window.location.href)` y cambia su texto a "Copiado" por un momento. Si `navigator.clipboard` no existe, el botón no se muestra.
+El botón `#copy-link` hace `navigator.clipboard.writeText(window.location.href)` y cambia su texto a "Copiado" por un momento. Si `navigator.clipboard` no existe, el botón no se muestra.
 
 `initMap('map')` deja de correr al cargar el módulo y pasa a correr sólo cuando hay objeto (hoy está suelto en `main.js`).
 
@@ -1536,7 +1536,7 @@ El botón `#copiar-enlace` hace `navigator.clipboard.writeText(window.location.h
 
   <section class="totales">
     <h2>Qué hay adentro</h2>
-    <ul id="totales" class="totales-grid"></ul>
+    <ul id="totals" class="totales-grid"></ul>
   </section>
 </main>
 <!--#shell:cta-->
@@ -1679,7 +1679,7 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
   it('"volver" restaura la ficha del objeto y lo redibuja', async () => {
     await montar('?t=dep&c=06840&capa=radios')
     await verPrimeraFila()
-    document.querySelector('#volver-al-objeto').click()
+    document.querySelector('#back-to-object').click()
     expect(document.querySelector('#detail-name').textContent).toBe('Tres de Febrero')
     expect(document.querySelector('#detail-self a').href).toContain('departamentos')
   })
@@ -1768,7 +1768,7 @@ function mostrarFila(capa, row) {
 }
 ```
 
-`botonVolver()` es un `<button id="volver-al-objeto" class="btn ghost mini">` que dice `Volver a ${obj.n}` y llama a `selectObject(obj, capaActiva)` de nuevo.
+`botonVolver()` es un `<button id="back-to-object" class="btn ghost mini">` que dice `Volver a ${obj.n}` y llama a `selectObject(obj, capaActiva)` de nuevo.
 
 El `onView` del browser pasa a ser:
 
