@@ -1422,7 +1422,11 @@ describe('la URL es el estado', () => {
   it('capa=vias abre el panel de costo y no pide nada (NAV-R7, SITIO-R3)', async () => {
     await montar('?t=dep&c=06840&capa=vias')
     expect(document.querySelector('#browse').textContent).toContain('no tiene un índice útil')
-    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('vias_de_circulacion'))
+    // `toHaveBeenCalledWith` compara la lista de argumentos entera y
+    // `features.js` llama `fetch(url, { signal })` con dos: un solo matcher
+    // no matchea nunca y el `not` pasaría siempre. Se mira la lista de
+    // llamadas, que es el idioma que ya usa browser.test.js.
+    expect(global.fetch.mock.calls.some(([u]) => String(u).includes('vias_de_circulacion'))).toBe(false)
   })
 
   it('cambiar de pestaña reescribe la URL sin navegar', async () => {
