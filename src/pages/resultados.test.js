@@ -450,6 +450,26 @@ describe('el "Ver" de una fila hija (NAV-R10)', () => {
     expect(document.querySelector('#detail-self .is-disabled')).not.toBeNull()
   })
 
+  // La ficha tenía un elemento que se quedaba hablando del padre: el
+  // enlace "Qué es...". `showRow` reemplazaba nombre, metadatos y descarga,
+  // y no tocaba el enlace, así que el panel decía "Radio censal 068400101"
+  // y ofrecía "Qué es un departamento →" justo abajo.
+  it('el enlace a la nota pasa a ser el de la capa de la fila (NAV-R10, NOTA-R3)', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    const enlace = document.querySelector('#detail-meta + .note-link a')
+    expect(enlace.getAttribute('href')).toContain('#radio-censal')
+    expect(enlace.textContent).toContain('radio censal')
+  })
+
+  it('y "volver" lo devuelve al del objeto', async () => {
+    await montar('?t=dep&c=06840&capa=radios')
+    await verPrimeraFila()
+    document.querySelector('#back-to-object').click()
+    expect(document.querySelector('#detail-meta + .note-link a').getAttribute('href'))
+      .toContain('#departamento')
+  })
+
   it('"volver" restaura la ficha del objeto y lo redibuja', async () => {
     await montar('?t=dep&c=06840&capa=radios')
     await verPrimeraFila()

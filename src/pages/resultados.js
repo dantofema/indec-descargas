@@ -108,12 +108,20 @@ function renderParents(obj) {
   el.parents.replaceChildren(...rows)
 }
 
+/** El enlace "Qué es..." a la nota de un slug, con el texto que le toque. */
+function noteLink(slug, texto) {
+  const a = document.createElement('a')
+  a.href = noteHref(slug)
+  a.textContent = texto
+  return a
+}
+
 /** El enlace "Qué es..." del objeto de la ficha (NOTA-R3). */
 function objectNoteLink(obj) {
-  const a = document.createElement('a')
-  a.href = noteHref(NOTE_BY_TYPE[obj.t])
-  a.textContent = `Qué es ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()} →`
-  return a
+  return noteLink(
+    NOTE_BY_TYPE[obj.t],
+    `Qué es ${TYPES[obj.t].det} ${TYPES[obj.t].label.toLowerCase()} →`,
+  )
 }
 
 /** Vuelve a la ficha del objeto, en la pestaña desde la que se vino. */
@@ -132,9 +140,9 @@ function backButton(layer) {
  * que arma la tabla: ficha y tabla leen lo mismo, así que no pueden decir
  * cosas distintas de la misma fila.
  *
- * Se reemplaza entera, no se le agrega nada a lo que había: es lo que
- * separa esto del bug viejo, donde cada "Ver" le pegaba otro tramo de texto
- * a #detail-meta sin límite.
+ * Se reemplaza entera —nombre, metadatos, enlace a la nota y descarga—, no
+ * se le agrega nada a lo que había: es lo que separa esto del bug viejo,
+ * donde cada "Ver" le pegaba otro tramo de texto a #detail-meta sin límite.
  */
 function showRow(layer, row) {
   const spec = specOf(layer)
@@ -153,6 +161,11 @@ function showRow(layer, row) {
     .filter((c) => row[c.field] !== undefined && row[c.field] !== '')
     .map((c) => `${c.label}: ${c.map ? c.map(row[c.field]) : row[c.field]}`)
     .join(' · ')
+
+  // El enlace también: era el único elemento de la ficha que se quedaba
+  // hablando del padre, y dejaba el panel diciendo "Radio censal 068400101"
+  // arriba de "Qué es un departamento →" (NAV-R10).
+  el.note.replaceChildren(noteLink(NOTE_BY_LAYER[layer], `Qué es ${singular.toLowerCase()} →`))
 
   // Una fila sin código no es un error de programa: es un dato que el INDEC
   // no publicó (DES-R8). Se dice, y la ficha sigue en pie.
