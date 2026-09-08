@@ -823,13 +823,37 @@ describe('la ficha de una vía (SITIO-R3)', () => {
 Run: `npx vitest run src/pages/resultados.test.js`
 Expected: FAIL — hoy `drawObject` pide siempre.
 
-- [ ] **Step 3: Exportar el aviso desde `src/browser.js`**
+- [ ] **Step 3: Reescribir el docblock del aviso en `src/browser.js`, que quedó describiendo un mecanismo muerto**
+
+`VIAS_VIEW_NOTICE` ya está exportada. Lo que hay que arreglar es su comentario, que la Task 4 dejó hablando del botón "Ver" que borró —**es un hallazgo heredado de la review de esa tarea, asignado a ésta porque ésta es la que le da su hogar nuevo**—. Hoy dice que sin el aviso "el clic deja la interfaz muerta"; no hay más clic que pida un feature. Pasa a:
 
 ```js
+/**
+ * Medido contra el GeoServer real el 2026-09-06: traer una vía con geometría
+ * tarda 12,4 s, contra 0,65 s en radios. Lo usa la ficha de una vía, que por
+ * eso no pide nada al abrirse y muestra este costo con un botón (SITIO-R3).
+ *
+ * Vive en este módulo, que no lo consume, porque acá están todos los costos
+ * medidos de vías del repo: partirlos en dos archivos es cómo divergen.
+ */
 export const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
 ```
 
-Vive acá y no en `resultados.js` porque este módulo ya es el dueño de todos los costos medidos de vías del repo; partirlos en dos archivos es cómo divergen.
+- [ ] **Step 3b: Corregir NAV-R7 en `docs/reglas/navegacion.md`, que promete lo que la Task 4 borró**
+
+El segundo hallazgo heredado. NAV-R7 dice hoy: *«El "Ver" de una fila de vías también avisa la espera mientras trae el feature completo.»* Ese "Ver" ya no trae ningún feature: navega. La regla quedó mintiendo, y su **Por qué** repite el mecanismo muerto dos veces más.
+
+Reemplazar esa oración por:
+
+```markdown
+La ficha de una vía tampoco pide nada al abrirse: muestra el mismo costo medido y su botón
+(SITIO-R3). Antes ese aviso vivía en el "Ver" de la fila, que traía el feature; desde que "Ver"
+navega (NAV-R11), la espera es de la ficha de destino y el aviso se mudó con ella.
+```
+
+Y en el **Por qué**, donde dice *«traer un solo feature con geometría —lo que hace "Ver"— tarda 12,4 s»*, cambiar la aposición a *«—lo que hace la ficha de una vía—»*; donde dice *«dejar que "Ver" trabaje en silencio»*, poner *«dejar que la ficha de una vía trabaje en silencio»*. Los números medidos no se tocan.
+
+El grep de `NAV-R10` de la tarea anterior no podía encontrar esto: buscaba la regla que moría, y ésta es otra regla, viva, que hablaba del mismo mecanismo.
 
 - [ ] **Step 4: No pedir vías al montar, en `src/pages/resultados.js`**
 
