@@ -656,13 +656,23 @@ describe('la URL es el estado', () => {
       .toContain('Radios censales')
   })
 
-  it('capa=vias abre el panel de costo y no pide nada (NAV-R7, SITIO-R3)', async () => {
+  it('capa=vias abre el panel de costo y no pide vías (NAV-R7, SITIO-R3)', async () => {
     await montar('?t=dep&c=06840&capa=vias')
     expect($('#browse').textContent).toContain('no tiene un índice útil')
     // `toHaveBeenCalledWith` compara la lista de argumentos entera y
     // `features.js` llama `fetch(url, { signal })` con dos: un solo matcher
     // no matchea nunca y el `not` pasaría siempre.
     expect(global.fetch.mock.calls.some(([u]) => String(u).includes('vias_de_circulacion'))).toBe(false)
+
+    // La cuenta que afirma SITIO-R3, porque afirmarla sin gate es cómo la
+    // regla envejeció dos veces: la página sí pide, lo que no pide es vías.
+    // Son la página de la primera pestaña —abortada— y la geometría del
+    // objeto para el mapa, que es la fila 1 y no depende de qué pestaña se
+    // abrió.
+    const capas = global.fetch.mock.calls
+      .map(([u]) => decodeURIComponent(String(u).match(/typenames=([^&]+)/)?.[1] ?? ''))
+      .filter(Boolean)
+    expect(capas).toEqual(['geonode:fracciones_censales', 'geonode:departamentos'])
   })
 
   // La pestaña que el browser abre solo al armarse no es una acción del
