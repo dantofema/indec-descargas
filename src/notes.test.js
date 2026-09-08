@@ -70,6 +70,17 @@ describe('los números que afirma una nota (NOTA-R2)', () => {
     const dobles = NOTAS.filter((n) => n.tipo && n.capa)
     expect(dobles.map((n) => n.slug).sort()).toEqual(['departamento', 'localidad-censal'])
   })
+
+  it('los nombres que son los tres tipos a la vez salen del catálogo, no de la memoria', () => {
+    const porNombre = new Map()
+    for (const o of catalog.objects) {
+      if (!['gl', 'dep', 'loc'].includes(o.t)) continue
+      if (!porNombre.has(o.n)) porNombre.set(o.n, new Set())
+      porNombre.get(o.n).add(o.t)
+    }
+    const losTres = [...porNombre.values()].filter((s) => s.size === 3).length
+    expect(notaDe('gobierno-local').paragraphs.join(' ')).toContain(`${losTres} nombres del catálogo`)
+  })
 })
 
 describe('las dos notas que ya existían', () => {

@@ -79,7 +79,7 @@ export const NOTAS = [
     total: 2282,
     paragraphs: [
       'Son 2.282 y son la excepción del sitio: no ofrecen ninguna capa hija. No es una omisión. Ni los radios ni las fracciones llevan el campo cmu que identifica al gobierno local, así que lo único que podrían ofrecer son las vías; y el gobierno local está fuera de la cadena censal —no tiene cde—, así que una sola capa suelta ahí no se explica.',
-      'Un mismo nombre puede ser gobierno local, departamento y localidad censal a la vez, con tres límites distintos: Avellaneda y Tres de Febrero son los dos casos. Por eso cada resultado del buscador muestra de qué tipo es, que es lo que decide qué límites vas a bajar.',
+      'Un mismo nombre puede ser gobierno local, departamento y localidad censal a la vez, con tres límites distintos, y no es una rareza: 271 nombres del catálogo existen como los tres. Avellaneda es el caso que más confunde: «Municipio Avellaneda» (060035), «Partido de Avellaneda» (06035) y «Localidad Avellaneda» (06035010) son tres objetos con límites diferentes. Por eso cada resultado del buscador muestra de qué tipo es, que es lo que decide qué límites vas a bajar.',
       'Se descarga por cmu.',
     ],
   },
