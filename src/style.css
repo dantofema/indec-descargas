@@ -598,6 +598,17 @@ table.wide th.col-anchor, table.wide td.col-anchor {
      Los dos contrastes los mide la suite: si alguien toca `--ground`, se
      entera ahí y no cuando alguien no puede leer un error. */
   .status.error { color: #ff6b6b; }
+
+  /* Los tiles del IGN son claros y no se pueden oscurecer sin falsear el
+     dato. En vez de disimularlo, el mapa es una pantalla encendida dentro de
+     la consola: pozo hundido, borde teñido y sombra proyectada, para que la
+     superficie clara se lea como algo prendido y no como un parche
+     (APAR-R5). */
+  .map {
+    border-color: color-mix(in oklch, var(--accent) 30%, var(--line));
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent),
+                0 12px 32px -18px oklch(0 0 0 / .9);
+  }
 }
 
 /* Lo único no negociable de esta tanda (APAR-R4): para alguien con

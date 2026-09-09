@@ -10,6 +10,18 @@ const IGN_TILES = 'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capaba
 
 const ARGENTINA = [[-55.5, -74], [-21.5, -53]]
 
+/**
+ * El color de la geometría sale del token del sitio y no de un literal: la
+ * paleta tiene dos modos y el dibujo tiene que leerse sobre el basemap claro
+ * del IGN en los dos (APAR-R5). Se resuelve al dibujar, no al importar,
+ * porque el token cambia con `prefers-color-scheme`.
+ *
+ * El fallback es el azul que el sitio tenía antes de la consola cartográfica:
+ * en jsdom el valor computado de una custom property puede venir vacío, y un
+ * mapa sin color es peor que uno con el color viejo.
+ */
+const accent = () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1f6feb'
+
 let map = null
 let layer = null
 let pending = 0
@@ -84,7 +96,7 @@ async function drawFromUrl(request, url) {
     }
 
     layer = L.geoJSON(geojson, {
-      style: { color: '#1f6feb', weight: 2, fillOpacity: 0.12 },
+      style: { color: accent(), weight: 2, fillOpacity: 0.12 },
     }).addTo(map)
 
     map.fitBounds(layer.getBounds(), { padding: [16, 16] })

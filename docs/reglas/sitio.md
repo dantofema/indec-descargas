@@ -116,6 +116,9 @@ del dato que se está viendo. La licencia BSD-2-Clause de Leaflet no exige créd
 interfaz, sólo el aviso de copyright en el código, que sigue donde estaba. La atribución del IGN
 sí queda: esa es del basemap sobre el que se dibuja el objeto.
 
+La geometría del objeto se dibuja con el acento del sitio, no con un azul literal: la paleta
+tiene dos modos y el dibujo tiene que leerse sobre el basemap claro del IGN en los dos (APAR-R5).
+
 ### SITIO-R9 — El sitio dice que no es del INDEC, en las cuatro páginas
 
 El pie de las cuatro páginas abre con un descargo de que el sitio no es oficial ni representa al
