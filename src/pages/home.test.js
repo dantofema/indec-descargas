@@ -74,9 +74,13 @@ describe('los totales del home', () => {
       'Jurisdicciones', 'Departamentos', 'Fracciones censales', 'Radios censales',
       'Localidades censales', 'Gobiernos locales', 'Aglomerados', 'Vías de circulación',
     ])
-    expect(tiles.map((li) => li.querySelector('.totales-n').textContent)).toEqual([
+    // El número no llega de una: los contadores lo suben desde 0 en 1300 ms
+    // (APAR-R4), así que hay que esperar a que el reloj termine y no leerlo
+    // apenas el tile existe, o esta prueba mide un cuadro cualquiera de la
+    // animación en vez del total real.
+    await vi.waitFor(() => expect(tiles.map((li) => li.querySelector('.totales-n').textContent)).toEqual([
       '24', '529', '6.571', '66.515', '4.023', '2.282', '119', '477.588',
-    ])
+    ]), { timeout: 2000 })
   })
 
   it('cada uno trae su icono dibujado a mano, sin librería', async () => {
@@ -189,5 +193,35 @@ describe('elegir un objeto', () => {
     expect($('#type').value).toBe('')
     expect([...$('#type').options].map((o) => o.value))
       .toEqual(['', 'jur', 'dep', 'loc', 'gl', 'aglo'])
+  })
+})
+
+describe('los contadores corren (APAR-R4)', () => {
+  // No se afirma un valor intermedio (decisión del plan): eso ataría el test
+  // al reloj. Pero sin nada más, esta prueba pasaba igual con el código
+  // viejo —que siempre pintó el total final de una— porque nunca revisaba
+  // que hubiera corrido una animación de verdad. `requestAnimationFrame` es
+  // el mecanismo, no un valor de reloj: que se haya llamado sí distingue
+  // "corrió un cuadro" de "nunca animó nada".
+  it('los contadores arrancan abajo del total y llegan al total', async () => {
+    const raf = vi.spyOn(window, 'requestAnimationFrame')
+    await montar()
+    const n = () => [...document.querySelectorAll('.totales-n')].map((e) => e.textContent)
+    await vi.waitFor(() => expect(raf).toHaveBeenCalled())
+    // El reloj de los contadores es de 1300 ms y el default de `vi.waitFor`
+    // es 1000 ms: sin este margen el test cronometra la animación en vez de
+    // esperarla, y se cae por timeout aunque el código esté bien.
+    await vi.waitFor(() => expect(n()).toContain('66.515'), { timeout: 2000 })
+  })
+
+  it('con prefers-reduced-motion el número está desde el primer cuadro', async () => {
+    window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
+    // `montar()` no espera a que lleguen los totales —es una promesa aparte
+    // de montar la página—: revisar el texto justo después corría contra una
+    // carrera con esa promesa, no contra el comportamiento que el nombre
+    // describe. `montarConTotales()` espera a que los ocho tiles existan; con
+    // reduced motion ya están en su valor final en cuanto existen.
+    await montarConTotales()
+    expect([...document.querySelectorAll('.totales-n')].map((e) => e.textContent)).toContain('66.515')
   })
 })

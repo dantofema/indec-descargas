@@ -97,16 +97,53 @@ function icon(shapes) {
 }
 
 /**
+ * Los ocho totales suben desde cero al cargar. No son ocho animaciones: es
+ * una sola, con un reloj compartido, porque ocho relojes desincronizados se
+ * ven como un error y no como una entrada.
+ *
+ * easeOutCubic y no lineal: arranca rápido y se estaciona, que es como se
+ * lee un instrumento. Lineal parecería una barra de carga.
+ */
+const COUNT_MS = 1300
+
+function runCounters(nodes) {
+  const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
+  const paint = (t) => {
+    for (const { node, target } of nodes) node.textContent = fmt(Math.round(target * t))
+  }
+  // Respetar la preferencia no es un extra: para alguien con sensibilidad
+  // vestibular, ocho números corriendo es un síntoma.
+  if (mq && mq.matches) return paint(1)
+
+  // El arranque se toma del primer `now` que entrega el propio rAF, no de
+  // `performance.now()` leído antes de pedir el cuadro: son dos relojes que
+  // no siempre comparten origen (en jsdom llegan a diferir en ~700 ms), y
+  // mezclarlos da un `p` negativo en los primeros cuadros.
+  let start = null
+  const step = (now) => {
+    start ??= now
+    const p = Math.min(1, (now - start) / COUNT_MS)
+    paint(1 - (1 - p) ** 3)
+    if (p < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+/**
  * Los ocho tiles. Con `replaceChildren` para que volver a cablear la página
  * no los duplique.
  */
 function renderTotals(totals) {
+  const counters = []
   el.totals.replaceChildren(...TILES.map((tile) => {
     const li = document.createElement('li')
     li.className = 'totales-tile'
     const n = document.createElement('span')
     n.className = 'totales-n'
-    n.textContent = fmt(totals[tile.key] ?? 0)
+    // Arranca en 0: `runCounters` lo sube al total real, salvo que el
+    // sistema pida sin movimiento (ahí salta directo al final).
+    n.textContent = fmt(0)
+    counters.push({ node: n, target: totals[tile.key] ?? 0 })
     const label = document.createElement('span')
     label.className = 'totales-label'
     label.textContent = tile.label
@@ -114,6 +151,7 @@ function renderTotals(totals) {
     return li
   }))
   if (totals.generated) el.generated.textContent = `Catálogo generado el ${totals.generated}.`
+  runCounters(counters)
 }
 
 /**
