@@ -318,6 +318,24 @@ describe('la paleta de la consola (APAR-R6)', () => {
       }
     }
   })
+
+  // Un color fuera del gamut sRGB no se puede pintar: el browser lo mapea al
+  // borde y lo que se ve deja de ser lo que el gate mide. Declarar el croma
+  // que sRGB sí puede representar no pierde saturación —la pantalla iba a
+  // mostrar ese color igual— y hace que la medición valga.
+  it('ningún token de color se sale del gamut sRGB', () => {
+    const { light, dark } = palettes()
+    for (const [modo, tokens] of [['clara', light], ['oscura', dark]]) {
+      for (const t of ['--ground', '--panel', '--raise', '--line', '--fg', '--muted', '--accent', '--amber']) {
+        const m = resolve(t, tokens).match(/^oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)$/)
+        const canales = oklchToLinear(+m[1], +m[2], +m[3])
+        for (const c of canales) {
+          expect(c, `${t} en la paleta ${modo} se sale de sRGB`).toBeGreaterThanOrEqual(-1e-6)
+          expect(c, `${t} en la paleta ${modo} se sale de sRGB`).toBeLessThanOrEqual(1 + 1e-6)
+        }
+      }
+    }
+  })
 })
 
 // El color del error no es un token: vive en una regla, así que `palettes()`

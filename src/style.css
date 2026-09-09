@@ -11,9 +11,16 @@
   --fg:     oklch(0.22 0.012 250);
   --muted:  oklch(0.50 0.014 250);
   /* L bajado de 0.55 (spec) a 0.50: a 0.55 el acento medía 4,127:1 contra
-     --ground, por debajo del piso de 4,5:1 que exige el gate (APAR-R6). */
-  --accent: oklch(0.50 0.14 190);
-  --amber:  oklch(0.50 0.14 75);
+     --ground, por debajo del piso de 4,5:1 que exige el gate (APAR-R6).
+     C bajado de 0.14 (spec) a 0.086: a 0.14, L=0.50 y matiz 190 caen fuera
+     del gamut sRGB (canal R negativo) — el browser recorta al borde del
+     gamut igual, así que declarar más croma del que sRGB admite no suma
+     saturación, sólo hace que lo que se mide no sea lo que se pinta.
+     0.086 es el croma máximo que admite el matiz 190 a esta luminosidad, y
+     es el más chico de los dos acentos, así que siguen compartiendo croma
+     (APAR-R2). El contraste no baja: sube, de 5,031:1 a 5,578:1. */
+  --accent: oklch(0.50 0.086 190);
+  --amber:  oklch(0.50 0.086 75);
 
   /* Los nombres que el resto de la hoja ya usa, en términos de los de
      arriba: así el rediseño de superficie no obliga a reescribir cada
