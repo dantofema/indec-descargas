@@ -2,6 +2,61 @@
 
 Decisiones de producto sobre qué se puede descargar y con qué límite.
 
+## ⏳ Abiertas
+
+<!-- abiertas -->
+| **DES-Q1** | Qué hace el sitio cuando alguien direcciona un objeto que no existe |
+<!-- /abiertas -->
+
+### DES-Q1 — Qué hace el sitio cuando alguien direcciona un objeto que no existe
+
+**Qué pasa hoy, verificado el 2026-09-08 leyendo el código:** `?t=rad&c=999999999` pasa la
+validación de largo —nueve dígitos es el largo correcto de un radio—, abre la ficha, escribe
+«Radio censal 999999999» y ofrece **«Descargar este radio censal»**, apuntando a un GetFeature
+que va a devolver un `.gpkg` vacío. Si además el mapa falla, el mensaje dice *«las descargas
+siguen funcionando»*, que en ese caso es falso.
+
+**Por qué apareció.** El plan de direccionabilidad decidió, con razón, que el catálogo hace
+falta para **buscar por nombre** y no para **direccionar**: por eso fracción, radio y vía
+tienen enlace propio aunque no estén en `catalog.json`. Lo que no se reemplazó es la otra
+función que el catálogo cumplía sin que nadie la nombrara: **era el chequeo de existencia**.
+Para los cinco tipos que están en él, un código inexistente cae en SITIO-R4 y muestra el
+buscador; para los tres nuevos, no hay nada que lo atrape.
+
+**No hace falta un error de tipeo para llegar.** DES-R8 documenta que los códigos del INDEC no
+cierran entre capas —529 departamentos en una, 530 en otra, 527 en la tercera—, que es
+exactamente el escenario para el que se escribió la mitad de DES-R10.
+
+**Qué reglas quedan en tensión:** SITIO-R4 promete «nunca una ficha rota», DES-R3 dice que «un
+`.gpkg` vacío parece un error del usuario, no un dato», y SITIO-R3 exige que la descarga de una
+vía funcione **sin pedir nada**, porque pedir cuesta 12,4 segundos medidos.
+
+**Las salidas, con lo que cuesta cada una:**
+
+1. **Verificar antes de ofrecer.** La ficha de un objeto sin catálogo no muestra el botón de
+   descarga hasta que el GeoServer confirma que existe. Cumple DES-R3 y DES-R10 al pie.
+   *Cuesta:* choca de frente con SITIO-R3 en vías —la descarga de un tramo dejaría de funcionar
+   sin red, que es justamente lo que esa regla protege— y le agrega una espera a fracciones y
+   radios, que hoy no la tienen.
+2. **Ofrecer siempre, y decir la verdad cuando no vuelve nada.** El botón queda, pero si el
+   pedido vuelve sin features la ficha lo dice y apaga la descarga con su motivo, usando el
+   mismo patrón que DES-R8 ya tiene para una fila sin código. El mensaje de error deja de
+   afirmar que las descargas funcionan cuando no es cierto. *Cuesta:* entre que se abre el
+   enlace y que vuelve el pedido, el botón estuvo ofrecido; y en vías, donde no se pide nada
+   hasta el clic, sigue ofrecido indefinidamente.
+3. **Que el largo no alcance: exigir que el código exista antes de abrir la ficha.** Un pedido
+   de verificación al montar, y si no existe, el buscador con su mensaje, como manda SITIO-R4.
+   *Cuesta:* un pedido más en cada ficha de los tres tipos nuevos, y en vías ese pedido es el
+   de 12,4 segundos que SITIO-R3 prohíbe cobrarle a quien sólo abrió un enlace.
+4. **Sacar la promesa:** que fracción, radio y vía no tengan permalink propio y se vuelva a
+   llegar a ellos sólo bajando por la ficha del padre. *Cuesta:* deshace el plan entero, y
+   fracciones y radios vuelven a ser inalcanzables por búsqueda —no tienen nombre publicado
+   (NAV-R4), así que el código era su único handle—.
+
+**Lo que no puede quedar** es DES-R10 y SITIO-R4 diciendo una cosa y el código haciendo otra.
+La corrección de DES-R10 que entró con esta rama sinceró el texto sobre los padres sintéticos,
+pero no cierra la pregunta de fondo: qué se le muestra a alguien que pide un objeto que no está.
+
 ## ✅ Reglas
 
 ### DES-R1 — No hay tope superior de features
