@@ -5,14 +5,20 @@ const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8')
 
 const roots = (texto) => [...texto.matchAll(/:root\s*\{([^}]*)\}/g)].map((m) => m[1])
 
+/** Los `:root[data-tema="<tema>"]`, que es donde vive la paleta que no es la de por defecto. */
+const rootsTema = (texto, tema) => [
+  ...texto.matchAll(new RegExp(`:root\\[data-tema="${tema}"\\]\\s*\\{([^}]*)\\}`, 'g')),
+].map((m) => m[1])
+
 const readTokens = (block) => Object.fromEntries(
   [...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]),
 )
 
 /**
  * Las dos paletas, ubicadas por dónde viven y no por el orden en que
- * aparecen: la clara es el `:root` de afuera de todo `@media` y la oscura el
- * de adentro de `(prefers-color-scheme: dark)`.
+ * aparecen: **la oscura es el `:root` pelado** —la de por defecto, APAR-R7—
+ * y la clara el `:root[data-tema="claro"]`, que sólo entra cuando la
+ * persona la pide con el botón.
  *
  * Antes tomaba el primer `:root` como el claro y el segundo como el oscuro.
  * Con un tercer bloque, o con los dos al revés, el suite auditaba la paleta
@@ -20,20 +26,25 @@ const readTokens = (block) => Object.fromEntries(
  * estando mal. Ahora, si esos supuestos dejan de valer, esto tira.
  */
 function palettes() {
-  const oscuro = media('(prefers-color-scheme: dark)')
-  if (oscuro === null) {
-    throw new Error('la hoja ya no trae un @media (prefers-color-scheme: dark): ¿dónde está la paleta oscura?')
+  // El sitio ya no le pregunta al sistema qué paleta quiere: si vuelve un
+  // `@media (prefers-color-scheme: dark)`, hay dos autoridades decidiendo
+  // el tema y la del botón deja de mandar.
+  if (media('(prefers-color-scheme: dark)') !== null) {
+    throw new Error('volvió un @media (prefers-color-scheme: dark): el tema lo elige la persona, no el sistema (APAR-R7)')
   }
-  const claros = roots(css.replace(oscuro, ''))
-  const oscuros = roots(oscuro)
-  if (claros.length !== 1) {
-    throw new Error(`se esperaba un solo :root fuera de @media (la paleta clara) y hay ${claros.length}`)
-  }
+  const oscuros = roots(css)
+  const claros = rootsTema(css, 'claro')
   if (oscuros.length !== 1) {
-    throw new Error(`se esperaba un solo :root dentro del @media oscuro y hay ${oscuros.length}`)
+    throw new Error(`se esperaba un solo :root pelado (la paleta oscura, la de por defecto) y hay ${oscuros.length}`)
   }
-  const light = readTokens(claros[0])
-  return { light, dark: { ...light, ...readTokens(oscuros[0]) } }
+  if (claros.length !== 1) {
+    throw new Error(`se esperaba un solo :root[data-tema="claro"] y hay ${claros.length}`)
+  }
+  // Los alias (`--bg: var(--ground)`, etc.) viven una sola vez, en el
+  // `:root` pelado: `var()` se resuelve en uso, así que la paleta clara los
+  // hereda sin repetirlos.
+  const dark = readTokens(oscuros[0])
+  return { dark, light: { ...dark, ...readTokens(claros[0]) } }
 }
 
 /** Resuelve las indirecciones `var(--x)` hasta llegar al color. */
@@ -121,6 +132,14 @@ function media(consulta) {
 describe('de dónde salen las paletas que se auditan', () => {
   it('hay exactamente una paleta clara y una oscura, y están donde se las busca', () => {
     expect(() => palettes()).not.toThrow()
+  })
+
+  it('la que manda sin que nadie elija nada es la oscura (APAR-R7)', () => {
+    // El `:root` pelado es lo que ve quien entra por primera vez. Si la
+    // clara volviera ahí, la consola dejaría de ser la cara del sitio y la
+    // decisión del dueño quedaría sólo en el botón.
+    const pelado = readTokens(roots(css)[0])
+    expect(luminance(resolve('--bg', pelado))).toBeLessThan(0.1)
   })
 
   // El chequeo estructural no alcanza: dos bloques bien ubicados pero con
@@ -366,16 +385,28 @@ describe('el mensaje de error se lee en las dos paletas', () => {
 
   it('en la paleta clara', () => {
     const { light } = palettes()
-    const claro = colorDeError(css.replace(media('(prefers-color-scheme: dark)'), ''))
+    // La clara ya no es la de por defecto: su rojo vive detrás del
+    // atributo, igual que el resto de su paleta.
+    const claro = colorDeError(css.slice(css.indexOf(':root[data-tema="claro"] .status.error')))
     expect(claro).toBeTruthy()
     expect(contrast(claro, resolve('--ground', light))).toBeGreaterThanOrEqual(4.5)
   })
 
   it('en la paleta oscura', () => {
     const { dark } = palettes()
-    const oscuro = colorDeError(media('(prefers-color-scheme: dark)'))
+    // La oscura es la de por defecto, así que su rojo es el de la regla
+    // pelada: la primera `.status.error` de la hoja.
+    const oscuro = colorDeError(css)
     expect(oscuro).toBeTruthy()
     expect(contrast(oscuro, resolve('--ground', dark))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('los dos rojos son distintos: no quedó uno solo sirviendo a las dos', () => {
+    // Si alguien borra una de las dos reglas, los dos casos de arriba leen
+    // el mismo color y uno de los dos pasa por casualidad.
+    const oscuro = colorDeError(css)
+    const claro = colorDeError(css.slice(css.indexOf(':root[data-tema="claro"] .status.error')))
+    expect(claro).not.toBe(oscuro)
   })
 })
 

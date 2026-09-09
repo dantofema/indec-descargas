@@ -103,3 +103,22 @@ revisó. Un token que se toca después —por ejemplo para resolver un problema 
 un par por debajo del piso legible sin que nadie lo note hasta que alguien no pueda leer el sitio.
 Con el gate, ese error rompe la suite en el mismo commit que lo introduce, no en un reporte de
 accesibilidad meses después.
+
+### APAR-R7 — La consola oscura es la de por defecto; la clara la elige la persona
+
+El sitio no le pregunta al sistema qué paleta quiere. La oscura es el `:root` pelado —lo que ve
+quien entra sin haber elegido nada— y la clara vive detrás de `:root[data-tema="claro"]`, que
+sólo aparece cuando alguien toca el botón del header. La elección se guarda y sobrevive a la
+recarga. No queda ningún `@media (prefers-color-scheme)` en la hoja, y la suite falla si vuelve.
+
+El botón está en el nav de las cuatro páginas, y el script que aplica el tema guardado se inyecta
+en el `<head>` **antes** de la hoja de estilo.
+
+**Por qué:** la consola oscura es la identidad que se eligió para el sitio, y atada a
+`prefers-color-scheme` no la veía nadie que tuviera el escritorio en claro —la mayoría—: el
+rediseño existía y no se veía. Dos autoridades decidiendo el tema es una que no manda, así que el
+sistema deja de opinar y decide la persona. La paleta clara no se borra: sigue auditada por
+APAR-R6 y a un click. Y el script va antes de la hoja porque, después, el browser ya tiene con
+qué pintar y quien eligió el tema claro se come un destello oscuro en cada carga.
+
+**Decidida y construida el 2026-09-09** · ✅ implementada · `src/tema.test.js`, `src/style.test.js`

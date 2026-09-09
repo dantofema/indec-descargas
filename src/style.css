@@ -9,28 +9,20 @@
 @font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/plex-mono-500.woff2") format("woff2"); }
 
 :root {
-  /* La consola, paleta clara. Las cuatro superficies comparten un solo eje
-     de matiz (250, azul frío) y sólo varían en luminosidad; los dos acentos
-     comparten croma y luminosidad y sólo cambian de matiz, así que ninguno
-     pesa más que el otro (APAR-R2). Los pisos de contraste los verifica la
-     suite, no esta tabla (APAR-R6). */
-  --ground: oklch(0.99 0.002 250);
-  --panel:  oklch(0.975 0.004 250);
-  --raise:  oklch(0.95 0.006 250);
-  --line:   oklch(0.90 0.006 250);
-  --fg:     oklch(0.22 0.012 250);
-  --muted:  oklch(0.50 0.014 250);
-  /* L bajado de 0.55 (spec) a 0.50: a 0.55 el acento medía 4,127:1 contra
-     --ground, por debajo del piso de 4,5:1 que exige el gate (APAR-R6).
-     C bajado de 0.14 (spec) a 0.086: a 0.14, L=0.50 y matiz 190 caen fuera
-     del gamut sRGB (canal R negativo) — el browser recorta al borde del
-     gamut igual, así que declarar más croma del que sRGB admite no suma
-     saturación, sólo hace que lo que se mide no sea lo que se pinta.
-     0.086 es el croma máximo que admite el matiz 190 a esta luminosidad, y
-     es el más chico de los dos acentos, así que siguen compartiendo croma
-     (APAR-R2). El contraste no baja: sube, de 5,031:1 a 5,578:1. */
-  --accent: oklch(0.50 0.086 190);
-  --amber:  oklch(0.50 0.086 75);
+  /* La consola, paleta oscura: la de por defecto, la que ve quien entra sin
+     haber elegido nada (APAR-R7). Las cuatro superficies comparten un solo
+     eje de matiz (250, azul frío) y sólo varían en luminosidad; los dos
+     acentos comparten croma y luminosidad y sólo cambian de matiz, así que
+     ninguno pesa más que el otro (APAR-R2). Los pisos de contraste los
+     verifica la suite, no esta tabla (APAR-R6). */
+  --ground: oklch(0.17 0.012 250);
+  --panel:  oklch(0.215 0.014 250);
+  --raise:  oklch(0.26 0.015 250);
+  --line:   oklch(0.32 0.014 250);
+  --fg:     oklch(0.96 0.005 250);
+  --muted:  oklch(0.72 0.012 250);
+  --accent: oklch(0.80 0.125 190);
+  --amber:  oklch(0.80 0.125 75);
 
   /* Los nombres que el resto de la hoja ya usa, en términos de los de
      arriba: así el rediseño de superficie no obliga a reescribir cada
@@ -241,6 +233,31 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
 }
 .home .totales h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; }
 .totales-nota { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+/* El botón del tema vive en el nav, del lado de los enlaces: es una
+   preferencia del sitio, no una acción sobre el contenido. Se lee como un
+   enlace más hasta que el mouse lo toca (APAR-R7). */
+.tema {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .25rem .6rem;
+  margin: -.25rem 0;
+  font: inherit;
+  font-size: .92rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(.2, .7, .3, 1),
+              border-color 200ms cubic-bezier(.2, .7, .3, 1);
+}
+.tema:hover { color: var(--fg); border-color: var(--line); }
+.tema svg { transition: transform 300ms cubic-bezier(.2, .7, .3, 1); }
+/* La media luna gira cuando el tema cambia: el mismo glifo dice los dos
+   estados sin cambiar de dibujo ni de ancho. */
+:root[data-tema="claro"] .tema svg { transform: rotate(180deg); }
+
 .totales { margin: 0 0 3rem; }
 
 /* Ocho tiles que se acomodan solos: sin breakpoint propio, la grilla
@@ -351,7 +368,7 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
 .results .kind { color: var(--muted); font-size: .85rem; white-space: nowrap; }
 
 .status { color: var(--muted); margin: 1rem 0; }
-.status.error { color: #b32020; }
+.status.error { color: #ff6b6b; }
 
 .detail { display: flex; flex-direction: column; gap: 1.75rem; margin: 1.5rem 0 3rem; }
 
@@ -437,7 +454,22 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
 }
 
 /* El pozo del mapa, como los tiles: radio propio de 12px, no `--radius`. */
-.map { height: 24rem; border: 1px solid var(--line); border-radius: 12px; background: var(--disabled); }
+.map {
+  height: 24rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--disabled);
+  /* Los tiles del IGN son claros y no se pueden oscurecer sin falsear el
+     dato. En vez de disimularlo, el mapa es una pantalla encendida dentro de
+     la consola: pozo hundido, borde teñido y sombra proyectada, para que la
+     superficie clara se lea como algo prendido y no como un parche
+     (APAR-R5). Con la paleta clara el pozo sobra: ahí la página ya es del
+     color del mapa. */
+  border-color: color-mix(in oklch, var(--accent) 30%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent),
+              0 12px 32px -18px oklch(0 0 0 / .9);
+}
+:root[data-tema="claro"] .map { border-color: var(--line); box-shadow: none; }
 /* Leaflet pinta la placa de atribución al 80% de opacidad, así que el fondo
    real de ese texto es la tesela que haya debajo: su enlace pasa de 4,94:1
    sobre blanco a 3,64:1 sobre el gris del contenedor. Opaca, el número no
@@ -647,38 +679,33 @@ table.wide th.col-anchor, table.wide td.col-anchor {
    (ver scripts/shell.mjs): es un dato, no prosa. */
 #generated { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* La consola, paleta oscura. Mismo eje de matiz que la clara (250) y
-       misma lógica de acentos (croma y luminosidad compartidos, sólo
-       cambia el matiz); los alias de abajo no se repiten porque `var()`
-       se resuelve en uso y heredan solos del `:root` de afuera. */
-    --ground: oklch(0.17 0.012 250);
-    --panel:  oklch(0.215 0.014 250);
-    --raise:  oklch(0.26 0.015 250);
-    --line:   oklch(0.32 0.014 250);
-    --fg:     oklch(0.96 0.005 250);
-    --muted:  oklch(0.72 0.012 250);
-    --accent: oklch(0.80 0.125 190);
-    --amber:  oklch(0.80 0.125 75);
-  }
-  /* El rojo del modo claro no llega al 4,5:1 de WCAG AA sobre este fondo,
-     justo en la única cadena que el usuario más necesita poder leer. Este sí.
-     Los dos contrastes los mide la suite: si alguien toca `--ground`, se
-     entera ahí y no cuando alguien no puede leer un error. */
-  .status.error { color: #ff6b6b; }
-
-  /* Los tiles del IGN son claros y no se pueden oscurecer sin falsear el
-     dato. En vez de disimularlo, el mapa es una pantalla encendida dentro de
-     la consola: pozo hundido, borde teñido y sombra proyectada, para que la
-     superficie clara se lea como algo prendido y no como un parche
-     (APAR-R5). */
-  .map {
-    border-color: color-mix(in oklch, var(--accent) 30%, var(--line));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent),
-                0 12px 32px -18px oklch(0 0 0 / .9);
-  }
+/* La paleta clara: sólo entra cuando la persona la pide con el botón del
+   header (APAR-R7). No hay `@media (prefers-color-scheme)` en toda la hoja
+   a propósito — dos autoridades decidiendo el tema es una que no manda—, y
+   los alias (`--bg: var(--ground)` y compañía) no se repiten acá porque
+   `var()` se resuelve en uso y los hereda del `:root` de arriba. */
+:root[data-tema="claro"] {
+  --ground: oklch(0.99 0.002 250);
+  --panel:  oklch(0.975 0.004 250);
+  --raise:  oklch(0.95 0.006 250);
+  --line:   oklch(0.90 0.006 250);
+  --fg:     oklch(0.22 0.012 250);
+  --muted:  oklch(0.50 0.014 250);
+  /* L bajado de 0.55 (spec) a 0.50: a 0.55 el acento medía 4,127:1 contra
+     --ground, por debajo del piso de 4,5:1 que exige el gate (APAR-R6).
+     C bajado de 0.14 (spec) a 0.086: a 0.14, L=0.50 y matiz 190 caen fuera
+     del gamut sRGB (canal R negativo) — el browser recorta al borde del
+     gamut igual, así que declarar más croma del que sRGB admite no suma
+     saturación, sólo hace que lo que se mide no sea lo que se pinta.
+     0.086 es el croma máximo que admite el matiz 190 a esta luminosidad, y
+     es el más chico de los dos acentos, así que siguen compartiendo croma
+     (APAR-R2). El contraste no baja: sube, de 5,031:1 a 5,578:1. */
+  --accent: oklch(0.50 0.086 190);
+  --amber:  oklch(0.50 0.086 75);
 }
+/* El rojo de la paleta clara. El de la oscura vive en la regla de siempre,
+   más arriba, porque ahora la oscura es la de por defecto. */
+:root[data-tema="claro"] .status.error { color: #b32020; }
 
 /* Lo único no negociable de esta tanda (APAR-R4): para alguien con
    sensibilidad vestibular, ocho números corriendo no es un adorno, es un
