@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { injectShell, readPartials } from '../../scripts/shell.mjs'
@@ -74,9 +74,13 @@ describe('los totales del home', () => {
       'Jurisdicciones', 'Departamentos', 'Fracciones censales', 'Radios censales',
       'Localidades censales', 'Gobiernos locales', 'Aglomerados', 'Vías de circulación',
     ])
-    expect(tiles.map((li) => li.querySelector('.totales-n').textContent)).toEqual([
+    // El número no llega de una: los contadores lo suben desde 0 en 1300 ms
+    // (APAR-R4), así que hay que esperar a que el reloj termine y no leerlo
+    // apenas el tile existe, o esta prueba mide un cuadro cualquiera de la
+    // animación en vez del total real.
+    await vi.waitFor(() => expect(tiles.map((li) => li.querySelector('.totales-n').textContent)).toEqual([
       '24', '529', '6.571', '66.515', '4.023', '2.282', '119', '477.588',
-    ])
+    ]), { timeout: 2000 })
   })
 
   it('cada uno trae su icono dibujado a mano, sin librería', async () => {
@@ -189,5 +193,92 @@ describe('elegir un objeto', () => {
     expect($('#type').value).toBe('')
     expect([...$('#type').options].map((o) => o.value))
       .toEqual(['', 'jur', 'dep', 'loc', 'gl', 'aglo'])
+  })
+})
+
+describe('los contadores corren (APAR-R4)', () => {
+  // El único `vi.spyOn` del describe: sin restaurarlo, queda pegado a
+  // `window.requestAnimationFrame` para los tests que corran después. Hoy
+  // es inofensivo —es pass-through—, pero es la clase de cosa que muerde
+  // cuando alguien agrega un test nuevo más adelante.
+  afterEach(() => vi.restoreAllMocks())
+
+  // No se afirma un valor intermedio (decisión del plan): eso ataría el test
+  // al reloj. Pero sin nada más, esta prueba pasaba igual con el código
+  // viejo —que siempre pintó el total final de una— porque nunca revisaba
+  // que hubiera corrido una animación de verdad. `requestAnimationFrame` es
+  // el mecanismo, no un valor de reloj: que se haya llamado sí distingue
+  // "corrió un cuadro" de "nunca animó nada".
+  it('los contadores arrancan abajo del total y llegan al total', async () => {
+    const raf = vi.spyOn(window, 'requestAnimationFrame')
+    await montar()
+    const n = () => [...document.querySelectorAll('.totales-n')].map((e) => e.textContent)
+    await vi.waitFor(() => expect(raf).toHaveBeenCalled())
+    // El reloj de los contadores es de 1300 ms y el default de `vi.waitFor`
+    // es 1000 ms: sin este margen el test cronometra la animación en vez de
+    // esperarla, y se cae por timeout aunque el código esté bien.
+    await vi.waitFor(() => expect(n()).toContain('66.515'), { timeout: 2000 })
+  })
+
+  it('con prefers-reduced-motion el número está desde el primer cuadro', async () => {
+    window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
+    // `montar()` no espera a que lleguen los totales —es una promesa aparte
+    // de montar la página—: revisar el texto justo después corría contra una
+    // carrera con esa promesa, no contra el comportamiento que el nombre
+    // describe. `montarConTotales()` espera a que los ocho tiles existan; con
+    // reduced motion ya están en su valor final en cuanto existen.
+    await montarConTotales()
+    expect([...document.querySelectorAll('.totales-n')].map((e) => e.textContent)).toContain('66.515')
+  })
+})
+
+/**
+ * El canvas aprobado (`Main.dc.html`) traía una composición que la rama
+ * nunca portó: se tradujeron los tokens y las animaciones, y el markup
+ * quedó igual al de antes del rediseño. Estos casos fijan lo que el hero
+ * tiene que decir, que es donde estaba la diferencia visible.
+ */
+describe('el hero porta la composición del canvas', () => {
+  it('lleva el descargo arriba del título, no sólo en el pie', async () => {
+    await montar()
+    expect($('.hero .eyebrow').textContent).toBe('Sitio no oficial · Datos del INDEC')
+  })
+
+  it('el titular es una oración que cierra', async () => {
+    await montar()
+    // El anterior decía "más fácil de descargar y usarla en tus proyectos":
+    // arranca comparando y termina coordinando un infinitivo con un
+    // gerundio. No concuerda, y era lo primero que se leía del sitio.
+    expect($('.hero h1').textContent).toBe('La cartografía del INDEC, lista para tus proyectos.')
+  })
+
+  it('el campo anuncia que también busca por código', async () => {
+    await montar()
+    // La búsqueda por código se implementó en la rama anterior y el
+    // placeholder se quedó viejo: la función existía y nadie la veía.
+    expect($('#q').placeholder).toContain('código')
+  })
+})
+
+describe('la línea meta del hero (BUS-R5)', () => {
+  it('separa lo buscable por nombre de lo direccionable por código', async () => {
+    await montarConTotales()
+    const meta = $('.hero-meta').textContent
+    // 24 + 119 + 529 + 2282 + 4023: los cinco tipos con `catalogo: true`.
+    expect(meta).toContain('6.977')
+    // Los ocho tipos sumados: todo el Marco es direccionable por código,
+    // aunque sólo cinco entren al catálogo de nombres.
+    expect(meta).toContain('557.651')
+  })
+
+  it('cada número queda pegado a la vía de búsqueda que le corresponde', async () => {
+    await montarConTotales()
+    const meta = $('.hero-meta').textContent
+    // Decir "557.651 objetos indexados" —lo que pedía el artboard— sería
+    // falso: radios, fracciones y vías no están en catalog.json. Que los
+    // dos números aparezcan no alcanza: cruzados, la página miente igual,
+    // así que cada uno se exige junto a su palabra.
+    expect(meta).toMatch(/6\.977[^·]*nombre/)
+    expect(meta).toMatch(/557\.651[^·]*código/)
   })
 })

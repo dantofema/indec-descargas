@@ -1,0 +1,232 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400&display=swap">
+  <style>
+    :root {
+      --ground: oklch(0.17 0.012 250);
+      --panel:  oklch(0.215 0.014 250);
+      --raise:  oklch(0.26 0.015 250);
+      --line:   oklch(0.32 0.014 250);
+      --fg:     oklch(0.96 0.005 250);
+      --muted:  oklch(0.72 0.012 250);
+      --accent: oklch(0.80 0.125 190);
+      --display: "Space Grotesk", system-ui, sans-serif;
+      --body: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    }
+    /* La paleta clara, la misma que APAR-R7 pone detrás del botón. */
+    .claro {
+      --ground: oklch(0.99 0.002 250);
+      --panel:  oklch(0.975 0.004 250);
+      --raise:  oklch(0.95 0.006 250);
+      --line:   oklch(0.90 0.006 250);
+      --fg:     oklch(0.22 0.012 250);
+      --muted:  oklch(0.50 0.014 250);
+      --accent: oklch(0.50 0.086 190);
+      color: var(--fg);
+    }
+    body { margin: 0; background: var(--ground); color: var(--fg); font-family: var(--body); }
+    a { color: var(--accent); } a:hover { color: var(--fg); }
+    code { font-family: var(--mono); font-size: .92em; color: var(--fg); }
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+    .rotulo { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+    .caja {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; padding: 26px; box-sizing: border-box;
+    }
+    /* La barra de los usos incorrectos: una diagonal, sin rojo — el rojo acá
+       sería el color de error del sitio diciendo otra cosa. */
+    .mal { position: relative; opacity: .55; }
+    .mal::after {
+      content: ''; position: absolute; left: -7px; right: -7px; top: 50%;
+      height: 1px; background: var(--muted); transform: rotate(-32deg);
+    }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; gap: 30px; padding: 56px">
+
+  <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; padding-bottom: 26px; border-bottom: 1px solid var(--line)">
+    <div>
+      <p class="eyebrow" style="margin-bottom: 11px">Familia de marca · Marco</p>
+      <h1 style="font-family: var(--display); font-weight: 700; font-size: 33px; margin: 0; letter-spacing: -.025em">Descargas del Marco Geoestadístico</h1>
+    </div>
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg>
+  </header>
+
+    <section style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow">Marca principal</p>
+      <div class="caja" style="height:250px;">
+        <div style="display:flex;align-items:center;gap:56px">
+          <svg width="150" height="150" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg>
+          <div style="display:flex;flex-direction:column;gap:9px;max-width:340px">
+            <span style="font-family:var(--display);font-weight:700;font-size:23px;letter-spacing:-.02em">Marco</span>
+            <p style="margin:0;font-size:13.5px;line-height:1.6;color:var(--muted);text-wrap:pretty">El encuadre va en <code>--fg</code> porque es la estructura; el polígono en <code>--accent</code> porque es el dato. Los ocho iconos de la home son enteros de acento, así que la marca no se confunde con un tile.</p>
+          </div>
+        </div></div>
+    </section>
+    <section style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Construcción · retícula de 24</p>
+        <div class="caja" style="height:300px;gap:30px">
+          <div style="position:relative;width:192px;height:192px;border:1px solid var(--line);border-radius:4px">
+            <div style="position:absolute;left:4.1667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:8.3333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:12.5000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:16.6667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:20.8333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:25.0000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:29.1667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:33.3333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:37.5000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:41.6667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:45.8333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:50.0000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:54.1667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:58.3333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:62.5000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:66.6667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:70.8333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:75.0000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:79.1667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:83.3333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:87.5000%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:91.6667%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;left:95.8333%;top:0;bottom:0;width:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:4.1667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:8.3333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:12.5000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:16.6667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:20.8333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:25.0000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:29.1667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:33.3333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:37.5000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:41.6667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:45.8333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:50.0000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:54.1667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:58.3333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:62.5000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:66.6667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:70.8333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:75.0000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:79.1667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:83.3333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:87.5000%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:91.6667%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div><div style="position:absolute;top:95.8333%;left:0;right:0;height:1px;background:var(--line);opacity:.5"></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><svg width="192" height="192" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg></div>
+          </div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.5">
+            <li>brazo · 5 u</li>
+            <li>margen · 3 u</li>
+            <li>trazo · 1,6 u</li>
+            <li>vértices · 4, ninguno recto</li>
+            <li>remates · redondos</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Usos incorrectos</p>
+        <div class="caja" style="height:300px">
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 34px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:9px"><div class="mal"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" style="flex:none;transform:rotate(22deg)"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg></div><span class="rotulo">no rotarla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:9px"><div class="mal"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="oklch(0.80 0.125 25)" stroke="oklch(0.80 0.125 25)" stroke-width="1.4" stroke-linejoin="round" /></svg></div><span class="rotulo">no cambiarle el matiz</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:9px"><div class="mal"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" style="flex:none;transform:scaleX(1.5)"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg></div><span class="rotulo">no deformarla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:9px"><div class="mal" style="position:relative;width:54px;height:54px;display:flex;align-items:center;justify-content:center"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg><span style="position:absolute;font-family:var(--display);font-weight:700;font-size:9px">MG</span></div><span class="rotulo">no meterle texto</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Lockup horizontal · el del header</p>
+        <div class="caja" style="height:150px;gap:14px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5999999999999999" stroke-linejoin="round" /></svg><span style="font-size:19px"><span style="font-family:var(--display);font-weight:700;letter-spacing:-.015em">Marco Geoestadístico</span></span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Lockup apilado · pie y tarjeta</p>
+        <div class="caja" style="height:150px;flex-direction:column;gap:13px"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" /></svg><span style="font-size:17px"><span style="font-family:var(--display);font-weight:700;letter-spacing:-.015em">Marco Geoestadístico</span></span></div>
+      </div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow">Tamaños reales · favicon 16 y 32, botones 24, app 48 y 64</p>
+      <div class="caja" style="height:230px;">
+        <div style="display:flex;align-items:flex-end;gap:46px"><div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg><span class="rotulo">64 px</span>
+        </div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg><span class="rotulo">48 px</span>
+        </div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" /></svg><span class="rotulo">32 px</span>
+        </div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.7999999999999998" stroke-linejoin="round" /></svg><span class="rotulo">24 px</span>
+        </div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5V3.5h5" /><path d="M20.5 8.5V3.5h-5" /><path d="M3.5 15.5v5h5" /><path d="M20.5 15.5v5h-5" /></g><path d="M8.9 10.3 13.2 8.4 16.1 12 11.9 15.6Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.9" stroke-linejoin="round" /></svg><span class="rotulo">16 px</span>
+        </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-left:26px;padding-left:46px;border-left:1px solid var(--line)">
+            <div style="width:128px;height:128px;display:flex;align-items:center;justify-content:center;image-rendering:pixelated">
+              <div style="transform:scale(8);transform-origin:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5V3.5h5" /><path d="M20.5 8.5V3.5h-5" /><path d="M3.5 15.5v5h5" /><path d="M20.5 15.5v5h-5" /></g><path d="M8.9 10.3 13.2 8.4 16.1 12 11.9 15.6Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.9" stroke-linejoin="round" /></svg></div>
+            </div>
+            <span class="rotulo">los 16 px, ×8</span>
+          </div>
+        </div></div>
+    </section>
+    <section style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Icono de aplicación · las dos miden arriba de 10:1</p>
+        <div class="caja" style="height:230px;gap:34px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px"><div style="width:120px;height:120px;border-radius:26px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center"><svg width="66" height="66" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg></div><span class="rotulo">15,59:1</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px"><div style="width:120px;height:120px;border-radius:26px;background:var(--accent);display:flex;align-items:center;justify-content:center"><svg width="66" height="66" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="var(--ground)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--ground)" stroke="var(--ground)" stroke-width="1.5" stroke-linejoin="round" /></svg></div><span class="rotulo">10,77:1</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Un solo color · impresión y forced-colors</p>
+        <div class="caja" style="height:230px;gap:40px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:13px"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg><span class="rotulo">sobre oscuro</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:13px"><div style="width:104px;height:104px;background:var(--fg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--ground)"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg></div><span class="rotulo">invertida</span></div>
+        </div>
+      </div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow">En la paleta clara · la que se elige con el botón del header</p>
+      <div class="caja" style="height:190px;">
+        <div class="claro" style="display:flex;align-items:center;gap:54px;width:100%;height:100%;background:var(--ground);border-radius:11px;padding:0 44px;box-sizing:border-box">
+          <svg width="84" height="84" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg>
+          <div style="width:1px;height:74px;background:var(--line)"></div>
+          <div style="display:flex;align-items:center;gap:13px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5999999999999999" stroke-linejoin="round" /></svg><span style="font-size:19px;color:var(--fg)"><span style="font-family:var(--display);font-weight:700;letter-spacing:-.015em">Marco Geoestadístico</span></span></div>
+          <div style="display:flex;align-items:flex-end;gap:26px;margin-left:auto"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" /></svg><svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.7999999999999998" stroke-linejoin="round" /></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5V3.5h5" /><path d="M20.5 8.5V3.5h-5" /><path d="M3.5 15.5v5h5" /><path d="M20.5 15.5v5h-5" /></g><path d="M8.9 10.3 13.2 8.4 16.1 12 11.9 15.6Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.9" stroke-linejoin="round" /></svg></div>
+        </div></div>
+    </section>
+    <section style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Área de resguardo · un brazo por lado</p>
+        <div class="caja" style="height:220px">
+          <div style="position:relative;padding:29px;border:1px dashed var(--line);border-radius:10px">
+            <span class="rotulo" style="position:absolute;top:9px;left:50%;transform:translateX(-50%)">29 px</span>
+            <svg width="116" height="116" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" /></svg>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="eyebrow">Tamaño mínimo</p>
+        <div class="caja" style="height:220px;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:flex-end;gap:38px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:11px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5V3.5h5" /><path d="M20.5 8.5V3.5h-5" /><path d="M3.5 15.5v5h5" /><path d="M20.5 15.5v5h-5" /></g><path d="M8.9 10.3 13.2 8.4 16.1 12 11.9 15.6Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.9" stroke-linejoin="round" /></svg><span class="rotulo" style="color:var(--accent)">16 · sola</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:11px"><div style="display:flex;align-items:center;gap:9px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.7999999999999998" stroke-linejoin="round" /></svg><span style="font-size:14px"><span style="font-family:var(--display);font-weight:700;letter-spacing:-.015em">Marco Geoestadístico</span></span></div><span class="rotulo" style="color:var(--accent)">22 · con texto</span></div>
+          </div>
+          <p style="margin:0;font-size:12.5px;color:var(--muted);max-width:340px;text-align:center;line-height:1.55;text-wrap:pretty">A 16 px el polígono se achica y adelgaza, si no toca los brazos del encuadre.</p>
+        </div>
+      </div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow">En el header real del sitio</p>
+      <div class="caja" style="height:150px;">
+        <div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 34px;box-sizing:border-box">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:19px;border-bottom:1px solid var(--line)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5999999999999999" stroke-linejoin="round" /></svg>
+              <span style="font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:-.01em">Descargas del Marco Geoestadístico</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:22px;font-size:14px;color:var(--muted)">
+              <span style="color:var(--fg);font-weight:600;border-bottom:2px solid var(--accent);padding-bottom:5px">Inicio</span>
+              <span>Notas</span><span>Servicios del INDEC</span>
+              <span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex:none"><circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" stroke="none" /></svg>Tema claro</span>
+            </div>
+          </div>
+        </div></div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow">Tarjeta para compartir · 1200 × 630, a la mitad</p>
+      <div class="caja" style="height:400px;">
+        <div style="width:600px;height:315px;background:var(--ground);border:1px solid var(--line);border-radius:11px;padding:44px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:13px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" style="flex:none;"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" /></g><path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5999999999999999" stroke-linejoin="round" /></svg><span style="font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">Sitio no oficial · Datos del INDEC</span></div>
+          <p style="margin:0;font-family:var(--display);font-weight:700;font-size:38px;line-height:1.07;letter-spacing:-.02em;max-width:15ch">La cartografía del INDEC, lista para tus proyectos.</p>
+          <p style="margin:0;font-family:var(--mono);font-size:12.5px;color:var(--muted)">6.977 objetos por nombre · 557.651 por código</p>
+        </div></div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow">El archivo</p>
+      <div class="caja" style="height:260px;">
+        <div style="display:flex;gap:42px;align-items:flex-start;width:100%">
+          <pre style="margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--fg);background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:19px 22px;overflow:auto;flex:1">&lt;svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"&gt;
+  &lt;g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"&gt;
+    &lt;path d="M3 8V3h5" /&gt;&lt;path d="M21 8V3h-5" /&gt;
+    &lt;path d="M3 16v5h5" /&gt;&lt;path d="M21 16v5h-5" /&gt;
+  &lt;/g&gt;
+  &lt;path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z"
+        fill="#3dd7cf" stroke="#3dd7cf" stroke-width="1.5" stroke-linejoin="round" /&gt;
+&lt;/svg&gt;</pre>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px;font-size:12.5px;color:var(--muted);line-height:1.55;width:250px;flex:none">
+            <li>El encuadre es <code>currentColor</code>: hereda el color de donde se lo pegue y sirve en las dos paletas sin tocar el archivo.</li>
+            <li>El polígono va literal porque un favicon se abre fuera de la página, donde no hay variables: <code>#3dd7cf</code> en oscuro, <code>#02736e</code> en claro.</li>
+            <li>Para 16 px, la variante de trazo grueso: brazos a 2,4 y polígono a 1,9.</li>
+          </ul>
+        </div></div>
+    </section>
+
+</div>
+</x-dc>
+</body>
+</html>

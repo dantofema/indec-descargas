@@ -6,6 +6,7 @@ documento mienta.
 
 | Superficie | Reglas |
 |---|---|
+| [apariencia](apariencia.md) | APAR-R1 … APAR-R8 |
 | [buscador](buscador.md) | BUS-R1 … BUS-R5 |
 | [descargas](descargas.md) | DES-R1 … DES-R10 |
 | [navegacion](navegacion.md) | NAV-R1 … NAV-R11 |

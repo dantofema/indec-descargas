@@ -1,0 +1,31 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 1240, "title": "Home" },
+    { "file": "Ficha.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 1120, "title": "Resultados" },
+    { "file": "Sistema.dc.html", "x": 3120, "y": 0, "w": 1200, "h": 1560, "title": "Sistema visual" }
+  ],
+  "annotations": [
+    {
+      "id": "direccion",
+      "x": 0,
+      "y": -190,
+      "w": 460,
+      "text": "CONSOLA CARTOGRÁFICA\n\nOscuro de grafito frío, acento cián de señal, mono para todo número.\n\nEl color se declara en oklch: los dos acentos comparten croma y luminosidad y sólo cambian de matiz, así que ninguno pesa más que el otro. Probá el selector de acento arriba del artboard."
+    },
+    {
+      "id": "mapa-claro",
+      "x": 1560,
+      "y": -190,
+      "w": 460,
+      "text": "EL PROBLEMA QUE MARQUÉ\n\nEl basemap del IGN es claro y esta interfaz es oscura. En vez de disimularlo, el mapa es una pantalla encendida dentro de la consola: pozo hundido, borde teñido de acento, sombra interior.\n\nY la geometría dibujada pasa del azul #1f6feb al cián, que es lo que se lee sobre el papel claro del IGN."
+    },
+    {
+      "id": "sistema-nota",
+      "x": 3120,
+      "y": -190,
+      "w": 460,
+      "text": "LO QUE VA A src/style.css\n\nLos ocho tokens, la escala tipográfica, los ocho iconos que ya existen en home.js, los estados de control y la tabla de movimiento con su duración y su curva.\n\nHoy el sitio tiene CERO transiciones: esto es todo lo que se agrega, y cada fila dice por qué."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

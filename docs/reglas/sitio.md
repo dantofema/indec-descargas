@@ -72,8 +72,12 @@ cambió. La respuesta útil ante eso es dejar buscar de nuevo, no un error termi
 
 ### SITIO-R5 — Cada página lleva el CTA al Geoportal INDEC
 
-Home, resultados, notas y servicios llevan un enlace chico a `https://geonode.indec.gob.ar/`,
-con `target="_blank"`.
+Home, resultados, notas y servicios llevan un panel a `https://geonode.indec.gob.ar/`, con
+`target="_blank"`, que dice la cuenta de capas y para qué sirve ir.
+
+**Corregida el 2026-09-09 al construir el rediseño:** decía "un enlace chico". Un enlace chico y
+suelto entre el contenido y el pie no se lee como una salida, se lee como un botón huérfano: no
+dice a qué se va ni por qué, así que la regla se cumplía y su propósito no.
 
 **Por qué:** este sitio usa 8 de las 47 capas que publica el INDEC; quien necesita más tiene que
 saber a dónde ir. `geoportal.indec.gob.ar` **no existe** —verificado el 2026-09-08, sin registro
@@ -115,6 +119,9 @@ leafletjs.com y una bandera de Ucrania (`leaflet-src.js:5762`), y ninguna de las
 del dato que se está viendo. La licencia BSD-2-Clause de Leaflet no exige crédito en la
 interfaz, sólo el aviso de copyright en el código, que sigue donde estaba. La atribución del IGN
 sí queda: esa es del basemap sobre el que se dibuja el objeto.
+
+La geometría del objeto se dibuja con el acento del sitio, no con un azul literal: la paleta
+tiene dos modos y el dibujo tiene que leerse sobre el basemap claro del IGN en los dos (APAR-R5).
 
 ### SITIO-R9 — El sitio dice que no es del INDEC, en las cuatro páginas
 

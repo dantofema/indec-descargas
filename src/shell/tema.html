@@ -1,0 +1,39 @@
+<script>
+  /* Corre antes de la primera pintura: la hoja pinta oscuro por defecto
+     (APAR-R7) y quien eligió claro vería un destello si esto esperara al
+     módulo de la página. Va en línea también porque servicios/ no embarca
+     ningún JS y un botón no justifica sumarle un bundle.
+     El texto de acá lo ejecuta src/tema.test.js: en línea no es sin test. */
+  (function () {
+    var CLAVE = 'tema'
+    var raiz = document.documentElement
+    var guardado = null
+    try { guardado = localStorage.getItem(CLAVE) } catch (e) { /* modo privado */ }
+    if (guardado === 'claro' || guardado === 'oscuro') raiz.dataset.tema = guardado
+
+    var sincronizar = function () {
+      var claro = raiz.dataset.tema === 'claro'
+      var botones = document.querySelectorAll('[data-tema-toggle]')
+      for (var i = 0; i < botones.length; i++) {
+        botones[i].setAttribute('aria-pressed', String(claro))
+      }
+    }
+
+    /* Una sola vez por documento. Sin esto, dos inyecciones del partial
+       dejan dos listeners y un click togglea dos veces, o sea nada. */
+    if (raiz.__temaCableado) return
+    raiz.__temaCableado = true
+
+    /* Delegado en document y no en el botón: esto corre con el <head> a
+       medio leer, así que el botón todavía no existe. */
+    document.addEventListener('click', function (e) {
+      var t = e.target
+      if (!t || !t.closest || !t.closest('[data-tema-toggle]')) return
+      raiz.dataset.tema = raiz.dataset.tema === 'claro' ? 'oscuro' : 'claro'
+      try { localStorage.setItem(CLAVE, raiz.dataset.tema) } catch (e) { /* modo privado */ }
+      sincronizar()
+    })
+
+    document.addEventListener('DOMContentLoaded', sincronizar)
+  })()
+</script>

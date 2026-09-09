@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400&display=swap">
+  <style>
+    :root {
+      --ground: oklch(0.17 0.012 250);
+      --panel:  oklch(0.215 0.014 250);
+      --raise:  oklch(0.26 0.015 250);
+      --line:   oklch(0.32 0.014 250);
+      --fg:     oklch(0.96 0.005 250);
+      --muted:  oklch(0.72 0.012 250);
+      --accent: oklch(0.80 0.125 190);
+      --display: "Space Grotesk", system-ui, sans-serif;
+      --body: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    }
+    body { margin: 0; background: var(--ground); color: var(--fg); font-family: var(--body); }
+    a { color: var(--accent); } a:hover { color: var(--fg); }
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+    h2 { font-family: var(--display); font-weight: 500; font-size: 21px; margin: 0 0 8px; letter-spacing: -.01em; }
+    .concepto { font-size: 13.5px; line-height: 1.55; color: var(--muted); margin: 0; text-wrap: pretty; }
+    .caja { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .rotulo { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+    .contra { font-size: 12.5px; line-height: 1.5; color: var(--muted); margin: 0; text-wrap: pretty; }
+    .contra strong { color: var(--fg); font-weight: 500; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; gap: 26px; padding: 40px; min-height: 600px">
+
+  <div>
+    <p class="eyebrow">Dirección · A</p>
+    <h2>Marco</h2>
+    <p class="concepto">Cuatro esquinas que encuadran un polígono irregular. «Marco» es el nombre del dato y también lo que hace el dibujo: el sitio no produce la geometría, la encuadra y te la entrega.</p>
+  </div>
+
+  <div class="caja" style="height: 168px">
+    <svg width="92" height="92" viewBox="0 0 24 24" fill="none" style="color: var(--fg)">
+      <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" />
+      </g>
+      <path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" />
+    </svg>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; gap: 30px">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 9px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="color: var(--fg)">
+        <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" />
+        </g>
+        <path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+      <span class="rotulo">32</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 9px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color: var(--fg)">
+        <g stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" />
+        </g>
+        <path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" />
+      </svg>
+      <span class="rotulo">24</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 9px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="color: var(--fg)">
+        <g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.5 8.5V3.5h5" /><path d="M20.5 8.5V3.5h-5" /><path d="M3.5 15.5v5h5" /><path d="M20.5 15.5v5h-5" />
+        </g>
+        <path d="M8.4 10 13.6 7.7 17 12.2 11.6 16.3Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" />
+      </svg>
+      <span class="rotulo">16</span>
+    </div>
+    <p class="rotulo" style="margin: 0 0 4px; line-height: 1.6">A 16 px el trazo<br>engorda a 2,4</p>
+  </div>
+
+  <div class="caja" style="height: 74px; justify-content: flex-start; padding: 0 22px; gap: 13px">
+    <svg width="27" height="27" viewBox="0 0 24 24" fill="none" style="color: var(--fg); flex: none">
+      <g stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" />
+      </g>
+      <path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" />
+    </svg>
+    <span style="font-family: var(--display); font-weight: 700; font-size: 16.5px; letter-spacing: -.015em">Marco Geoestadístico</span>
+  </div>
+
+  <p class="contra"><strong>En contra:</strong> cuatro esquinas es también el icono de «escanear» y «pantalla completa» en media interfaz. El polígono adentro la separa, pero de reojo puede leerse como un botón y no como una marca. Y pide aire: apretada contra otro elemento, el encuadre se pierde.</p>
+</div>
+</x-dc>
+</body>
+</html>

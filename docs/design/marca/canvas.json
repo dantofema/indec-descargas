@@ -1,0 +1,49 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Marca" },
+    { "id": "page-2", "name": "Direcciones descartadas" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "page-1", "x": 0, "y": 0, "w": 1240, "h": 3220, "title": "Familia · Marco" },
+
+    { "file": "Marco.dc.html",     "page": "page-2", "x": 0,    "y": 0, "w": 560, "h": 680, "title": "A · Marco (elegida)" },
+    { "file": "Reticula.dc.html",  "page": "page-2", "x": 660,  "y": 0, "w": 560, "h": 680, "title": "B · Retícula" },
+    { "file": "Vertice.dc.html",   "page": "page-2", "x": 1320, "y": 0, "w": 560, "h": 680, "title": "C · Vértice" },
+    { "file": "Monograma.dc.html", "page": "page-2", "x": 1980, "y": 0, "w": 560, "h": 680, "title": "D · Monograma" }
+  ],
+  "annotations": [
+    {
+      "id": "que-quedo",
+      "page": "page-1",
+      "x": 1340,
+      "y": 0,
+      "w": 460,
+      "text": "MARCO, DEFINITIVA\n\nCuatro esquinas encuadrando un polígono irregular. El encuadre en --fg porque es la estructura, el polígono en --accent porque es el dato: la misma separación con la que está armado el resto del sitio.\n\nRetoqué la variante de 16 px al elegirla: el polígono se achicó y adelgazó a 1,9 porque con el trazo de 2,2 rozaba los brazos."
+    },
+    {
+      "id": "el-riesgo",
+      "page": "page-1",
+      "x": 1340,
+      "y": 470,
+      "w": 460,
+      "text": "EL RIESGO QUE SE ACEPTA\n\nCuatro esquinas es también el icono de «escanear» y «pantalla completa». El polígono adentro la separa y el encuadre queda asimétrico —el polígono no está centrado—, que es lo que la aleja de un botón.\n\nSi alguna vez molesta, la salida es agrandar el polígono, no achicar las esquinas."
+    },
+    {
+      "id": "falta-decidir",
+      "page": "page-1",
+      "x": 1340,
+      "y": 940,
+      "w": 460,
+      "text": "LO QUE FALTA DECIDIR\n\n1. En pantallas chicas, ¿la marca reemplaza al texto del header o lo acompaña? Hoy el texto es largo: «Descargas del Marco Geoestadístico».\n\n2. ¿El favicon lleva fondo propio o va sobre el del navegador? Con fondo se ve igual en cualquier pestaña; sin fondo se integra mejor en las oscuras.\n\nLas dos las dejo abiertas: son tuyas."
+    },
+    {
+      "id": "las-descartadas",
+      "page": "page-2",
+      "x": 0,
+      "y": -350,
+      "w": 520,
+      "text": "LAS CUATRO DIRECCIONES\n\nQuedan acá para no perder el razonamiento: cada una explora un eje distinto —el dato, la geometría, el instrumento, la tipografía— y dice abajo qué tenía en contra.\n\nGanó A. B rozaba el icono de departamentos, C era la más legible y la menos propia, y D dependía de que Plex Mono cargue."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

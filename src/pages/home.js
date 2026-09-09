@@ -8,6 +8,7 @@
  * el catálogo llega.
  */
 import { loadCatalog } from '../catalog.js'
+import { TYPES } from '../download.js'
 import { loadTotales } from '../totales.js'
 import { createSearchBox } from '../searchbox.js'
 import { format } from '../permalink.js'
@@ -23,42 +24,42 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
  * sumar una librería de iconos al bundle.
  */
 const TILES = [
-  { key: 'jur', label: 'Jurisdicciones', shapes: [
+  { key: 'jur', type: 'jur', label: 'Jurisdicciones', shapes: [
     ['path', { d: 'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z' }],
     ['path', { d: 'M9 3v15' }],
     ['path', { d: 'M15 6v15' }],
   ] },
-  { key: 'dep', label: 'Departamentos', shapes: [
+  { key: 'dep', type: 'dep', label: 'Departamentos', shapes: [
     ['rect', { x: 3, y: 3, width: 8, height: 8, rx: 1 }],
     ['rect', { x: 13, y: 3, width: 8, height: 8, rx: 1 }],
     ['rect', { x: 3, y: 13, width: 8, height: 8, rx: 1 }],
     ['rect', { x: 13, y: 13, width: 8, height: 8, rx: 1 }],
   ] },
-  { key: 'fracciones', label: 'Fracciones censales', shapes: [
+  { key: 'fracciones', type: 'frac', label: 'Fracciones censales', shapes: [
     ['rect', { x: 3, y: 3, width: 18, height: 18, rx: 1 }],
     ['rect', { x: 8, y: 8, width: 8, height: 8, rx: 1 }],
   ] },
-  { key: 'radios', label: 'Radios censales', shapes: [
+  { key: 'radios', type: 'rad', label: 'Radios censales', shapes: [
     ['circle', { cx: 12, cy: 12, r: 8 }],
     ['circle', { cx: 12, cy: 12, r: 1.5 }],
     ['path', { d: 'M12 12l6-4' }],
   ] },
-  { key: 'loc', label: 'Localidades censales', shapes: [
+  { key: 'loc', type: 'loc', label: 'Localidades censales', shapes: [
     ['path', { d: 'M4 20v-9l5-4 5 4v9' }],
     ['path', { d: 'M14 20v-6l5-3v9' }],
     ['path', { d: 'M3 20h18' }],
   ] },
-  { key: 'gl', label: 'Gobiernos locales', shapes: [
+  { key: 'gl', type: 'gl', label: 'Gobiernos locales', shapes: [
     ['path', { d: 'M3 10l9-6 9 6z' }],
     ['path', { d: 'M6 10v9M10 10v9M14 10v9M18 10v9' }],
     ['path', { d: 'M3 21h18' }],
   ] },
-  { key: 'aglo', label: 'Aglomerados', shapes: [
+  { key: 'aglo', type: 'aglo', label: 'Aglomerados', shapes: [
     ['circle', { cx: 9, cy: 11, r: 5 }],
     ['circle', { cx: 16, cy: 15, r: 4 }],
     ['circle', { cx: 17, cy: 7, r: 3 }],
   ] },
-  { key: 'vias', label: 'Vías de circulación', shapes: [
+  { key: 'vias', type: 'via', label: 'Vías de circulación', shapes: [
     ['path', { d: 'M8 3v18' }],
     ['path', { d: 'M16 3v18' }],
     ['path', { d: 'M12 4v3M12 10v4M12 17v3' }],
@@ -75,6 +76,7 @@ function queryEls() {
     results: document.querySelector('#results'),
     status: document.querySelector('#status'),
     totals: document.querySelector('#totals'),
+    heroMeta: document.querySelector('#hero-meta'),
     generated: document.querySelector('#generated'),
   })
 }
@@ -97,16 +99,73 @@ function icon(shapes) {
 }
 
 /**
+ * Los ocho totales suben desde cero al cargar. No son ocho animaciones: es
+ * una sola, con un reloj compartido, porque ocho relojes desincronizados se
+ * ven como un error y no como una entrada.
+ *
+ * easeOutCubic y no lineal: arranca rápido y se estaciona, que es como se
+ * lee un instrumento. Lineal parecería una barra de carga.
+ */
+const COUNT_MS = 1300
+
+function runCounters(nodes) {
+  const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
+  const paint = (t) => {
+    for (const { node, target } of nodes) node.textContent = fmt(Math.round(target * t))
+  }
+  // Respetar la preferencia no es un extra: para alguien con sensibilidad
+  // vestibular, ocho números corriendo es un síntoma.
+  if (mq && mq.matches) return paint(1)
+
+  // El arranque se toma del primer `now` que entrega el propio rAF, no de
+  // `performance.now()` leído antes de pedir el cuadro: son dos relojes que
+  // no siempre comparten origen (en jsdom llegan a diferir en ~700 ms), y
+  // mezclarlos da un `p` negativo en los primeros cuadros.
+  let start = null
+  const step = (now) => {
+    start ??= now
+    const p = Math.min(1, (now - start) / COUNT_MS)
+    paint(1 - (1 - p) ** 3)
+    if (p < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+/**
+ * La línea bajo el buscador. Los dos números no son el mismo universo y
+ * confundirlos sería mentir: sólo los cinco tipos con `catalogo: true`
+ * entran a catalog.json y se pueden buscar por nombre; los ocho se pueden
+ * pedir por su código. El artboard decía "N objetos indexados" con el total
+ * de los ocho, que es justamente la afirmación falsa.
+ */
+function renderHeroMeta(totals) {
+  if (!el.heroMeta) return
+  let porNombre = 0
+  let total = 0
+  for (const tile of TILES) {
+    const n = totals[tile.key] ?? 0
+    total += n
+    if (TYPES[tile.type]?.catalogo) porNombre += n
+  }
+  el.heroMeta.textContent =
+    `${fmt(porNombre)} objetos por nombre · ${fmt(total)} por código`
+}
+
+/**
  * Los ocho tiles. Con `replaceChildren` para que volver a cablear la página
  * no los duplique.
  */
 function renderTotals(totals) {
+  const counters = []
   el.totals.replaceChildren(...TILES.map((tile) => {
     const li = document.createElement('li')
     li.className = 'totales-tile'
     const n = document.createElement('span')
     n.className = 'totales-n'
-    n.textContent = fmt(totals[tile.key] ?? 0)
+    // Arranca en 0: `runCounters` lo sube al total real, salvo que el
+    // sistema pida sin movimiento (ahí salta directo al final).
+    n.textContent = fmt(0)
+    counters.push({ node: n, target: totals[tile.key] ?? 0 })
     const label = document.createElement('span')
     label.className = 'totales-label'
     label.textContent = tile.label
@@ -114,6 +173,8 @@ function renderTotals(totals) {
     return li
   }))
   if (totals.generated) el.generated.textContent = `Catálogo generado el ${totals.generated}.`
+  renderHeroMeta(totals)
+  runCounters(counters)
 }
 
 /**

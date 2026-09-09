@@ -44,18 +44,18 @@ describe('injectShell', () => {
 })
 
 describe('readPartials', () => {
-  it('trae los tres partials del shell', () => {
-    expect(Object.keys(readPartials()).sort()).toEqual(['cta', 'footer', 'header'])
+  it('trae los cinco partials del shell', () => {
+    expect(Object.keys(readPartials()).sort()).toEqual(['cta', 'footer', 'header', 'iconos', 'tema'])
   })
 })
 
 describe('las páginas del sitio', () => {
   const paginas = ['index.html', 'resultados/index.html', 'notas/index.html', 'servicios/index.html']
 
-  it('todas traen header, CTA y footer, y todas resuelven', () => {
+  it('todas traen header, tema, CTA y footer, y todas resuelven', () => {
     for (const p of paginas) {
       const html = readFileSync(resolve(process.cwd(), p), 'utf8')
-      for (const m of ['header', 'cta', 'footer']) {
+      for (const m of ['header', 'tema', 'iconos', 'cta', 'footer']) {
         expect(html, `${p} no trae el marcador ${m}`).toContain(`<!--#shell:${m}-->`)
       }
       expect(() => injectShell(html, { partials: readPartials(), base: '/' })).not.toThrow()
@@ -108,7 +108,23 @@ describe('las páginas del sitio', () => {
     expect(cta).toContain('https://geonode.indec.gob.ar/')
     expect(cta).toContain('target="_blank"')
     expect(cta).toContain('rel="noopener"')
-    expect(cta).toContain('Más info, más mapas, más capas en Geoportal INDEC')
+    expect(cta).toContain('Ir al Geoportal INDEC')
+    // SITIO-R5 corregida el 2026-09-09: el panel tiene que decir la cuenta
+    // de capas y para qué se va, no sólo llevar. Sin esto el test pasaba
+    // con el botón huérfano que la corrección vino a sacar.
+    expect(cta).toContain('8 de las 47 capas')
+  })
+
+  it('todo campo de búsqueda anuncia que también busca por código (BUS-R5)', () => {
+    // La búsqueda por código se construyó y los dos placeholders quedaron
+    // diciendo sólo "un nombre": la función existía y no se veía. Recorre
+    // las cuatro páginas para que agregar un buscador a otra no se olvide.
+    for (const p of paginas) {
+      const html = readFileSync(resolve(process.cwd(), p), 'utf8')
+      for (const [, ph] of html.matchAll(/placeholder="([^"]*)"/g)) {
+        expect(ph, `${p} pide un nombre sin decir que acepta el código`).toContain('código')
+      }
+    }
   })
 
   it('ninguna página lleva el bloque institucional del INDEC (SITIO-R9)', () => {
@@ -174,7 +190,7 @@ describe('el plugin del shell, tal como lo enchufa el build', () => {
     expect(html).not.toMatch(/<!--#shell:/)
     expect(html).not.toMatch(/\{\{[a-z]+\}\}/)
     expect(html).toContain(readGenerated())
-    expect(html).toContain('Más info, más mapas, más capas en Geoportal INDEC')
+    expect(html).toContain('Ir al Geoportal INDEC')
     expect(html).toContain(`href="${viteConfig.base}notas/"`)
   })
 })

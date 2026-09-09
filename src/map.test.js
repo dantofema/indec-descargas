@@ -1,4 +1,8 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs'
+// jsdom pisa el `URL` global con el suyo, que `readFileSync` no acepta
+// (protocolo no es "file:"): hace falta el de Node, con nombre explícito.
+import { URL as NodeURL } from 'node:url'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Leaflet necesita un browser de verdad para medir y pintar. Acá se prueba
@@ -104,6 +108,38 @@ describe('showObject: la selección más nueva manda', () => {
     await nueva
     pendientes[0].resolve({ ok: true, status: 200, json: async () => { throw new SyntaxError('JSON roto') } })
     await expect(vieja).resolves.toBeUndefined()
+  })
+})
+
+// El basemap del IGN es claro en las dos paletas y el color de la geometría
+// tiene que leerse encima en las dos (APAR-R5): por eso sale de --accent, el
+// token del sitio, y no de un azul fijo que ninguna paleta declaró.
+describe('showObject: la geometría toma su color de --accent, no de un literal', () => {
+  it('no hardcodea el azul de GitHub como color de la geometría', () => {
+    const codigo = readFileSync(new NodeURL('./map.js', import.meta.url), 'utf8')
+    // El literal puede seguir vivo como fallback de --accent (ver el test de
+    // abajo): lo que esta regla prohíbe es que sea el color que efectivamente
+    // pinta, no que la palabra exista en algún lado del archivo.
+    expect(codigo).not.toMatch(/style:\s*\{\s*color:\s*['"]#1f6feb['"]/)
+  })
+
+  it('lee --accent del documento para pintar la geometría', async () => {
+    document.documentElement.style.setProperty('--accent', '#00c2ff')
+    try {
+      const p = showObject(objeto)
+      pendientes[0].resolve(respuesta())
+      await p
+      expect(geoJSON.mock.calls[0][1].style.color).toBe('#00c2ff')
+    } finally {
+      document.documentElement.style.removeProperty('--accent')
+    }
+  })
+
+  it('si --accent no resuelve, cae al azul viejo en vez de dejar la geometría sin color', async () => {
+    const p = showObject(objeto)
+    pendientes[0].resolve(respuesta())
+    await p
+    expect(geoJSON.mock.calls[0][1].style.color).toBe('#1f6feb')
   })
 })
 

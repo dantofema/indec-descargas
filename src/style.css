@@ -1,18 +1,53 @@
+/* Las cinco caras se sirven desde el propio sitio: 34.560 bytes medidos, y
+   a cambio el sitio no le pide nada a ningún tercero (APAR-R3). Hoy sólo
+   habla con el GeoServer del INDEC —de donde salen los datos— y con los
+   tiles del IGN —de donde sale el mapa—. */
+@font-face { font-family: "Space Grotesk"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/space-grotesk-500.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/space-grotesk-700.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/plex-sans-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/plex-mono-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/plex-mono-500.woff2") format("woff2"); }
+
 :root {
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #666666;
-  --line: #e0e0e0;
-  --accent: #1f6feb;
-  --accent-fg: #ffffff;
-  --hl: #f5f8ff;
+  /* La consola, paleta oscura: la de por defecto, la que ve quien entra sin
+     haber elegido nada (APAR-R7). Las cuatro superficies comparten un solo
+     eje de matiz (250, azul frío) y sólo varían en luminosidad; los dos
+     acentos comparten croma y luminosidad y sólo cambian de matiz, así que
+     ninguno pesa más que el otro (APAR-R2). Los pisos de contraste los
+     verifica la suite, no esta tabla (APAR-R6). */
+  --ground: oklch(0.17 0.012 250);
+  --panel:  oklch(0.215 0.014 250);
+  --raise:  oklch(0.26 0.015 250);
+  --line:   oklch(0.32 0.014 250);
+  --fg:     oklch(0.96 0.005 250);
+  --muted:  oklch(0.72 0.012 250);
+  --accent: oklch(0.80 0.125 190);
+  --amber:  oklch(0.80 0.125 75);
+
+  /* Los nombres que el resto de la hoja ya usa, en términos de los de
+     arriba: así el rediseño de superficie no obliga a reescribir cada
+     regla en la misma tarea que cambia los colores. */
+  --bg: var(--ground);
+  --hl: var(--raise);
   --hl-mark: var(--accent);
-  --disabled: #f2f2f2;
-  --warn: #8a5a00;
-  --radius: 6px;
+  --accent-fg: var(--ground);
+  --disabled: var(--raise);
+  --warn: var(--amber);
+  --radius: 8px;
+
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
+
+/* Piso global de foco visible: varios controles (`.btn`, los links del
+   nav, `.cta`) no traían ningún indicador propio de foco de teclado. Los
+   que sí lo tenían —`.nota-tab`, `.tab`, `.pager button`— quedan igual: su
+   selector es más específico y gana. Esto es la red por debajo, no un
+   reemplazo. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* La hoja del browser aplica `[hidden] { display: none }` con especificidad
    cero, así que cualquier regla nuestra que ponga `display` se lo come:
@@ -22,13 +57,16 @@
 
 body {
   margin: 0;
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.5 var(--body);
   color: var(--fg);
   background: var(--bg);
 }
 
 main, .site-header, .site-footer {
-  max-width: 60rem;
+  /* 70rem = los 1120 px de contenido del artboard (1440 menos los márgenes).
+     A 60rem el hero quedaba en una columna angosta con medio ancho vacío
+     al lado, que era la mitad de por qué el rediseño no se notaba. */
+  max-width: 70rem;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -52,13 +90,35 @@ main { padding-top: 1.75rem; }
 /* El h1 de /resultados/. Vivía en el header cuando el sitio era una sola
    página; ahora el header es marca y nav compartidos y no lleva ninguno,
    así que la regla es de la página. */
-.resultados h1 { font-size: 1.4rem; margin: 0 0 1.25rem; }
+.resultados h1 { font-family: var(--display); font-weight: 500; font-size: 1.4rem; margin: 0 0 1.25rem; }
 .subtitle { color: var(--muted); margin: 0 0 1.5rem; }
-.brand { color: var(--fg); font-weight: 600; text-decoration: none; }
+.brand {
+  color: var(--fg); font-weight: 600; text-decoration: none;
+  display: inline-flex; align-items: center; gap: .55rem;
+}
 .brand:hover { text-decoration: underline; }
+/* El encuadre no se subraya junto con el texto. */
+.brand:hover .marca { text-decoration: none; }
+.marca { flex: none; }
 .site-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-.site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+.site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; position: relative; }
 .site-nav a:hover { color: var(--fg); }
+/* El subrayado del nav: crece desde la izquierda al pasar el mouse (spec §3,
+   fila "pestaña y nav"). La base en `scaleX(0)` es la misma pieza que la
+   pestaña de capas de abajo, así que corre el mismo riesgo con
+   prefers-reduced-motion: se abre a mano para la página activa, más abajo
+   en este archivo y en el bloque que apaga el movimiento. */
+.site-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -.35rem;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 240ms cubic-bezier(.2, .7, .3, 1);
+}
+.site-nav a:hover::after { transform: scaleX(1); }
 /* Marca en el nav cuál página estás mirando. El body trae `data-pagina`
    —cada página lo pone en su propio <body>— y el link, `data-nav` —lo pone
    el shell, en build—: el puente entre los dos es CSS puro, sin JS, así
@@ -72,43 +132,183 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   color: var(--fg);
   font-weight: 600;
 }
+/* El mismo subrayado del hover, pero fijo: la página activa lo tiene abierto
+   sin necesidad de mouse encima. */
+body[data-pagina="home"] .site-nav [data-nav="home"]::after,
+body[data-pagina="resultados"] .site-nav [data-nav="home"]::after,
+body[data-pagina="notas"] .site-nav [data-nav="notas"]::after,
+body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
+  transform: scaleX(1);
+}
 
 /* El CTA institucional, entre el contenido y el footer en toda página. */
-.cta { max-width: 60rem; margin: 2rem auto 0; padding: 0 1rem; }
+.cta { max-width: 70rem; margin: 3rem auto 0; padding: 0 1rem; }
+/* El panel: título, una línea de para qué, y el enlace a la derecha. Antes
+   era un botón suelto que no decía a dónde llevaba (SITIO-R5, corregida). */
+.cta aside, .cta {
+  --cta-gap: 1.25rem;
+}
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cta-gap);
+  padding: 1.4rem 1.6rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.cta-texto { flex: 1 1 22rem; }
+.cta-texto h2 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin: 0 0 .3rem;
+}
+.cta-texto p { color: var(--muted); font-size: .92rem; margin: 0; max-width: 46ch; }
 .cta a {
+  flex: 0 0 auto;
   display: inline-block;
-  padding: .5rem .9rem;
+  padding: .6rem 1rem;
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   color: var(--accent);
   text-decoration: none;
+  white-space: nowrap;
+  transition: background 200ms cubic-bezier(.2, .7, .3, 1), color 200ms cubic-bezier(.2, .7, .3, 1);
   font-size: .9rem;
 }
-.cta a:hover { background: var(--hl); }
+.cta a:hover { background: var(--accent); color: var(--accent-fg); }
 
 /* El home: el hero con el buscador arriba y los totales abajo. */
 .home .hero { margin: 1.5rem 0 3rem; }
-.home h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .6rem; max-width: 24ch; }
-.home .subtitle { font-size: 1.05rem; max-width: 60ch; }
-.home .totales h2 { font-size: 1.15rem; margin: 0 0 1rem; }
+/* Entrada orquestada, una vez al cargar: cuatro escalones de 80 ms que
+   ordenan la lectura —título, texto, buscador, totales— en vez de tirar
+   todo a la vez (APAR-R4, spec §3). `.search` va con el prefijo `.home`
+   porque esa clase también vive en /resultados/, que no entra así. */
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.home h1, .home .subtitle, .home .search, .home .totales {
+  animation: hero-in 550ms cubic-bezier(.2, .7, .3, 1) both;
+}
+.home .subtitle { animation-delay: 80ms; }
+.home .search { animation-delay: 160ms; }
+.home .totales { animation-delay: 240ms; }
+/* Mono, versalitas y apagado: la firma de la consola para todo lo que es
+   dato sobre el sitio y no contenido del sitio. */
+.home .eyebrow {
+  font-family: var(--mono);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 .9rem;
+}
+/* El único h1 en peso 700: es la única pieza de la consola que lleva el
+   peso más pesado de Space Grotesk, el título del home. `clamp` porque a
+   2rem fijos el titular era del tamaño de un h2 y no abría nada. */
+.home h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2.1rem, 5.2vw, 3.9rem);
+  line-height: 1.06;
+  letter-spacing: -.02em;
+  margin: 0 0 .9rem;
+  max-width: 18ch;
+}
+/* Los dos universos de búsqueda, bajo el campo. Los llena home.js. */
+.home .hero-meta {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--muted);
+  margin: .85rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.home .subtitle { font-size: 1.1rem; max-width: 54ch; margin: 0 0 1.8rem; }
+/* El encabezado de los totales es una fila: título a la izquierda y la
+   cuenta a la derecha, como el rótulo de un instrumento. */
+.totales-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+.home .totales h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; }
+.totales-nota { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+/* El botón del tema vive en el nav, del lado de los enlaces: es una
+   preferencia del sitio, no una acción sobre el contenido. Se lee como un
+   enlace más hasta que el mouse lo toca (APAR-R7). */
+.tema {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .25rem .6rem;
+  margin: -.25rem 0;
+  font: inherit;
+  font-size: .92rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(.2, .7, .3, 1),
+              border-color 200ms cubic-bezier(.2, .7, .3, 1);
+}
+.tema:hover { color: var(--fg); border-color: var(--line); }
+.tema svg { transition: transform 300ms cubic-bezier(.2, .7, .3, 1); }
+/* La media luna gira cuando el tema cambia: el mismo glifo dice los dos
+   estados sin cambiar de dibujo ni de ancho. */
+:root[data-tema="claro"] .tema svg { transform: rotate(180deg); }
+
 .totales { margin: 0 0 3rem; }
 
 /* Ocho tiles que se acomodan solos: sin breakpoint propio, la grilla
-   reparte lo que haya de ancho. */
+   reparte lo que haya de ancho. El mínimo es 16rem y no 10rem para que a
+   ancho completo den 4 + 4 —la grilla del artboard— en vez de 5 + 3, que
+   dejaba una fila coja. */
 .totales-grid {
   list-style: none; padding: 0; margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: .75rem;
 }
 .totales-tile {
   display: flex; flex-direction: column; gap: .15rem;
-  padding: .9rem 1rem;
+  padding: 1.15rem 1.25rem;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: var(--panel);
+  /* No usa `--radius`: es un tile, no un control, y la consola les da a
+     los tiles y al pozo del mapa un radio propio, más grande. */
+  border-radius: 10px;
+  position: relative;
+  transition: transform 220ms cubic-bezier(.2, .7, .3, 1);
+}
+/* La línea inferior del hover: mismo `scaleX(0)` que la pestaña y el nav,
+   pero acá es puro `:hover` —nada la deja en un estado persistente— así
+   que no necesita abrirse a mano en el bloque de prefers-reduced-motion:
+   sin transición, `:hover` la sigue mostrando igual, sólo que de un salto. */
+.totales-tile::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  border-radius: 0 0 10px 10px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms cubic-bezier(.2, .7, .3, 1);
+}
+/* Sólo donde hay un puntero de verdad, mismo criterio que `.results li`. */
+@media (hover: hover) {
+  .totales-tile:hover { transform: translateY(-2px); }
+  .totales-tile:hover::after { transform: scaleX(1); }
 }
 .totales-tile svg { color: var(--accent); margin-bottom: .35rem; }
-.totales-n { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.totales-n { font-family: var(--mono); font-size: 1.9rem; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .totales-label { color: var(--muted); font-size: .85rem; }
 
 .search { position: relative; }
@@ -122,12 +322,22 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   font-size: 1.05rem;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--bg);
+  background: var(--panel);
   color: var(--fg);
 }
 #type { flex: 0 0 auto; }
 #q { flex: 1 1 16rem; min-width: 0; }
-#type:focus, #q:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+#type:focus, #q:focus {
+  /* El indicador de foco de un campo es su borde teñido más el anillo: un
+     `outline` sólido encima se pisa con el anillo y se lee como un borde
+     doble. Pero sacarlo del todo rompe el modo de alto contraste forzado,
+     donde el sistema pinta los outlines y descarta `box-shadow` y
+     `border-color`: por eso queda, transparente, ocupando su lugar. */
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 18%, transparent);
+}
 
 .results {
   position: absolute;
@@ -164,7 +374,7 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 .results .kind { color: var(--muted); font-size: .85rem; white-space: nowrap; }
 
 .status { color: var(--muted); margin: 1rem 0; }
-.status.error { color: #b32020; }
+.status.error { color: #ff6b6b; }
 
 .detail { display: flex; flex-direction: column; gap: 1.75rem; margin: 1.5rem 0 3rem; }
 
@@ -176,7 +386,7 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   .row-identity, .row-bulk, .notas-layout { grid-template-columns: 1fr; }
 }
 
-.notas h1 { font-size: 1.4rem; margin: 0 0 1.5rem; }
+.notas h1 { font-family: var(--display); font-weight: 500; font-size: 1.4rem; margin: 0 0 1.5rem; }
 
 /* Nav vertical de notas: mismo patrón de tablist que .tabs (ver tabs.js),
    en columna en vez de en fila. */
@@ -187,7 +397,11 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   border-radius: var(--radius);
   background: none;
   color: var(--muted);
+  /* `font-family`/`font-weight` van después del shorthand `font: inherit`:
+     antes lo pisaría de vuelta al de `body`. */
   font: inherit;
+  font-family: var(--display);
+  font-weight: 500;
   font-size: .9rem;
   text-align: left;
   padding: .55rem .7rem;
@@ -202,9 +416,9 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 }
 .nota-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-.servicios h1 { font-size: 1.4rem; margin: 0 0 .4rem; }
+.servicios h1 { font-family: var(--display); font-weight: 500; font-size: 1.4rem; margin: 0 0 .4rem; }
 .servicios section { margin: 0 0 2.5rem; }
-.servicios h2 { font-size: 1.15rem; margin: 0 0 .75rem; }
+.servicios h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 .75rem; }
 /* Subtítulos de bloque dentro de una sección: mismo tratamiento visual que
    `.block-title` en la ficha de objeto, para no inventar un segundo patrón
    de "etiqueta chica en mayúsculas" en el mismo sitio. */
@@ -238,14 +452,30 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 /* El nombre y el "Copiar enlace" comparten fila: el botón acompaña al
    objeto que se está mirando, no al bloque entero. */
 .identity-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; }
-.identity-head h2 { margin: 0 0 .3rem; }
+.identity-head h2 { font-family: var(--display); font-weight: 500; margin: 0 0 .3rem; }
 
 .block-title {
   font-size: .78rem; text-transform: uppercase; letter-spacing: .06em;
   color: var(--muted); margin: 0 0 .4rem;
 }
 
-.map { height: 24rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--disabled); }
+/* El pozo del mapa, como los tiles: radio propio de 12px, no `--radius`. */
+.map {
+  height: 24rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--disabled);
+  /* Los tiles del IGN son claros y no se pueden oscurecer sin falsear el
+     dato. En vez de disimularlo, el mapa es una pantalla encendida dentro de
+     la consola: pozo hundido, borde teñido y sombra proyectada, para que la
+     superficie clara se lea como algo prendido y no como un parche
+     (APAR-R5). Con la paleta clara el pozo sobra: ahí la página ya es del
+     color del mapa. */
+  border-color: color-mix(in oklch, var(--accent) 30%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent),
+              0 12px 32px -18px oklch(0 0 0 / .9);
+}
+:root[data-tema="claro"] .map { border-color: var(--line); box-shadow: none; }
 /* Leaflet pinta la placa de atribución al 80% de opacidad, así que el fondo
    real de ese texto es la tesela que haya debajo: su enlace pasa de 4,94:1
    sobre blanco a 3,64:1 sobre el gris del contenedor. Opaca, el número no
@@ -255,6 +485,10 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
    bundle, así que empatar no alcanza. */
 #map .leaflet-control-attribution { background: #fff; }
 .meta { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
+/* Los metadatos de la ficha llevan códigos y números ("código 06840",
+   "partida en 8 tramos"): mono y cifras tabulares, como cualquier otro
+   dato de la consola. */
+#detail-meta { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* Enlace chico a la nota del objeto o de la capa activa (NOTA-R3): agrega
    contexto sin competir con las descargas que están al lado. */
@@ -277,7 +511,11 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
      sin este reset, el botón trae su chrome nativo debajo del borde y el
      fondo propios y su tipografía no hereda la del sitio. */
   appearance: none;
+  /* `font-family`/`font-weight` van después del shorthand `font: inherit`:
+     antes lo pisaría de vuelta al de `body`. */
   font: inherit;
+  font-family: var(--display);
+  font-weight: 500;
   cursor: pointer;
   display: inline-block;
   padding: .45rem .9rem;
@@ -289,7 +527,11 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   font-size: .9rem;
   white-space: nowrap;
 }
-.btn:hover { filter: brightness(1.08); }
+/* Antes era `filter: brightness(1.08)`: en la paleta oscura el acento ya es
+   luminoso, y subirle un 8% de brillo no se nota. Un anillo sí se ve en
+   las dos paletas. */
+.btn:hover { box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 22%, transparent); }
+.btn:active { transform: translateY(1px); }
 .btn.is-disabled {
   background: var(--disabled);
   border-color: var(--line);
@@ -303,7 +545,7 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
    la tabla de hijos: al lado de "Descargar" en cada fila, un `.btn` de
    tamaño completo compite por atención con el de la capa entera. */
 .btn.ghost { background: none; color: var(--accent); }
-.btn.ghost:hover { background: var(--hl); filter: none; }
+.btn.ghost:hover { background: color-mix(in oklch, var(--accent) 10%, transparent); }
 .btn.mini { padding: .25rem .55rem; font-size: .8rem; }
 
 /* Pestañas de capas hijas: patrón tablist de WAI-ARIA (ver tabs.js). */
@@ -321,11 +563,16 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   border-radius: var(--radius) var(--radius) 0 0;
   background: none;
   color: var(--muted);
+  /* `font-family`/`font-weight` van después del shorthand `font: inherit`:
+     antes lo pisaría de vuelta al de `body`. */
   font: inherit;
+  font-family: var(--display);
+  font-weight: 500;
   font-size: .9rem;
   padding: .6rem 1rem;
   cursor: pointer;
   white-space: nowrap;
+  position: relative;
 }
 .tab .n { color: inherit; }
 .tab[aria-selected="true"] {
@@ -336,6 +583,22 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
      activa con el panel de abajo, como en cualquier tablist con solapas. */
   margin-bottom: -1px;
 }
+/* El subrayado de la pestaña elegida, mismo tratamiento que el nav (spec §3,
+   "pestaña y nav"): crece desde la izquierda. Es un estado persistente, no
+   sólo `:hover`, así que el bloque de prefers-reduced-motion, al final de
+   esta hoja, lo tiene que dejar abierto a mano o desaparece con el resto del
+   movimiento. */
+.tab::after {
+  content: '';
+  position: absolute;
+  left: .2rem; right: .2rem; bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 240ms cubic-bezier(.2, .7, .3, 1);
+}
+.tab[aria-selected="true"]::after { transform: scaleX(1); }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Panel de texto de una nota, en /notas/: ancho de lectura, no el de la
@@ -368,9 +631,15 @@ thead th {
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-td.code { font-family: ui-monospace, Menlo, Consolas, monospace; }
-td.num { text-align: right; font-variant-numeric: tabular-nums; }
-td.acts { white-space: nowrap; }
+td.code { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td.num { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+/* Atenuadas hasta que se entra a la fila, con mouse o con teclado: bajan el
+   ruido de una tabla densa sin esconder que la acción existe (spec §3,
+   "fila de tabla"). Es un `:hover`/`:focus-within`, así que tampoco necesita
+   nada en el bloque de prefers-reduced-motion: el estado sigue disponible,
+   sólo que sin la transición de por medio. */
+td.acts { white-space: nowrap; opacity: .55; transition: opacity 160ms ease; }
+tr:hover td.acts, tr:focus-within td.acts { opacity: 1; }
 td.acts .btn + .btn { margin-left: .4rem; }
 /* El motivo de una fila sin código (ver table.js) es prosa, no botones: sin
    esto hereda el `nowrap` de la celda y estira la tabla a lo ancho. */
@@ -398,26 +667,69 @@ table.wide th.col-anchor, table.wide td.col-anchor {
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg);
+  font-family: var(--display);
+  font-weight: 500;
   font-size: .85rem;
   cursor: pointer;
 }
 .pager button:hover:not(:disabled) { background: var(--hl); }
 .pager button:disabled { color: var(--muted); cursor: not-allowed; opacity: .5; }
 .pager button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.pager .where { color: var(--muted); font-size: .85rem; }
+/* "1–50 de 320": cifras, así que van en mono con cifras tabulares. */
+.pager .where { color: var(--muted); font-size: .85rem; font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 .site-footer { border-top: 1px solid var(--line); padding-top: 1rem; padding-bottom: 3rem; color: var(--muted); font-size: .85rem; }
 .site-footer a { color: inherit; }
 .warning { font-style: italic; }
+/* La fecha de generación del catálogo, en el pie de las cuatro páginas
+   (ver scripts/shell.mjs): es un dato, no prosa. */
+#generated { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14161a; --fg: #e8e8e8; --muted: #9aa0a6; --line: #2c3038;
-    --accent: #4b8bf5; --accent-fg: #0d0f12; --disabled: #21252b; --warn: #e0b050;
-    --hl: #1c2230;
+/* La paleta clara: sólo entra cuando la persona la pide con el botón del
+   header (APAR-R7). No hay `@media (prefers-color-scheme)` en toda la hoja
+   a propósito — dos autoridades decidiendo el tema es una que no manda—, y
+   los alias (`--bg: var(--ground)` y compañía) no se repiten acá porque
+   `var()` se resuelve en uso y los hereda del `:root` de arriba. */
+:root[data-tema="claro"] {
+  --ground: oklch(0.99 0.002 250);
+  --panel:  oklch(0.975 0.004 250);
+  --raise:  oklch(0.95 0.006 250);
+  --line:   oklch(0.90 0.006 250);
+  --fg:     oklch(0.22 0.012 250);
+  --muted:  oklch(0.50 0.014 250);
+  /* L bajado de 0.55 (spec) a 0.50: a 0.55 el acento medía 4,127:1 contra
+     --ground, por debajo del piso de 4,5:1 que exige el gate (APAR-R6).
+     C bajado de 0.14 (spec) a 0.086: a 0.14, L=0.50 y matiz 190 caen fuera
+     del gamut sRGB (canal R negativo) — el browser recorta al borde del
+     gamut igual, así que declarar más croma del que sRGB admite no suma
+     saturación, sólo hace que lo que se mide no sea lo que se pinta.
+     0.086 es el croma máximo que admite el matiz 190 a esta luminosidad, y
+     es el más chico de los dos acentos, así que siguen compartiendo croma
+     (APAR-R2). El contraste no baja: sube, de 5,031:1 a 5,578:1. */
+  --accent: oklch(0.50 0.086 190);
+  --amber:  oklch(0.50 0.086 75);
+}
+/* El rojo de la paleta clara. El de la oscura vive en la regla de siempre,
+   más arriba, porque ahora la oscura es la de por defecto. */
+:root[data-tema="claro"] .status.error { color: #b32020; }
+
+/* Lo único no negociable de esta tanda (APAR-R4): para alguien con
+   sensibilidad vestibular, ocho números corriendo no es un adorno, es un
+   síntoma. Apaga toda animación y transición de la hoja. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* Los subrayados y las líneas de hover viven en un `transform: scaleX(0)`
+     que la transición abría: sin animación hay que dejarlos abiertos, o el
+     estado activo deja de verse. Sólo hace falta para los dos que quedan en
+     un estado persistente (no sólo `:hover`): la pestaña de capas elegida y
+     la página activa del nav. El hover del tile y el hover simple del nav
+     no necesitan nada acá — `:hover` sigue matcheando igual sin animación,
+     sólo que de un salto en vez de un recorrido. */
+  .tab[aria-selected="true"]::after { transform: scaleX(1); }
+  body[data-pagina="home"] .site-nav [data-nav="home"]::after,
+  body[data-pagina="resultados"] .site-nav [data-nav="home"]::after,
+  body[data-pagina="notas"] .site-nav [data-nav="notas"]::after,
+  body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
+    transform: scaleX(1);
   }
-  /* #b32020 sobre este fondo mide 2,71:1, por debajo del 4,5:1 de WCAG AA,
-     justo en la única cadena que el usuario más necesita poder leer.
-     Este mide 6,53:1. */
-  .status.error { color: #ff6b6b; }
 }
