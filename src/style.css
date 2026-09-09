@@ -176,8 +176,13 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 #type { flex: 0 0 auto; }
 #q { flex: 1 1 16rem; min-width: 0; }
 #type:focus, #q:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  /* El indicador de foco de un campo es su borde teñido más el anillo: un
+     `outline` sólido encima se pisa con el anillo y se lee como un borde
+     doble. Pero sacarlo del todo rompe el modo de alto contraste forzado,
+     donde el sistema pinta los outlines y descarta `box-shadow` y
+     `border-color`: por eso queda, transparente, ocupando su lugar. */
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   border-color: var(--accent);
   box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 18%, transparent);
 }

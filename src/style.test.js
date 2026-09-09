@@ -398,4 +398,13 @@ describe('los controles de la consola', () => {
   it('todo número va en cifras tabulares', () => {
     expect(css).toMatch(/font-variant-numeric:\s*tabular-nums/)
   })
+
+  // Un `outline` sólido sobre el anillo se lee como un borde doble; sacarlo
+  // del todo rompe el alto contraste forzado, donde el sistema pinta outlines
+  // y descarta sombras. Transparente es la única forma que cumple las dos.
+  it('el campo enfocado no apila dos anillos visibles', () => {
+    const foco = rule('#type:focus, #q:focus').join(' ')
+    expect(foco).toMatch(/outline:\s*2px solid transparent/)
+    expect(foco).toMatch(/box-shadow/)
+  })
 })
