@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      --ground: oklch(0.17 0.012 250);
+      --panel:  oklch(0.215 0.014 250);
+      --raise:  oklch(0.26 0.015 250);
+      --line:   oklch(0.32 0.014 250);
+      --fg:     oklch(0.96 0.005 250);
+      --muted:  oklch(0.72 0.012 250);
+      --amber:  oklch(0.80 0.125 75);
+      --display: "Space Grotesk", system-ui, sans-serif;
+      --body: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    body { margin: 0; background: var(--ground); color: var(--fg); font-family: var(--body); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--fg); }
+
+    .btn {
+      appearance: none; font: inherit; cursor: pointer;
+      font-family: var(--display); font-weight: 500; font-size: 13.5px;
+      padding: 9px 15px; border-radius: 7px;
+      border: 1px solid var(--accent); background: var(--accent);
+      color: oklch(0.17 0.012 250);
+      transition: box-shadow .2s, transform .12s;
+    }
+    .btn:hover { box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 22%, transparent); }
+    .btn:active { transform: translateY(1px); }
+    .btn.ghost { background: transparent; color: var(--accent); border-color: color-mix(in oklch, var(--accent) 40%, var(--line)); }
+    .btn.ghost:hover { background: color-mix(in oklch, var(--accent) 10%, transparent); box-shadow: none; }
+    .btn.mini { padding: 5px 11px; font-size: 12px; border-radius: 6px; }
+
+    /* Las filas de la tabla: el hover marca la fila entera y adelanta las
+       acciones, que en reposo están al 55% para que la tabla se lea como
+       datos y no como una botonera. */
+    .row { transition: background .16s; }
+    .row:hover { background: color-mix(in oklch, var(--accent) 7%, transparent); }
+    .row .acts { opacity: .55; transition: opacity .16s; }
+    .row:hover .acts { opacity: 1; }
+
+    .tab {
+      appearance: none; font: inherit; cursor: pointer;
+      font-family: var(--display); font-size: 13.5px; font-weight: 500;
+      background: none; border: 0; color: var(--muted);
+      padding: 11px 2px; position: relative;
+      transition: color .18s;
+    }
+    .tab::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+      background: var(--accent); transform: scaleX(0); transform-origin: 0 50%;
+      transition: transform .26s cubic-bezier(.2,.7,.3,1);
+    }
+    .tab:hover { color: var(--fg); }
+    .tab[aria-selected="true"] { color: var(--fg); }
+    .tab[aria-selected="true"]::after, .tab:hover::after { transform: scaleX(1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .row, .row .acts, .tab, .tab::after, .btn { transition: none !important; }
+      .row .acts { opacity: 1; }
+    }
+  </style>
+</helmet>
+
+<div style="--accent: {{accent}}; min-height: 100%; background: var(--ground); font-family: var(--body);">
+
+  <header style="max-width: 1200px; margin: 0 auto; padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line);">
+    <span style="font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15"></path><path d="M15 6v15"></path></svg>
+      Marco Geoestadístico
+    </span>
+    <nav style="display: flex; gap: 26px; font-size: 14px; color: var(--muted);">
+      <a href="#" style="color: var(--muted);">Inicio</a>
+      <a href="#" style="color: var(--muted);">Notas</a>
+      <a href="#" style="color: var(--muted);">Servicios del INDEC</a>
+    </nav>
+  </header>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 28px 40px 56px;">
+
+    <!-- buscador compacto -->
+    <div style="display: flex; gap: 9px; margin: 0 0 28px; max-width: 660px;">
+      <select style="font: inherit; font-size: 14px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 10px 13px; min-width: 165px;" aria-label="Tipo">
+        <option>Todos los tipos</option>
+      </select>
+      <input style="font: inherit; font-size: 14px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 10px 13px; flex: 1;" value="Tres de Febrero" aria-label="Buscar">
+    </div>
+
+    <!-- fila 1: mapa + identidad -->
+    <div style="display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; margin: 0 0 26px;">
+
+      <!-- El basemap del IGN es claro y esta interfaz es oscura. En vez de
+           disimularlo, el mapa se trata como una pantalla encendida dentro
+           de la consola: pozo hundido, borde teñido de acento y sombra
+           interior para que la superficie clara no flote. -->
+      <div style="position: relative; border-radius: 12px; overflow: hidden;
+        border: 1px solid color-mix(in oklch, {{accent}} 30%, var(--line));
+        box-shadow: inset 0 0 0 1px color-mix(in oklch, {{accent}} 8%, transparent), 0 12px 32px -18px oklch(0 0 0 / .9);
+        background: #eceae4; min-height: 320px;">
+
+        <!-- basemap simulado: la trama clara del IGN -->
+        <svg width="100%" height="320" viewBox="0 0 620 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect width="620" height="320" fill="#eceae4"></rect>
+          <g stroke="#d6d2c8" stroke-width="1">
+            <path d="M0 70h620M0 140h620M0 210h620M0 280h620"></path>
+            <path d="M90 0v320M200 0v320M310 0v320M420 0v320M530 0v320"></path>
+          </g>
+          <g stroke="#c9c4b8" stroke-width="1.4" fill="none">
+            <path d="M-10 190 L120 176 L250 198 L390 170 L520 192 L640 178"></path>
+            <path d="M150 -10 L168 90 L142 200 L176 330"></path>
+          </g>
+          <!-- el objeto dibujado: acento sobre claro, no el azul del basemap -->
+          <path d="M196 96 L322 84 L378 138 L352 218 L232 232 L182 176 Z"
+                fill="{{accent}}" fill-opacity="0.17"
+                stroke="{{accent}}" stroke-width="2.4" stroke-linejoin="round"></path>
+        </svg>
+
+        <div style="position: absolute; left: 12px; bottom: 11px; font-family: var(--mono); font-size: 10.5px; color: #5c5850; background: #ffffffcc; padding: 3px 7px; border-radius: 4px;">Instituto Geográfico Nacional, OpenStreetMap</div>
+      </div>
+
+      <!-- identidad -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+          <h1 style="font-family: var(--display); font-weight: 700; font-size: 34px; line-height: 1.1; letter-spacing: -0.025em; margin: 0;">Tres de Febrero</h1>
+          <button class="btn ghost mini" type="button">Copiar enlace</button>
+        </div>
+
+        <p style="font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin: 0; display: flex; gap: 9px; flex-wrap: wrap; align-items: center;">
+          <span style="border: 1px solid var(--line); border-radius: 5px; padding: 3px 8px; color: var(--fg);">Departamento</span>
+          <span>Buenos Aires</span>
+          <span style="color: var(--line);">·</span>
+          <span>código 06840</span>
+        </p>
+
+        <a href="#" style="font-size: 13.5px;">Qué es un departamento →</a>
+
+        <div>
+          <button class="btn" type="button">Descargar este departamento</button>
+        </div>
+
+        <div style="border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px;">
+          <p style="font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px;">De qué forma parte</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; margin: 0 -10px; border-radius: 7px;">
+              <span style="font-size: 14px;">Buenos Aires <span style="font-family: var(--mono); font-size: 12px; color: var(--muted);"> · Jurisdicción · 06</span></span>
+              <span class="acts"><button class="btn ghost mini" type="button">Descargar</button></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- fila 3: recorrer -->
+    <div>
+      <p style="font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px;">Recorrer y descargar de a uno</p>
+
+      <div style="display: flex; gap: 26px; border-bottom: 1px solid var(--line); margin: 0 0 4px;">
+        <button class="tab" type="button" aria-selected="true">Fracciones censales <span style="font-family: var(--mono); font-size: 11.5px; color: var(--muted);">42</span></button>
+        <button class="tab" type="button" aria-selected="false">Radios censales <span style="font-family: var(--mono); font-size: 11.5px; color: var(--muted);">432</span></button>
+        <button class="tab" type="button" aria-selected="false">Localidades censales <span style="font-family: var(--mono); font-size: 11.5px; color: var(--muted);">1</span></button>
+        <button class="tab" type="button" aria-selected="false">Vías de circulación <span style="font-family: var(--mono); font-size: 11.5px; color: var(--muted);">1.487</span></button>
+      </div>
+
+      <a href="#" style="font-size: 13px; display: inline-block; margin: 12px 0 14px;">Qué es una fracción censal →</a>
+
+      <div style="border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel);">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+          <thead>
+            <tr style="background: color-mix(in oklch, var(--raise) 70%, var(--panel));">
+              <th style="text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 11px 16px;">Fracción</th>
+              <th style="text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 11px 16px;">Código</th>
+              <th style="padding: 11px 16px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row" style="border-top: 1px solid var(--line);">
+              <td style="padding: 11px 16px; font-family: var(--mono);">40</td>
+              <td style="padding: 11px 16px; font-family: var(--mono); color: var(--muted);">0684040</td>
+              <td style="padding: 9px 16px; text-align: right;"><span class="acts" style="display: inline-flex; gap: 7px;"><button class="btn ghost mini" type="button">Ver</button><button class="btn ghost mini" type="button">Descargar</button></span></td>
+            </tr>
+            <tr class="row" style="border-top: 1px solid var(--line);">
+              <td style="padding: 11px 16px; font-family: var(--mono);">41</td>
+              <td style="padding: 11px 16px; font-family: var(--mono); color: var(--muted);">0684041</td>
+              <td style="padding: 9px 16px; text-align: right;"><span class="acts" style="display: inline-flex; gap: 7px;"><button class="btn ghost mini" type="button">Ver</button><button class="btn ghost mini" type="button">Descargar</button></span></td>
+            </tr>
+            <tr class="row" style="border-top: 1px solid var(--line);">
+              <td style="padding: 11px 16px; font-family: var(--mono);">42</td>
+              <td style="padding: 11px 16px; font-family: var(--mono); color: var(--muted);">0684042</td>
+              <td style="padding: 9px 16px; text-align: right;"><span class="acts" style="display: inline-flex; gap: 7px;"><button class="btn ghost mini" type="button">Ver</button><button class="btn ghost mini" type="button">Descargar</button></span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 16px; border-top: 1px solid var(--line);">
+          <button class="btn ghost mini" type="button">Anterior</button>
+          <span style="font-family: var(--mono); font-size: 12px; color: var(--muted);">1–20 de 42</span>
+          <button class="btn ghost mini" type="button">Siguiente</button>
+        </div>
+      </div>
+
+      <!-- El panel de costo de vías: la única pantalla del sitio donde una
+           espera medida se declara antes de cobrarla. En oscuro el ámbar
+           hace de señal sin gritar como un rojo de error: esto no es un
+           fallo, es un precio. -->
+      <div style="margin: 22px 0 0; padding: 18px 20px; border-radius: 10px;
+        border: 1px solid color-mix(in oklch, var(--amber) 34%, var(--line));
+        background: color-mix(in oklch, var(--amber) 7%, var(--panel));
+        display: flex; gap: 16px; align-items: flex-start;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.6" stroke-linecap="round" style="flex: none; margin-top: 1px;" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 16.5v.01"></path></svg>
+        <div>
+          <p style="font-size: 14px; line-height: 1.6; margin: 0 0 12px; color: var(--fg);">Esta capa no tiene un índice útil sobre sus 477.588 vías: una página de 20 filas tarda entre <span style="font-family: var(--mono); color: var(--amber);">14 y 20 segundos</span> si el filtro es un departamento.</p>
+          <button class="btn ghost mini" type="button" style="border-color: color-mix(in oklch, var(--amber) 45%, var(--line)); color: var(--amber);">Cargar igual</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{
+  "accent": {"editor": "color", "default": "#3fd9c9", "options": ["#3fd9c9", "#7dd3fc", "#a3e635", "#f0a868"], "section": "Tema"},
+  "$preview": {"width": 1440, "height": 1120}
+}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#3fd9c9' }
+  }
+}
+</script>
+</body>
+</html>

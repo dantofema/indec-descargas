@@ -1,0 +1,284 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      --ground: oklch(0.17 0.012 250);
+      --panel:  oklch(0.215 0.014 250);
+      --raise:  oklch(0.26 0.015 250);
+      --line:   oklch(0.32 0.014 250);
+      --fg:     oklch(0.96 0.005 250);
+      --muted:  oklch(0.72 0.012 250);
+      --amber:  oklch(0.80 0.125 75);
+      --display: "Space Grotesk", system-ui, sans-serif;
+      --body: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    body { margin: 0; background: var(--ground); color: var(--fg); font-family: var(--body); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--fg); }
+
+    /* Una sola entrada orquestada: el hero escalona, los contadores corren
+       después. Nada de micro-interacciones sueltas. */
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .r { animation: rise .55s cubic-bezier(.2,.7,.3,1) both; }
+    .r1 { animation-delay: .04s } .r2 { animation-delay: .12s }
+    .r3 { animation-delay: .20s } .r4 { animation-delay: .30s }
+
+    /* El tile: la línea de acento se dibuja de izquierda a derecha en hover,
+       y el icono pasa de apagado a señal. El lift es de 2px: más se siente
+       un juguete, menos no se percibe. */
+    .tile {
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 18px 18px 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      transition: transform .22s cubic-bezier(.2,.7,.3,1), border-color .22s, background .22s;
+    }
+    .tile::after {
+      content: ""; position: absolute; inset: auto 0 0 0; height: 2px;
+      background: var(--accent);
+      transform: scaleX(0); transform-origin: 0 50%;
+      transition: transform .32s cubic-bezier(.2,.7,.3,1);
+    }
+    .tile:hover { transform: translateY(-2px); border-color: color-mix(in oklch, var(--accent) 45%, var(--line)); background: var(--raise); }
+    .tile:hover::after { transform: scaleX(1); }
+    .tile:hover .ico { color: var(--accent); }
+    .ico { color: var(--muted); transition: color .22s; }
+
+    .btn {
+      appearance: none; font: inherit; cursor: pointer;
+      font-family: var(--display); font-weight: 500; font-size: 15px;
+      padding: 13px 22px; border-radius: 8px;
+      border: 1px solid var(--accent);
+      background: var(--accent); color: oklch(0.17 0.012 250);
+      transition: box-shadow .22s, transform .12s, background .22s;
+    }
+    .btn:hover { box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 22%, transparent); }
+    .btn:active { transform: translateY(1px); }
+    .btn.ghost {
+      background: transparent; color: var(--accent);
+      border-color: color-mix(in oklch, var(--accent) 40%, var(--line));
+    }
+    .btn.ghost:hover { background: color-mix(in oklch, var(--accent) 10%, transparent); box-shadow: none; }
+
+    .field {
+      font: inherit; font-size: 15px; color: var(--fg);
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; padding: 13px 15px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field::placeholder { color: var(--muted); }
+    .field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent); }
+
+    .navlink { color: var(--muted); font-size: 14px; position: relative; }
+    .navlink::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 1px;
+      background: var(--accent); transform: scaleX(0); transform-origin: 0 50%;
+      transition: transform .24s cubic-bezier(.2,.7,.3,1);
+    }
+    .navlink:hover { color: var(--fg); }
+    .navlink:hover::after { transform: scaleX(1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .r, .tile, .tile::after, .btn, .navlink::after, .ico { animation: none !important; transition: none !important; }
+      .tile::after, .navlink::after { transform: scaleX(1); }
+    }
+  </style>
+</helmet>
+
+<div style="--accent: {{accent}}; min-height: 100%; background:
+  radial-gradient(1100px 520px at 18% -8%, color-mix(in oklch, {{accent}} 9%, transparent), transparent 70%),
+  var(--ground);
+  font-family: var(--body);">
+
+  <!-- barra -->
+  <header style="max-width: 1120px; margin: 0 auto; padding: 22px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line);">
+    <span style="font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15"></path><path d="M15 6v15"></path>
+      </svg>
+      Marco Geoestadístico
+    </span>
+    <nav style="display: flex; gap: 26px; align-items: center;">
+      <a class="navlink" href="#">Inicio</a>
+      <a class="navlink" href="#">Notas</a>
+      <a class="navlink" href="#">Servicios del INDEC</a>
+    </nav>
+  </header>
+
+  <!-- hero -->
+  <section style="max-width: 1120px; margin: 0 auto; padding: 78px 40px 56px;">
+    <p class="r r1" style="font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 20px;">Sitio no oficial · datos del INDEC</p>
+
+    <h1 class="r r2" style="font-family: var(--display); font-weight: 700; font-size: 60px; line-height: 1.04; letter-spacing: -0.028em; margin: 0 0 20px; max-width: 17ch;">
+      La cartografía del INDEC, lista para tus proyectos.
+    </h1>
+
+    <p class="r r3" style="font-size: 17px; line-height: 1.6; color: var(--muted); margin: 0 0 36px; max-width: 58ch;">
+      Buscá una provincia, departamento, localidad, municipio o aglomerado y descargalo en GeoPackage. Sin saber WFS, sin cuenta, sin instalar nada.
+    </p>
+
+    <div class="r r4" style="display: flex; gap: 10px; flex-wrap: wrap; max-width: 720px;">
+      <select class="field" style="min-width: 190px;" aria-label="Tipo de objeto">
+        <option>Todos los tipos</option>
+      </select>
+      <input class="field" style="flex: 1 1 300px;" type="search" placeholder="Escribí un nombre o un código. Por ejemplo: Tres de Febrero" aria-label="Buscar">
+      <button class="btn" type="button">Buscar</button>
+    </div>
+
+    <p class="r r4" style="font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin: 18px 0 0;">
+      <span style="color: var(--fg);">{{n.total}}</span> objetos indexados
+      <span style="color: var(--line);"> · </span>
+      catálogo generado el <span style="color: var(--fg);">2026-09-06</span>
+    </p>
+  </section>
+
+  <!-- contadores -->
+  <section style="max-width: 1120px; margin: 0 auto; padding: 0 40px 72px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin: 0 0 22px;">
+      <h2 style="font-family: var(--display); font-weight: 500; font-size: 19px; letter-spacing: -0.01em; margin: 0;">Qué hay adentro</h2>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--muted);">ocho objetos del Marco</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15"></path><path d="M15 6v15"></path></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.jur}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Jurisdicciones</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"></rect><rect x="13" y="3" width="8" height="8" rx="1"></rect><rect x="3" y="13" width="8" height="8" rx="1"></rect><rect x="13" y="13" width="8" height="8" rx="1"></rect></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.dep}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Departamentos</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.fracciones}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Fracciones censales</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="1.5"></circle><path d="M12 12l6-4"></path></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.radios}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Radios censales</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20v-9l5-4 5 4v9"></path><path d="M14 20v-6l5-3v9"></path><path d="M3 20h18"></path></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.loc}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Localidades censales</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6z"></path><path d="M6 10v9M10 10v9M14 10v9M18 10v9"></path><path d="M3 21h18"></path></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.gl}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Gobiernos locales</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="11" r="5"></circle><circle cx="16" cy="15" r="4"></circle><circle cx="17" cy="7" r="3"></circle></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.aglo}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Aglomerados</span>
+      </div>
+
+      <div class="tile">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v18"></path><path d="M16 3v18"></path><path d="M12 4v3M12 10v4M12 17v3"></path></svg>
+        <span style="font-family: var(--mono); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px;">{{n.vias}}</span>
+        <span style="font-size: 13.5px; color: var(--muted);">Vías de circulación</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="max-width: 1120px; margin: 0 auto; padding: 0 40px 72px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap;
+      padding: 30px 34px; border: 1px solid var(--line); border-radius: 12px;
+      background: linear-gradient(180deg, var(--panel), color-mix(in oklch, var(--panel) 88%, var(--ground)));">
+      <div>
+        <h3 style="font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: -0.01em; margin: 0 0 7px;">Este sitio usa 8 de las 47 capas que publica el INDEC</h3>
+        <p style="font-size: 14.5px; color: var(--muted); margin: 0; max-width: 62ch;">Si necesitás más mapas, más capas o los metadatos completos, el Geoportal es la fuente.</p>
+      </div>
+      <a class="btn ghost" href="#" style="display: inline-flex; align-items: center; gap: 9px; text-decoration: none;">
+        Ir al Geoportal INDEC
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M8 7h9v9"></path></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- pie -->
+  <footer style="border-top: 1px solid var(--line);">
+    <div style="max-width: 1120px; margin: 0 auto; padding: 30px 40px 40px; display: flex; gap: 40px; flex-wrap: wrap; justify-content: space-between;">
+      <p style="font-size: 13.5px; line-height: 1.65; color: var(--muted); margin: 0; max-width: 54ch;">
+        <strong style="color: var(--fg); font-weight: 500;">Sitio no oficial.</strong> No pertenece al INDEC ni lo representa. Publica datos que el INDEC distribuye abiertamente.
+      </p>
+      <p style="font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--muted); margin: 0;">
+        Los límites del INDEC son de uso estadístico.<br>
+        Los oficiales los publica el <a href="#">IGN</a>.
+      </p>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{
+  "accent": {"editor": "color", "default": "#3fd9c9", "options": ["#3fd9c9", "#7dd3fc", "#a3e635", "#f0a868"], "section": "Tema"},
+  "$preview": {"width": 1440, "height": 1240}
+}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props)
+    // `t` es el progreso 0..1 de la entrada. Los contadores no son ocho
+    // animaciones sueltas: son una sola, y por eso comparten reloj.
+    this.state = { t: 0 }
+  }
+
+  componentDidMount() {
+    // Respetar la preferencia del sistema no es un extra: para alguien con
+    // sensibilidad vestibular, ocho números corriendo es un síntoma.
+    const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (mq && mq.matches) { this.setState({ t: 1 }); return }
+
+    const start = performance.now()
+    const dur = 1300
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / dur)
+      // easeOutCubic: arranca rápido y se estaciona, que es como se lee un
+      // instrumento. Lineal parece una barra de carga.
+      this.setState({ t: 1 - Math.pow(1 - p, 3) })
+      if (p < 1) this.raf = requestAnimationFrame(step)
+    }
+    this.raf = requestAnimationFrame(step)
+  }
+
+  componentWillUnmount() { if (this.raf) cancelAnimationFrame(this.raf) }
+
+  renderVals() {
+    const t = this.state.t
+    // Los ocho totales son los reales del catálogo del 2026-09-06, no
+    // ejemplos: el diseño tiene que aguantar 477.588 al lado de 24.
+    const real = { jur: 24, dep: 529, loc: 4023, gl: 2282, aglo: 119, fracciones: 6571, radios: 66515, vias: 477588, total: 6977 }
+    const n = {}
+    for (const k of Object.keys(real)) {
+      n[k] = Math.round(real[k] * t).toLocaleString('es-AR')
+    }
+    return { accent: this.props.accent ?? '#3fd9c9', n }
+  }
+}
+</script>
+</body>
+</html>
