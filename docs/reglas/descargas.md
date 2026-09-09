@@ -98,14 +98,26 @@ vías son 727 calles, y una se parte en 80 tramos idénticos en los 21 campos pu
 distinguibles sólo por ese `id`. Prometer "bajar este tramo" sería prometer algo que el filtro
 no puede cumplir.
 
-### DES-R10 — Se ofrece la cadena de padres completa, sólo si existen en el catálogo
+### DES-R10 — Se ofrece la cadena de padres completa; la de catálogo se verifica antes, la sintética no tiene dónde
 
-La ficha de un objeto también ofrece sus padres: departamento → jurisdicción; localidad →
+La ficha de un objeto también ofrece sus padres. Para los tipos que están en el catálogo —
+departamento, localidad censal, gobierno local—: departamento → jurisdicción; localidad →
 departamento, jurisdicción y aglomerado; gobierno local → jurisdicción. Aglomerado y
-jurisdicción no tienen padre. Cada padre derivado se busca en el catálogo antes de ofrecerlo
-(DES-R8); el que no aparece ahí, no se muestra.
+jurisdicción no tienen padre. Cada uno de estos padres se busca en el catálogo antes de
+ofrecerlo (DES-R8); el que no aparece ahí, no se muestra.
+
+Para los tres tipos que no están en el catálogo —fracción censal, radio censal, vía de
+circulación—, agregados junto con su ficha propia: fracción → departamento, jurisdicción; radio
+→ fracción, departamento, jurisdicción; vía → localidad censal, departamento, jurisdicción. Cada
+padre de esta cadena que a su vez es de catálogo (departamento, jurisdicción, localidad) se busca
+igual que arriba y se descarta si no aparece. El que no es de catálogo —la fracción que cuelga de
+un radio— no tiene dónde buscarse: se deriva del prefijo del código, igual que el objeto mismo, y
+se ofrece siempre, sin nombre (NAV-R4). Su existencia no la confirma el catálogo sino el
+GeoServer, recién cuando se abre esa ficha.
 
 **Por qué:** las inconsistencias del INDEC (DES-R8) hacen que un código de padre derivado no
-siempre resuelva a un objeto real. Ofrecer un enlace a un padre que no está en el catálogo sería
+siempre resuelva a un objeto real. Ofrecer un enlace a un padre de catálogo que no está ahí sería
 un link roto, y el catálogo es la única fuente contra la que se puede verificar antes de
-mostrarlo.
+mostrarlo. Un padre sintético no tiene esa fuente para consultar de antemano —no está en ningún
+catálogo—, así que retenerlo hasta poder verificarlo lo dejaría afuera siempre; se ofrece igual,
+y es la propia ficha la que dice si hay algo ahí o no.

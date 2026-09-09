@@ -20,9 +20,7 @@ sola vez, en vez de que cada ficha la repita a su manera.
 Los totales que una nota declara se comparan con `public/catalog.json` en la suite: un número
 que se desvía del catálogo pone la suite roja. Vale para el dato y para la prosa: la nota que
 repite su total escribiéndolo con letras también se compara, así que corregir el campo y dejar
-el párrafo viejo no pasa. Las dos notas que se mudaron intactas no afirman su total en prosa
-—`/notas/` ya lo muestra como dato— y están exceptuadas por nombre; si alguna vez lo afirman,
-la excepción se cae sola.
+el párrafo viejo no pasa. Las ocho notas afirman su total en prosa; no hay exceptuadas.
 
 Una nota puede además afirmar algo que no sale del catálogo ni del GeoServer, **si nombra la
 fuente en el texto y deja el enlace a la vista** (`sources` en `notes.js`, dibujado bajo la nota).
@@ -31,9 +29,13 @@ UBA. Lo sostiene una afirmación humana, y por eso la nota tiene que decir de qu
 vez de absorberlo como si fuera propio. Lo único que la suite acorrala es que no quede una
 afirmación externa huérfana: cada fuente declarada tiene que estar nombrada en algún párrafo.
 
-Lo verificable contra el catálogo o el GeoServer sigue bajo el gate automático, sin excepción:
-que ahora se admita fuente externa no es permiso para dejar de chequear lo que sí se puede
-chequear.
+Lo comparable contra `public/catalog.json` se recalcula en cada corrida de la suite: si el
+catálogo cambia, el número viejo de la prosa se pone rojo solo. Lo que sale de medir contra el
+GeoServer del INDEC —cuántos tramos no tienen altura, cuántos radios son mixtos, cuánto tarda una
+descarga— no se vuelve a medir en cada corrida: ningún test le habla al GeoServer. Ese número
+queda *fijado* como literal el día que se midió, tanto en la nota como en el test que lo cita, así
+que la suite verifica que los dos literales sigan coincidiendo —protege contra un tipeo o una
+edición a medias—, no que el GeoServer siga contestando lo mismo hoy.
 
 **Por qué:** una nota es la voz del sitio sobre datos ajenos, no la opinión del sitio sobre sí
 mismo. Un número inventado ahí es peor que no tener nota: el sitio no tiene forma de saber si
