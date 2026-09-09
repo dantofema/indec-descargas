@@ -43,9 +43,11 @@ let current = null
  * abrió y `capa=` aparece recién cuando se cambia de pestaña. La excepción
  * es un enlace que sí nombró una capa: ahí la barra ya afirmó qué se está
  * viendo, y si el objeto no tiene esa capa —o si esa capa no existe— hay
- * que dejarla diciendo la que se abrió en su lugar. La página de esa
- * primera pestaña corre la misma suerte: se carga sola y avisa por el
- * mismo aviso que la pestaña, así que la misma guarda decide si se escribe.
+ * que dejarla diciendo la que se abrió en su lugar.
+ *
+ * La página de la tabla va por el mismo camino: la primera pestaña se carga
+ * sola al armar la fila y dispara su propio aviso, distinto del de la
+ * pestaña pero con la misma guarda, así que `writeTab` decide para los dos.
  */
 let writeTab = false
 

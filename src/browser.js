@@ -95,8 +95,10 @@ export const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la
  * cambio después—. El browser no sabe que existe una URL: la página que lo
  * cablea es la que decide qué hacer con ese aviso.
  *
- * `onPage` avisa la página que quedó cargada, con la misma lógica: el
- * browser no sabe que existe una URL, sólo qué se está mirando.
+ * `onPage` avisa desde `load`, antes del `await fetchPage(...)`: el aviso
+ * llega cuando la página se pide de verdad, no cuando termina de cargar
+ * —ese pedido todavía puede abortarse o fallar—. El browser no sabe que
+ * existe una URL, sólo qué se está pidiendo.
  */
 export function createBrowser({ container, onView, onError, onTab = () => {}, onPage = () => {} }) {
   let obj = null
