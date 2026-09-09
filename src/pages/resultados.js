@@ -13,7 +13,7 @@
  */
 import { loadCatalog } from '../catalog.js'
 import { selfUrl, TYPES, LAYER_OF_TYPE, TYPE_OF_LAYER, featureUrl, isCode } from '../download.js'
-import { initMap, showObject } from '../map.js'
+import { initMap, showObject, syncMapSize } from '../map.js'
 import { fmt, downloadButton, disabledButton, setStatus, costPanel } from '../ui.js'
 import { childRows } from '../children.js'
 import { createSearchBox } from '../searchbox.js'
@@ -233,6 +233,10 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   el.rowBrowse.hidden = !browser.show(obj, initialLayer, initialPage)
   writeTab = true
   el.detail.hidden = false
+  // `#detail` estaba oculto cuando `initMap` armó el mapa, así que Leaflet
+  // midió 0×0: hay que avisarle recién ahora, se dibuje algo enseguida o no
+  // (ver SITIO-R3 dos líneas abajo).
+  syncMapSize()
   // SITIO-R3: nada de vías se pide sin un acto explícito. Un enlace a un
   // tramo abre mostrando el costo medido y un botón, igual que la pestaña
   // (NAV-R7). Lo que sí funciona sin red es la descarga: sólo necesita el
@@ -249,20 +253,30 @@ function loadFeatureButton(obj) {
     onClick: (b) => {
       b.disabled = true
       b.textContent = 'Cargando…'
-      drawObject(obj)
+      // Con el GeoServer del INDEC un corte de conexión es más probable que
+      // un 500 (ver map.js), y este botón es la única acción de la ficha:
+      // si el fallo lo deja apagado, la página se queda sin ninguna salida.
+      drawObject(obj, () => {
+        b.disabled = false
+        b.textContent = 'Cargar igual'
+      })
     },
   })
 }
 
 /**
- * Dibuja el objeto de la ficha en el mapa. Va después de destapar `#detail`:
- * Leaflet midió altura cero con el panel oculto y `showObject` lo corrige
- * con `invalidateSize`, que necesita el contenedor a la vista.
+ * Dibuja el objeto de la ficha en el mapa. Va después de destapar `#detail`
+ * y de `syncMapSize()`: sin eso Leaflet sigue midiendo lo que midió con el
+ * panel oculto, que es 0×0.
  *
  * Un mapa que no se puede dibujar no rompe la ficha: las descargas —que son
  * a lo que se vino— siguen ahí, así que el fallo se avisa y se sigue.
+ *
+ * `onFail` es para quien haya dejado algo deshabilitado mientras esperaba
+ * —hoy sólo el botón "Cargar igual" de una vía—: sin avisarle del fallo,
+ * ese botón queda apagado para siempre y la página pierde su única acción.
  */
-function drawObject(obj) {
+function drawObject(obj, onFail = () => {}) {
   showObject(obj)
     .then((drawn) => {
       // Un objeto sin catálogo llega a la página con nada más que su tipo y
@@ -274,6 +288,7 @@ function drawObject(obj) {
     })
     .catch((err) => {
       setStatus(el.status, `No se pudo dibujar el objeto en el mapa: ${err.message}. Las descargas siguen funcionando.`, true)
+      onFail()
     })
 }
 

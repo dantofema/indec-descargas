@@ -30,16 +30,24 @@ export function initMap(containerId) {
   map.attributionControl.setPrefix(false)
 }
 
-/** El mapa se creó con `#detail` oculto: Leaflet midió altura cero y hay
- * que avisarle recién ahora que ya es visible. También arranca la marca de
- * carrera que decide "quién es la última selección" (ver drawFromUrl).
+/**
+ * El mapa se creó con `#detail` oculto: Leaflet midió altura cero. Quien
+ * destapa el panel llama a esto para que Leaflet vuelva a medir, se dibuje
+ * algo enseguida o no —la ficha de una vía (SITIO-R3) puede destaparlo sin
+ * pedir nada hasta el clic en "Cargar igual", y sin este aviso se queda en
+ * cero píxeles hasta entonces—.
+ */
+export function syncMapSize() {
+  if (map) map.invalidateSize()
+}
+
+/** Arranca la marca de carrera que decide "quién es la última selección"
+ * (ver drawFromUrl).
  *
  * Lo que había dibujado no se toca acá: se borra recién cuando hay con qué
  * reemplazarlo (ver drawFromUrl). */
 function beginRequest() {
-  const request = ++pending
-  map.invalidateSize()
-  return request
+  return ++pending
 }
 
 /**

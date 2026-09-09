@@ -7,9 +7,18 @@ import { injectShell, readPartials } from '../../scripts/shell.mjs'
 // El cableado de /resultados/: que el `resultados/index.html` real, el
 // catálogo y los módulos encajen. Leaflet va mockeado —necesita un browser
 // de verdad para medir—, todo lo demás es el código que se publica.
+//
+// `mapaLeaflet` guarda el objeto que devuelve `L.map()` en el montaje más
+// reciente: la ficha de una vía (SITIO-R3) tiene que avisarle a Leaflet su
+// tamaño al destaparse `#detail` sin haber dibujado nada todavía, y sin
+// `invalidateSize` como espía ningún test lo puede comprobar sobre el mock.
+let mapaLeaflet
 vi.mock('leaflet', () => ({
   default: {
-    map: () => ({ invalidateSize: () => {}, fitBounds: () => {}, attributionControl: { setPrefix: () => {} } }),
+    map: () => {
+      mapaLeaflet = { invalidateSize: vi.fn(), fitBounds: () => {}, attributionControl: { setPrefix: () => {} } }
+      return mapaLeaflet
+    },
     tileLayer: () => ({ addTo: () => {} }),
     geoJSON: () => ({ addTo() { return this }, getBounds: () => 'bounds', remove: () => {} }),
   },
@@ -410,6 +419,17 @@ describe('la ficha de una vía (SITIO-R3)', () => {
     expect(pidioVias()).toBe(false)
   })
 
+  // `initMap` corre con `#detail` todavía oculto y Leaflet mide 0×0. Las
+  // demás fichas lo corrigen al dibujar (`beginRequest` llama
+  // `invalidateSize`), pero la de una vía no dibuja nada hasta el clic: sin
+  // un aviso aparte, el permalink de un tramo aterriza con el mapa en cero
+  // píxeles en vez de la vista de Argentina.
+  it('el mapa mide su tamaño real al destaparse la ficha, aunque no dibuje nada', async () => {
+    await montar('?t=via&c=0684001001810')
+    expect(pidioVias()).toBe(false)
+    expect(mapaLeaflet.invalidateSize).toHaveBeenCalled()
+  })
+
   it('muestra el costo medido y un botón para cargar igual', async () => {
     await montar('?t=via&c=0684001001810')
     expect($('#detail').textContent).toContain('12 segundos')
@@ -443,6 +463,23 @@ describe('la ficha de una vía (SITIO-R3)', () => {
     // El fixture de vías tiene que devolver más de un feature para este caso:
     // si hoy devuelve uno solo, duplicalo en el mock con el mismo cod_indec.
     expect($('#detail-meta').textContent).toMatch(/partida en \d+ tramos/)
+  })
+
+  // Con el GeoServer del INDEC un corte de conexión es más probable que un
+  // 500 (ver map.js), y este botón es la única acción de la página: si el
+  // fallo lo deja apagado, la ficha queda sin salida.
+  it('si el dibujo falla, el botón vuelve a ofrecer "Cargar igual" para reintentar', async () => {
+    await montar('?t=via&c=0684001001810')
+    global.fetch = vi.fn(async () => { throw new TypeError('Failed to fetch') })
+
+    const boton = $('#load-feature')
+    boton.click()
+    await vi.waitFor(() => expect(boton.disabled).toBe(true))
+    expect(boton.textContent).toBe('Cargando…')
+
+    await vi.waitFor(() => expect($('#status').textContent).toContain('No se pudo dibujar'))
+    expect(boton.disabled).toBe(false)
+    expect(boton.textContent).toBe('Cargar igual')
   })
 })
 
