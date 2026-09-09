@@ -45,9 +45,36 @@ function resolve(name, tokens) {
 
 const channel = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
 
-function luminance(hex) {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+/**
+ * oklch → sRGB lineal, con los coeficientes de Björn Ottosson. Hace falta
+ * porque la paleta se declara en oklch —es el espacio donde "mismo croma,
+ * misma luminosidad, otro matiz" significa lo que dice— y el contraste de
+ * WCAG se calcula sobre sRGB lineal.
+ */
+function oklchToLinear(L, C, H) {
+  const h = (H * Math.PI) / 180
+  const a = C * Math.cos(h)
+  const b = C * Math.sin(h)
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+  ]
+}
+
+/** Los canales lineales de un color, venga en hex o en oklch. */
+function linearChannels(color) {
+  const ok = color.match(/^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)$/)
+  if (ok) return oklchToLinear(+ok[1], +ok[2], +ok[3]).map((c) => Math.min(1, Math.max(0, c)))
+  return [1, 3, 5].map((i) => channel(parseInt(color.slice(i, i + 2), 16) / 255))
+}
+
+function luminance(color) {
+  const [r, g, b] = linearChannels(color)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
 function contrast(a, b) {
@@ -209,5 +236,24 @@ describe('el nav marca la página activa', () => {
   // buscador del home, así que marca "Inicio".
   it('resultados marca Inicio', () => {
     expect(css).toMatch(par('resultados', 'home'))
+  })
+})
+
+describe('la conversión de color del gate', () => {
+  // El control que hace confiable a todo lo demás: un color escrito de las
+  // dos formas tiene que dar la misma luminancia. Sin esto, la conversión
+  // oklch podría estar mal y los contrastes de la paleta nueva serían
+  // números inventados con cara de medidos.
+  it('oklch y hex del mismo color dan la misma luminancia', () => {
+    // #1f6feb, el acento que el sitio tiene hoy, convertido el 2026-09-09.
+    // Su luminancia WCAG medida es 0.17658: si la conversión oklch no cae
+    // ahí, está mal la conversión, no el valor esperado.
+    expect(luminance('oklch(0.5686 0.2023 259.7)')).toBeCloseTo(luminance('#1f6feb'), 2)
+    expect(luminance('#1f6feb')).toBeCloseTo(0.17658, 4)
+  })
+
+  it('los extremos caen donde tienen que caer', () => {
+    expect(luminance('oklch(1 0 0)')).toBeCloseTo(1, 2)
+    expect(luminance('oklch(0 0 0)')).toBeCloseTo(0, 2)
   })
 })
