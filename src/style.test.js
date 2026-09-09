@@ -362,3 +362,20 @@ describe('el mensaje de error se lee en las dos paletas', () => {
     expect(contrast(oscuro, resolve('--ground', dark))).toBeGreaterThanOrEqual(4.5)
   })
 })
+
+describe('las fuentes se sirven desde acá (APAR-R3)', () => {
+  it('no hay ningún origen de terceros en la hoja', () => {
+    expect(css).not.toMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/)
+  })
+
+  it('las cinco caras están declaradas y apuntan a public/fonts', () => {
+    const caras = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1])
+    expect(caras).toHaveLength(5)
+    for (const c of caras) {
+      expect(c).toMatch(/url\(["']?\/fonts\/[a-z0-9-]+\.woff2/)
+      // `swap` y no `block`: la fuente no puede esconder el texto mientras
+      // llega. El sitio se lee antes de verse lindo.
+      expect(c).toMatch(/font-display:\s*swap/)
+    }
+  })
+})
