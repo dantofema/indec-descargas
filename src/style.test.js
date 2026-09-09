@@ -88,16 +88,32 @@ const rule = (selector) => {
 }
 
 
-/** Contenido de un bloque `@media`, contando llaves. */
+/**
+ * Contenido de un `@media`, contando llaves. Junta TODOS los bloques que
+ * usan la misma condición, no sólo el primero: la hoja está ordenada por
+ * superficie (`.results li:hover` y `.totales-tile:hover` comparten
+ * `(hover: hover)` pero viven cada uno junto a lo suyo), y para el browser
+ * dos bloques con la misma condición son equivalentes a uno solo. Quedarse
+ * con el primero auditaba sólo una superficie y dejaba la otra invisible al
+ * gate.
+ */
 function media(consulta) {
-  const inicio = css.indexOf(`@media ${consulta}`)
-  if (inicio === -1) return null
-  let i = css.indexOf('{', inicio), nivel = 0
-  for (let j = i; j < css.length; j++) {
-    if (css[j] === '{') nivel++
-    else if (css[j] === '}' && --nivel === 0) return css.slice(i + 1, j)
+  const bloques = []
+  let desde = 0
+  for (;;) {
+    const inicio = css.indexOf(`@media ${consulta}`, desde)
+    if (inicio === -1) break
+    let i = css.indexOf('{', inicio), nivel = 0
+    for (let j = i; j < css.length; j++) {
+      if (css[j] === '{') nivel++
+      else if (css[j] === '}' && --nivel === 0) {
+        bloques.push(css.slice(i + 1, j))
+        desde = j + 1
+        break
+      }
+    }
   }
-  return null
+  return bloques.length ? bloques.join('\n') : null
 }
 
 // El resto de este archivo audita colores contra `palettes()`, así que
@@ -420,4 +436,43 @@ describe('las cifras tabulares están donde hay números', () => {
       expect(bloques.join(' ')).toMatch(/font-variant-numeric:\s*tabular-nums/)
     })
   }
+})
+
+describe('el movimiento (APAR-R4)', () => {
+  it('hay movimiento, que antes no había', () => {
+    expect(css).toMatch(/@keyframes/)
+    expect((css.match(/transition:/g) ?? []).length).toBeGreaterThan(4)
+  })
+
+  // Lo único no negociable de esta tarea: para alguien con sensibilidad
+  // vestibular, ocho números corriendo no es un adorno.
+  it('todo se apaga con prefers-reduced-motion', () => {
+    const bloque = media('(prefers-reduced-motion: reduce)')
+    expect(bloque).not.toBeNull()
+    expect(bloque).toMatch(/animation:\s*none/)
+    expect(bloque).toMatch(/transition:\s*none/)
+  })
+
+  // El test de arriba pasaría igual con un bloque que apagara TODO, subrayado
+  // de la pestaña activa incluido: sólo mira que existan las dos
+  // declaraciones globales, no la excepción. Esta es la parte no negociable
+  // del brief: sin transición, el subrayado tiene que quedar dibujado
+  // (`scaleX(1)`), o el estado activo de la pestaña deja de verse.
+  it('la pestaña activa no se apaga: su subrayado queda abierto', () => {
+    const bloque = media('(prefers-reduced-motion: reduce)')
+    expect(bloque).toMatch(/\.tab\[aria-selected="true"\]::after\s*\{[^}]*transform:\s*scaleX\(1\)/)
+  })
+
+  // Mismo motivo para la página activa del nav: es el otro subrayado que
+  // esta tarea agrega con el mismo `scaleX(0)` de base (spec §3, "pestaña y
+  // nav"), así que corre el mismo riesgo si no se lo abre acá.
+  it('la página activa del nav no se apaga: su subrayado también queda abierto', () => {
+    const bloque = media('(prefers-reduced-motion: reduce)')
+    for (const [pagina, nav] of [
+      ['home', 'home'], ['resultados', 'home'], ['notas', 'notas'], ['servicios', 'servicios'],
+    ]) {
+      expect(bloque).toMatch(new RegExp(`\\[data-pagina="${pagina}"\\][^{]*\\[data-nav="${nav}"\\]::after`))
+    }
+    expect((bloque.match(/scaleX\(1\)/g) ?? []).length).toBeGreaterThan(1)
+  })
 })

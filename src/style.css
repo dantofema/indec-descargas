@@ -100,8 +100,24 @@ main { padding-top: 1.75rem; }
 .brand { color: var(--fg); font-weight: 600; text-decoration: none; }
 .brand:hover { text-decoration: underline; }
 .site-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-.site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+.site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; position: relative; }
 .site-nav a:hover { color: var(--fg); }
+/* El subrayado del nav: crece desde la izquierda al pasar el mouse (spec §3,
+   fila "pestaña y nav"). La base en `scaleX(0)` es la misma pieza que la
+   pestaña de capas de abajo, así que corre el mismo riesgo con
+   prefers-reduced-motion: se abre a mano para la página activa, más abajo
+   en este archivo y en el bloque que apaga el movimiento. */
+.site-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -.35rem;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 240ms cubic-bezier(.2, .7, .3, 1);
+}
+.site-nav a:hover::after { transform: scaleX(1); }
 /* Marca en el nav cuál página estás mirando. El body trae `data-pagina`
    —cada página lo pone en su propio <body>— y el link, `data-nav` —lo pone
    el shell, en build—: el puente entre los dos es CSS puro, sin JS, así
@@ -114,6 +130,14 @@ body[data-pagina="notas"] .site-nav [data-nav="notas"],
 body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   color: var(--fg);
   font-weight: 600;
+}
+/* El mismo subrayado del hover, pero fijo: la página activa lo tiene abierto
+   sin necesidad de mouse encima. */
+body[data-pagina="home"] .site-nav [data-nav="home"]::after,
+body[data-pagina="resultados"] .site-nav [data-nav="home"]::after,
+body[data-pagina="notas"] .site-nav [data-nav="notas"]::after,
+body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
+  transform: scaleX(1);
 }
 
 /* El CTA institucional, entre el contenido y el footer en toda página. */
@@ -131,6 +155,20 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
 
 /* El home: el hero con el buscador arriba y los totales abajo. */
 .home .hero { margin: 1.5rem 0 3rem; }
+/* Entrada orquestada, una vez al cargar: cuatro escalones de 80 ms que
+   ordenan la lectura —título, texto, buscador, totales— en vez de tirar
+   todo a la vez (APAR-R4, spec §3). `.search` va con el prefijo `.home`
+   porque esa clase también vive en /resultados/, que no entra así. */
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.home h1, .home .subtitle, .home .search, .home .totales {
+  animation: hero-in 550ms cubic-bezier(.2, .7, .3, 1) both;
+}
+.home .subtitle { animation-delay: 80ms; }
+.home .search { animation-delay: 160ms; }
+.home .totales { animation-delay: 240ms; }
 /* El único h1 en peso 700: es la única pieza de la consola que lleva el
    peso más pesado de Space Grotesk, el título del home. */
 .home h1 { font-family: var(--display); font-weight: 700; font-size: 2rem; line-height: 1.2; margin: 0 0 .6rem; max-width: 24ch; }
@@ -154,6 +192,28 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   /* No usa `--radius`: es un tile, no un control, y la consola les da a
      los tiles y al pozo del mapa un radio propio, más grande. */
   border-radius: 10px;
+  position: relative;
+  transition: transform 220ms cubic-bezier(.2, .7, .3, 1);
+}
+/* La línea inferior del hover: mismo `scaleX(0)` que la pestaña y el nav,
+   pero acá es puro `:hover` —nada la deja en un estado persistente— así
+   que no necesita abrirse a mano en el bloque de prefers-reduced-motion:
+   sin transición, `:hover` la sigue mostrando igual, sólo que de un salto. */
+.totales-tile::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  border-radius: 0 0 10px 10px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms cubic-bezier(.2, .7, .3, 1);
+}
+/* Sólo donde hay un puntero de verdad, mismo criterio que `.results li`. */
+@media (hover: hover) {
+  .totales-tile:hover { transform: translateY(-2px); }
+  .totales-tile:hover::after { transform: scaleX(1); }
 }
 .totales-tile svg { color: var(--accent); margin-bottom: .35rem; }
 .totales-n { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -405,6 +465,7 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
   padding: .6rem 1rem;
   cursor: pointer;
   white-space: nowrap;
+  position: relative;
 }
 .tab .n { color: inherit; }
 .tab[aria-selected="true"] {
@@ -415,6 +476,22 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
      activa con el panel de abajo, como en cualquier tablist con solapas. */
   margin-bottom: -1px;
 }
+/* El subrayado de la pestaña elegida, mismo tratamiento que el nav (spec §3,
+   "pestaña y nav"): crece desde la izquierda. Es un estado persistente, no
+   sólo `:hover`, así que el bloque de prefers-reduced-motion, al final de
+   esta hoja, lo tiene que dejar abierto a mano o desaparece con el resto del
+   movimiento. */
+.tab::after {
+  content: '';
+  position: absolute;
+  left: .2rem; right: .2rem; bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 240ms cubic-bezier(.2, .7, .3, 1);
+}
+.tab[aria-selected="true"]::after { transform: scaleX(1); }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Panel de texto de una nota, en /notas/: ancho de lectura, no el de la
@@ -449,7 +526,13 @@ thead th {
 }
 td.code { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 td.num { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
-td.acts { white-space: nowrap; }
+/* Atenuadas hasta que se entra a la fila, con mouse o con teclado: bajan el
+   ruido de una tabla densa sin esconder que la acción existe (spec §3,
+   "fila de tabla"). Es un `:hover`/`:focus-within`, así que tampoco necesita
+   nada en el bloque de prefers-reduced-motion: el estado sigue disponible,
+   sólo que sin la transición de por medio. */
+td.acts { white-space: nowrap; opacity: .55; transition: opacity 160ms ease; }
+tr:hover td.acts, tr:focus-within td.acts { opacity: 1; }
 td.acts .btn + .btn { margin-left: .4rem; }
 /* El motivo de una fila sin código (ver table.js) es prosa, no botones: sin
    esto hereda el `nowrap` de la celda y estira la tabla a lo ancho. */
@@ -515,4 +598,25 @@ table.wide th.col-anchor, table.wide td.col-anchor {
      Los dos contrastes los mide la suite: si alguien toca `--ground`, se
      entera ahí y no cuando alguien no puede leer un error. */
   .status.error { color: #ff6b6b; }
+}
+
+/* Lo único no negociable de esta tanda (APAR-R4): para alguien con
+   sensibilidad vestibular, ocho números corriendo no es un adorno, es un
+   síntoma. Apaga toda animación y transición de la hoja. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* Los subrayados y las líneas de hover viven en un `transform: scaleX(0)`
+     que la transición abría: sin animación hay que dejarlos abiertos, o el
+     estado activo deja de verse. Sólo hace falta para los dos que quedan en
+     un estado persistente (no sólo `:hover`): la pestaña de capas elegida y
+     la página activa del nav. El hover del tile y el hover simple del nav
+     no necesitan nada acá — `:hover` sigue matcheando igual sin animación,
+     sólo que de un salto en vez de un recorrido. */
+  .tab[aria-selected="true"]::after { transform: scaleX(1); }
+  body[data-pagina="home"] .site-nav [data-nav="home"]::after,
+  body[data-pagina="resultados"] .site-nav [data-nav="home"]::after,
+  body[data-pagina="notas"] .site-nav [data-nav="notas"]::after,
+  body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
+    transform: scaleX(1);
+  }
 }
