@@ -85,7 +85,12 @@ function queryEls() {
 }
 
 function renderChildren(obj) {
-  el.children.replaceChildren(...childRows(obj))
+  const rows = childRows(obj)
+  el.children.replaceChildren(...rows)
+  // La visibilidad de la fila la decide quien la dibuja, como su hermana
+  // `renderParents`: decidirla aparte es cómo divergen y queda una fila
+  // visible y vacía.
+  el.rowChildren.hidden = rows.length === 0
 }
 
 /** Una fila por padre: quién es y su descarga. */
@@ -224,12 +229,9 @@ function selectObject(obj, initialLayer = null, layerRequested = initialLayer !=
   showObjectIdentity(obj)
   renderParents(obj)
   renderChildren(obj)
-  // La fila 2 tiene dos mitades y cada una decide su visibilidad: un radio
-  // no contiene nada, y una sección vacía enseña a ignorarla.
-  el.rowChildren.hidden = el.children.children.length === 0
-  // La visibilidad de la fila la decide quien la dibuja, como la fila 2:
-  // recalcular acá el mismo predicado es cómo divergen y queda una fila
-  // visible y vacía.
+  // Mismo principio que `renderParents` y `renderChildren`: la fila se
+  // esconde según lo que devuelve quien la arma, no según un predicado
+  // recalculado acá aparte.
   el.rowBrowse.hidden = !browser.show(obj, initialLayer, initialPage)
   writeTab = true
   el.detail.hidden = false

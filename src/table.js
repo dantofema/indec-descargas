@@ -87,8 +87,9 @@ function actionCell(spec, childKey, row, onView) {
   ver.className = 'btn ghost mini'
   ver.textContent = 'Ver'
   // `onView` lleva la capa además de la fila: es lo único que en este
-  // punto sabe de qué capa vino el objeto, y quien mira el detalle
-  // necesita ese dato para pedirle la geometría al GeoServer.
+  // punto sabe de qué capa vino el objeto, y hace falta para armar el
+  // permalink de su ficha —el tipo sale de `TYPE_OF_LAYER[capa]`, no de
+  // la fila— y navegar (NAV-R11).
   ver.addEventListener('click', () => onView(row, childKey))
   acts.append(ver, downloadButton(featureUrl(childKey, code), 'Descargar', 'mini'))
   return acts

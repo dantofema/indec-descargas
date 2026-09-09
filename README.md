@@ -14,12 +14,15 @@ Sitio estático: no hay backend. Los datos salen del GeoServer público del INDE
 ## Estado
 
 Funcionando: cuatro páginas con URL propia —home, resultados, notas y servicios geoespaciales
-del INDEC— servidas por un único build. Elegir un objeto navega a su enlace permanente en
-`/resultados/?t=<tipo>&c=<código>`, que es la única fuente de verdad del estado: no hay nada
-para restaurar que la URL no diga, y compartir ese enlace reproduce exactamente lo que se
-estaba viendo. El home muestra los totales del catálogo al instante, sin bajarlo, y las cuatro
-páginas llevan el CTA al Geoportal INDEC y el footer institucional, inyectados en build. Las
-reglas están en [`docs/reglas/sitio.md`](docs/reglas/sitio.md).
+del INDEC— servidas por un único build. El sitio no es oficial ni representa al INDEC, y lo dice
+en la primera frase del pie de las cuatro páginas. Elegir un objeto navega a su enlace permanente
+en `/resultados/?t=<tipo>&c=<código>`, que es la única fuente de verdad del estado: no hay nada
+para restaurar que la URL no diga, y compartir ese enlace reproduce exactamente lo que se estaba
+viendo. Los ocho objetos del Marco Geoestadístico tienen ficha y enlace propios —también
+fracción censal, radio censal y vía de circulación, que no están en el catálogo y se llega a
+ellos por código, no por nombre—. El home muestra los totales del catálogo al instante, sin
+bajarlo, y las cuatro páginas llevan el CTA al Geoportal INDEC, inyectado en build. Las reglas
+están en [`docs/reglas/sitio.md`](docs/reglas/sitio.md).
 
 El sitio busca sobre un catálogo de 6.977 objetos (24 jurisdicciones, 529
 departamentos, 4.023 localidades censales, 2.282 gobiernos locales y 119 aglomerados),
@@ -33,13 +36,16 @@ Cada capa hija también se puede recorrer de a una fila, paginada contra el GeoS
 Vías es la excepción: no carga sola al abrir su pestaña, porque es una tabla de 477.588 filas
 sin índice útil y cualquier pedido contra ella tarda entre varios segundos y casi dos minutos;
 muestra el costo medido y un botón para cargar igual, y lista por tramo, no por calle. Elegir
-"Ver" en una fila hija actualiza también la ficha, no sólo el mapa: los dos describen siempre
-el mismo objeto. Las reglas están en [`docs/reglas/navegacion.md`](docs/reglas/navegacion.md).
+"Ver" en una fila hija navega a la ficha de esa fila, no la previsualiza dentro de la que ya se
+estaba mirando: hay un solo objeto por página, así que la ficha nunca puede contradecir al mapa.
+Las reglas están en [`docs/reglas/navegacion.md`](docs/reglas/navegacion.md).
 
 La búsqueda se puede acotar a un tipo de objeto, acepta las palabras del nombre sueltas y en
 cualquier orden, y toma la provincia como término extra para desambiguar homónimos: `caseros
-entre rios` separa los dos Caseros del país. Las reglas están en
-[`docs/reglas/buscador.md`](docs/reglas/buscador.md).
+entre rios` separa los dos Caseros del país. También se busca por código exacto, para los ocho
+tipos: los cinco del catálogo por su código publicado, y fracción, radio y vía —que no tienen
+nombre— por el largo del código, sin pedir nada al GeoServer hasta que se elige un resultado.
+Las reglas están en [`docs/reglas/buscador.md`](docs/reglas/buscador.md).
 
 Cada uno de los ocho objetos del Marco Geoestadístico tiene su propia nota, en `/notas/`, con
 ancla propia. La ficha de un objeto enlaza a la nota de su tipo y a la de cada capa hija que
@@ -77,6 +83,9 @@ se desincroniza del otro.
 
 ## Aviso
 
-Los límites que publica el INDEC en estas capas son para integración de información
-estadística. No son fuente oficial de delimitación territorial ni sirven como prueba en
-controversias de límites.
+Sitio no oficial. No pertenece al INDEC ni lo representa. Publica datos que el INDEC distribuye
+abiertamente.
+
+Los límites que publica el INDEC son para uso estadístico: no son los límites oficiales del
+territorio ni sirven como prueba en una controversia de límites. Los oficiales los publica el
+[IGN](https://www.ign.gob.ar/ut/), y no siempre coinciden con éstos.
