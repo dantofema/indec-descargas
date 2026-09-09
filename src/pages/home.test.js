@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { injectShell, readPartials } from '../../scripts/shell.mjs'
@@ -197,6 +197,12 @@ describe('elegir un objeto', () => {
 })
 
 describe('los contadores corren (APAR-R4)', () => {
+  // El único `vi.spyOn` del describe: sin restaurarlo, queda pegado a
+  // `window.requestAnimationFrame` para los tests que corran después. Hoy
+  // es inofensivo —es pass-through—, pero es la clase de cosa que muerde
+  // cuando alguien agrega un test nuevo más adelante.
+  afterEach(() => vi.restoreAllMocks())
+
   // No se afirma un valor intermedio (decisión del plan): eso ataría el test
   // al reloj. Pero sin nada más, esta prueba pasaba igual con el código
   // viejo —que siempre pintó el total final de una— porque nunca revisaba

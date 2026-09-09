@@ -438,12 +438,46 @@ describe('las cifras tabulares están donde hay números', () => {
   }
 })
 
-describe('el movimiento (APAR-R4)', () => {
-  it('hay movimiento, que antes no había', () => {
-    expect(css).toMatch(/@keyframes/)
-    expect((css.match(/transition:/g) ?? []).length).toBeGreaterThan(4)
-  })
+// La tabla de movimiento del spec §3 es un contrato: cada pieza tiene su
+// duración y su curva porque se eligieron por un motivo, no porque quedaban
+// bien. Contar ocurrencias de `transition:` —lo que hacía esto antes— deja
+// que alguien cambie 550ms por 500 sin que nadie se entere, y ahí el
+// documento pasa a describir un sitio que no existe. Es el mismo patrón de
+// aserción amplia con nombre específico que ya se corrigió dos veces en
+// este plan.
+describe('el movimiento respeta la tabla del spec (§3)', () => {
+  const CURVA = 'cubic-bezier(.2, .7, .3, 1)'
 
+  // [nombre de la fila del spec, selector tal cual aparece en la hoja,
+  // duración a buscar, curva esperada o null si la pieza no la usa].
+  const piezas = [
+    ['entrada del hero', '.home h1, .home .subtitle, .home .search, .home .totales', 550, CURVA],
+    ['tile hover', '.totales-tile', 220, CURVA],
+    ['fila de tabla', 'td.acts', 160, null],
+    ['pestaña', '.tab::after', 240, CURVA],
+    ['nav', '.site-nav a::after', 240, CURVA],
+  ]
+
+  for (const [nombre, selector, ms, curva] of piezas) {
+    it(`${nombre} conserva su duración y su curva`, () => {
+      const bloques = rule(selector)
+      // Si el selector no existe más, `rule()` devuelve `[]` y `join(' ')`
+      // da un string vacío: sin este chequeo, un selector renombrado o
+      // borrado pasaría en verde igual, porque ningún `toMatch` de abajo
+      // encontraría nada CONTRA qué fallar de forma obvia.
+      expect(bloques.length, `${selector} no existe en la hoja`).toBeGreaterThan(0)
+      const bloque = bloques.join(' ')
+      expect(bloque, `${nombre} cambió de duración`).toMatch(new RegExp(`\\b${ms}ms\\b`))
+      if (curva) expect(bloque, `${nombre} cambió de curva`).toContain(curva)
+    })
+  }
+
+  it('la entrada del hero tiene su @keyframes', () => {
+    expect(css).toMatch(/@keyframes\s+hero-in\s*\{/)
+  })
+})
+
+describe('el movimiento (APAR-R4)', () => {
   // Lo único no negociable de esta tarea: para alguien con sensibilidad
   // vestibular, ocho números corriendo no es un adorno.
   it('todo se apaga con prefers-reduced-motion', () => {
