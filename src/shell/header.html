@@ -1,5 +1,16 @@
 <header class="site-header">
-  <a class="brand" href="{{base}}">Descargas del Marco Geoestadístico</a>
+  <a class="brand" href="{{base}}">
+    <!-- La marca va en línea y no como <img>: así hereda --fg y --accent y
+         cambia sola con el botón del tema. La variante de trazo fino es la
+         de adentro de la página; el favicon usa la gruesa. -->
+    <svg class="marca" viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+      <g stroke="var(--fg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8V3h5" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /><path d="M21 16v5h-5" />
+      </g>
+      <path d="M8.7 10.3 13.4 8.2 16.4 12.1 11.6 15.8Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" />
+    </svg>
+    Descargas del Marco Geoestadístico
+  </a>
   <nav class="site-nav">
     <a data-nav="home" href="{{base}}">Inicio</a>
     <a data-nav="notas" href="{{base}}notas/">Notas</a>

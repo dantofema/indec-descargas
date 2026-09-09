@@ -44,8 +44,8 @@ describe('injectShell', () => {
 })
 
 describe('readPartials', () => {
-  it('trae los cuatro partials del shell', () => {
-    expect(Object.keys(readPartials()).sort()).toEqual(['cta', 'footer', 'header', 'tema'])
+  it('trae los cinco partials del shell', () => {
+    expect(Object.keys(readPartials()).sort()).toEqual(['cta', 'footer', 'header', 'iconos', 'tema'])
   })
 })
 
@@ -55,7 +55,7 @@ describe('las páginas del sitio', () => {
   it('todas traen header, tema, CTA y footer, y todas resuelven', () => {
     for (const p of paginas) {
       const html = readFileSync(resolve(process.cwd(), p), 'utf8')
-      for (const m of ['header', 'tema', 'cta', 'footer']) {
+      for (const m of ['header', 'tema', 'iconos', 'cta', 'footer']) {
         expect(html, `${p} no trae el marcador ${m}`).toContain(`<!--#shell:${m}-->`)
       }
       expect(() => injectShell(html, { partials: readPartials(), base: '/' })).not.toThrow()

@@ -122,3 +122,26 @@ APAR-R6 y a un click. Y el script va antes de la hoja porque, después, el brows
 qué pintar y quien eligió el tema claro se come un destello oscuro en cada carga.
 
 **Decidida y construida el 2026-09-09** · ✅ implementada · `src/tema.test.js`, `src/style.test.js`
+
+### APAR-R8 — La marca es «Marco», y sus archivos declaran de qué token salieron
+
+Cuatro esquinas encuadrando un polígono irregular. El encuadre va en `--fg` porque es la
+estructura; el polígono en `--accent` porque es el dato. Dos variantes de trazo, y no es
+decoración: **1,6 adentro de la página** y **2,4 con el polígono a 1,9 para 16 px**, porque a
+trazo fino el encuadre desaparece en una pestaña.
+
+En el header la marca va **en línea en el HTML**, no como `<img>`: así hereda los tokens y cambia
+sola con el botón del tema (APAR-R7). En `favicon.svg` los colores van literales, porque un
+favicon se abre fuera de la página y ahí la hoja no llega — y el archivo declara en un comentario
+de qué `oklch` salió cada hex, que es lo que `src/marca.test.js` compara contra `src/style.css`.
+
+Adentro del favicon `prefers-color-scheme` **sí** decide, y no contradice a APAR-R7: esa regla
+habla de la página, donde la persona elige con un botón. En el cromo del browser no hay botón ni
+página.
+
+**Por qué:** un favicon es el único pedazo de la identidad que se dibuja fuera del alcance de la
+hoja de estilo, así que es el único que puede quedar desincronizado de la paleta sin que nada se
+rompa —hasta que alguien mira la pestaña y ve un color que el sitio ya no usa—. El comentario con
+el `oklch` de origen convierte esa deriva silenciosa en un test rojo.
+
+**Decidida y construida el 2026-09-09** · ✅ implementada · `src/marca.test.js`

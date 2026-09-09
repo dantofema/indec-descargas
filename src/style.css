@@ -92,8 +92,14 @@ main { padding-top: 1.75rem; }
    así que la regla es de la página. */
 .resultados h1 { font-family: var(--display); font-weight: 500; font-size: 1.4rem; margin: 0 0 1.25rem; }
 .subtitle { color: var(--muted); margin: 0 0 1.5rem; }
-.brand { color: var(--fg); font-weight: 600; text-decoration: none; }
+.brand {
+  color: var(--fg); font-weight: 600; text-decoration: none;
+  display: inline-flex; align-items: center; gap: .55rem;
+}
 .brand:hover { text-decoration: underline; }
+/* El encuadre no se subraya junto con el texto. */
+.brand:hover .marca { text-decoration: none; }
+.marca { flex: none; }
 .site-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 .site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; position: relative; }
 .site-nav a:hover { color: var(--fg); }

@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400&display=swap">
+  <style>
+    :root {
+      --ground: oklch(0.17 0.012 250);
+      --panel:  oklch(0.215 0.014 250);
+      --raise:  oklch(0.26 0.015 250);
+      --line:   oklch(0.32 0.014 250);
+      --fg:     oklch(0.96 0.005 250);
+      --muted:  oklch(0.72 0.012 250);
+      --accent: oklch(0.80 0.125 190);
+      --display: "Space Grotesk", system-ui, sans-serif;
+      --body: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    }
+    body { margin: 0; background: var(--ground); color: var(--fg); font-family: var(--body); }
+    a { color: var(--accent); } a:hover { color: var(--fg); }
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+    h2 { font-family: var(--display); font-weight: 500; font-size: 21px; margin: 0 0 8px; letter-spacing: -.01em; }
+    .concepto { font-size: 13.5px; line-height: 1.55; color: var(--muted); margin: 0; text-wrap: pretty; }
+    .caja { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .rotulo { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+    .contra { font-size: 12.5px; line-height: 1.5; color: var(--muted); margin: 0; text-wrap: pretty; }
+    .contra strong { color: var(--fg); font-weight: 500; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; gap: 26px; padding: 40px; min-height: 600px">
+  <div>
+    <p class="eyebrow">Dirección · C</p>
+    <h2>Vértice</h2>
+    <p class="concepto">El símbolo del punto fijo geodésico: anillo, centro y cuatro marcas cardinales. Habla de medición y de precisión, que es de dónde viene todo este dato antes de ser una descarga.</p>
+  </div>
+
+  <div class="caja" style="height: 168px">
+    <svg width="92" height="92" viewBox="0 0 24 24" fill="none">
+      <g stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4.4" />
+        <path d="M12 2.4v3.2M12 18.4v3.2M2.4 12h3.2M18.4 12h3.2" />
+      </g>
+      <circle cx="12" cy="12" r="1.7" fill="var(--accent)" />
+    </svg>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; gap: 30px">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 9px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <g stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4.4" /><path d="M12 2.4v3.2M12 18.4v3.2M2.4 12h3.2M18.4 12h3.2" />
+        </g>
+        <circle cx="12" cy="12" r="1.7" fill="var(--accent)" />
+      </svg>
+      <span class="rotulo">32</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 9px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <g stroke="var(--fg)" stroke-width="1.9" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4.4" /><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3" />
+        </g>
+        <circle cx="12" cy="12" r="1.9" fill="var(--accent)" />
+      </svg>
+      <span class="rotulo">24</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 9px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <g stroke="var(--fg)" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4.8" /><path d="M12 3v2.4M12 18.6v2.4M3 12h2.4M18.6 12h2.4" />
+        </g>
+        <circle cx="12" cy="12" r="2.2" fill="var(--accent)" />
+      </svg>
+      <span class="rotulo">16</span>
+    </div>
+    <p class="rotulo" style="margin: 0 0 4px; line-height: 1.6">La que mejor<br>aguanta los 16 px</p>
+  </div>
+
+  <div class="caja" style="height: 74px; justify-content: flex-start; padding: 0 22px; gap: 13px">
+    <svg width="27" height="27" viewBox="0 0 24 24" fill="none" style="flex: none">
+      <g stroke="var(--fg)" stroke-width="1.7" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4.4" /><path d="M12 2.4v3.2M12 18.4v3.2M2.4 12h3.2M18.4 12h3.2" />
+      </g>
+      <circle cx="12" cy="12" r="1.7" fill="var(--accent)" />
+    </svg>
+    <span style="font-family: var(--display); font-weight: 700; font-size: 16.5px; letter-spacing: -.015em">Marco Geoestadístico</span>
+  </div>
+
+  <p class="contra"><strong>En contra:</strong> anillo con centro es también el símbolo de «ubicación» y de «grabar» en media interfaz; es la más legible y la menos propia.</p>
+</div>
+</x-dc>
+</body>
+</html>

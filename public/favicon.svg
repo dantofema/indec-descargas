@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" role="img" aria-label="Marco Geoestadístico">
+  <!--
+    La marca "Marco": cuatro esquinas encuadrando un polígono irregular.
+    Trazo grueso porque esto se dibuja a 16 px en una pestaña; la variante
+    fina (1,6) es la del header, adentro de la página.
+
+    Los colores van literales y no en var(): un favicon se abre fuera de la
+    página, donde la hoja de estilo no llega. De dónde salió cada uno —lo
+    verifica src/marca.test.js contra src/style.css:
+
+      oscuro: #3dd7cf = oklch(0.80 0.125 190)
+      claro:  #02736e = oklch(0.50 0.086 190)
+
+    Acá `prefers-color-scheme` sí decide, y no contradice a APAR-R7: esa
+    regla habla de la página, donde la persona elige con un botón. En el
+    cromo del browser no hay botón ni página, así que el sistema es lo único
+    que puede opinar. Por defecto va la marca oscura, que es la que sirve si
+    el browser no soporta la consulta.
+  -->
+  <style>
+    .encuadre { stroke: #161b20; }
+    .dato { fill: #02736e; stroke: #02736e; }
+    @media (prefers-color-scheme: dark) {
+      .encuadre { stroke: #eff2f5; }
+      .dato { fill: #3dd7cf; stroke: #3dd7cf; }
+    }
+  </style>
+  <g class="encuadre" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.5 8.5V3.5h5" />
+    <path d="M20.5 8.5V3.5h-5" />
+    <path d="M3.5 15.5v5h5" />
+    <path d="M20.5 15.5v5h-5" />
+  </g>
+  <path class="dato" d="M8.9 10.3 13.2 8.4 16.1 12 11.9 15.6Z" stroke-width="1.9" stroke-linejoin="round" />
+</svg>
