@@ -440,8 +440,9 @@ table.wide th.col-anchor, table.wide td.col-anchor {
     --accent: oklch(0.80 0.125 190);
     --amber:  oklch(0.80 0.125 75);
   }
-  /* #b32020 sobre este fondo mide 2,71:1, por debajo del 4,5:1 de WCAG AA,
-     justo en la única cadena que el usuario más necesita poder leer.
-     Este mide 6,53:1. */
+  /* El rojo del modo claro no llega al 4,5:1 de WCAG AA sobre este fondo,
+     justo en la única cadena que el usuario más necesita poder leer. Este sí.
+     Los dos contrastes los mide la suite: si alguien toca `--ground`, se
+     entera ahí y no cuando alguien no puede leer un error. */
   .status.error { color: #ff6b6b; }
 }

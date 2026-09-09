@@ -319,3 +319,28 @@ describe('la paleta de la consola (APAR-R6)', () => {
     }
   })
 })
+
+// El color del error no es un token: vive en una regla, así que `palettes()`
+// no lo ve. Y es la cadena que más importa que se lea: si el rediseño de la
+// paleta lo dejó por debajo del piso, nadie se entera hasta que alguien no
+// puede leer por qué falló su descarga.
+describe('el mensaje de error se lee en las dos paletas', () => {
+  const colorDeError = (bloque) => {
+    const m = bloque.match(/\.status\.error\s*\{\s*color:\s*([^;]+);/)
+    return m && m[1].trim()
+  }
+
+  it('en la paleta clara', () => {
+    const { light } = palettes()
+    const claro = colorDeError(css.replace(media('(prefers-color-scheme: dark)'), ''))
+    expect(claro).toBeTruthy()
+    expect(contrast(claro, resolve('--ground', light))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('en la paleta oscura', () => {
+    const { dark } = palettes()
+    const oscuro = colorDeError(media('(prefers-color-scheme: dark)'))
+    expect(oscuro).toBeTruthy()
+    expect(contrast(oscuro, resolve('--ground', dark))).toBeGreaterThanOrEqual(4.5)
+  })
+})
