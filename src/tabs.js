@@ -1,7 +1,10 @@
 /**
  * Pestañas con el patrón tablist de WAI-ARIA. No sabe qué hay adentro de
- * cada una: avisa cuál se eligió y el dueño decide qué dibujar. La usan la
- * fila de capas hijas y la de notas.
+ * cada una: avisa cuál se eligió y el dueño decide qué dibujar.
+ *
+ * Hoy tiene un solo llamador, la fila de capas hijas (`browser.js`). La
+ * fila de notas que también lo usaba dejó de existir (NOTA-R3), y `/notas/`
+ * explica en `pages/notas.js` por qué su tablist vertical no lo reusa.
  */
 export function createTabs({ container, items, onSelect }) {
   container.replaceChildren()

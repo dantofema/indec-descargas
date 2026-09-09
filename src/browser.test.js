@@ -157,135 +157,6 @@ describe('createBrowser', () => {
     expect(onView).toHaveBeenCalledWith(filas(20)[1], 'fracciones')
   })
 
-  // Corrección 3 al brief, que se la olvidó pedir: sin esto la fila que se
-  // mandó al mapa se pierde de vista entre otras 19 iguales.
-  describe('marca la fila que se está viendo', () => {
-    it('al hacer clic en Ver, esa fila queda aria-selected y las demás no', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-      const trs = () => container.querySelectorAll('tbody tr')
-      trs()[2].querySelector('button').click()
-
-      expect(trs()[2].getAttribute('aria-selected')).toBe('true')
-      expect([...trs()].filter((_, i) => i !== 2).every((tr) => tr.getAttribute('aria-selected') !== 'true')).toBe(true)
-    })
-
-    it('ver otra fila mueve la marca, no la duplica', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-      const trs = () => container.querySelectorAll('tbody tr')
-      trs()[2].querySelector('button').click()
-      trs()[0].querySelector('button').click()
-
-      expect(trs()[0].getAttribute('aria-selected')).toBe('true')
-      expect(trs()[2].getAttribute('aria-selected')).toBe('false')
-    })
-  })
-
-  // Fix round 1, hallazgo 5: un "Ver" que tarda —12,4 s medidos en vías—
-  // no puede dejar la interfaz muda. El botón avisa que está trabajando y,
-  // en vías, cuánto puede llegar a tardar.
-  describe('Ver deja un estado de carga mientras tarda', () => {
-    it('deshabilita el botón y cambia el texto, y lo restaura al terminar', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      let resolverOnView
-      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
-      const b = createBrowser({ container, onView, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      const button = container.querySelectorAll('tbody tr button')[0]
-      button.click()
-      expect(button.disabled).toBe(true)
-      expect(button.textContent).toBe('Viendo…')
-
-      resolverOnView()
-      await new Promise((r) => setTimeout(r, 0))
-      expect(button.disabled).toBe(false)
-      expect(button.textContent).toBe('Ver')
-    })
-
-    // Fix round 2, hallazgo abierto: `Promise.resolve(onView(...)).finally(...)`
-    // sin `.catch` deja el rechazo sin capturar —el botón se restaura igual
-    // porque `.finally()` corre pase lo que pase, pero la promesa rechazada
-    // queda como Unhandled Rejection—. `createBrowser` recibe `onError` para
-    // justo esto: un consumidor de `onView` puede no capturar sus propios
-    // errores (la interfaz no lo exige), y acá se enruta en vez de tragarlo.
-    it('un onView que rechaza no deja una promesa sin capturar, y el botón se restaura igual', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const falla = new Error('el mapa no se pudo dibujar')
-      const onView = vi.fn(() => Promise.reject(falla))
-      const onError = vi.fn()
-      const b = createBrowser({ container, onView, onError })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      let rechazoSinCapturar = null
-      const detectar = (razon) => { rechazoSinCapturar = razon }
-      process.on('unhandledRejection', detectar)
-
-      const button = container.querySelectorAll('tbody tr button')[0]
-      button.click()
-      // Una vuelta de macrotask: es cuando Node ya barrió los microtasks
-      // pendientes y, si nadie enganchó un `.catch`, dispara el evento.
-      await new Promise((r) => setTimeout(r, 0))
-      process.off('unhandledRejection', detectar)
-
-      expect(rechazoSinCapturar).toBe(null)
-      expect(onError).toHaveBeenCalledWith(falla)
-      expect(button.disabled).toBe(false)
-      expect(button.textContent).toBe('Ver')
-    })
-
-    it('si onView no devuelve una promesa, igual se restaura solo', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      const button = container.querySelectorAll('tbody tr button')[0]
-      button.click()
-      await new Promise((r) => setTimeout(r, 0))
-      expect(button.disabled).toBe(false)
-      expect(button.textContent).toBe('Ver')
-    })
-
-    it('en vías, mientras carga, avisa la espera con el número medido', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      let resolverOnView
-      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
-      const b = createBrowser({ container, onView, onError: () => {} })
-      b.show(depVias)
-      container.querySelectorAll('[role="tab"]')[1].click() // vías
-      boton(/cargar/i).click()
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      container.querySelectorAll('tbody tr button')[0].click()
-      expect(container.textContent).toMatch(/12 segundos/)
-
-      resolverOnView()
-      await new Promise((r) => setTimeout(r, 0))
-      expect(container.textContent).not.toMatch(/12 segundos/)
-    })
-
-    it('en otras capas no aparece el aviso de los 12 segundos de vías', async () => {
-      global.fetch = vi.fn(async () => paginaOk())
-      let resolverOnView
-      const onView = vi.fn(() => new Promise((r) => { resolverOnView = r }))
-      const b = createBrowser({ container, onView, onError: () => {} })
-      b.show(dep)
-      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
-
-      container.querySelectorAll('tbody tr button')[0].click()
-      expect(container.textContent).not.toMatch(/12 segundos/)
-      resolverOnView()
-    })
-  })
-
   // Corrección 2 al brief: medido contra el GeoServer real el 2026-09-06,
   // una página de vías tarda 14-20 s por departamento y 88-99 s por
   // provincia. Auto-cargarla colgaría la interfaz sin que nadie lo pida.
@@ -611,5 +482,178 @@ describe('createBrowser', () => {
     expect(container.textContent).not.toMatch(/no se pudo traer la lista/i)
     expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
     expect(container.textContent).toMatch(/sin código/i)
+  })
+
+  // Task 8: /resultados/ abre la capa que dice la URL. El browser no sabe
+  // nada de la URL —sólo recibe qué capa abrir y avisa cuál quedó abierta—,
+  // pero sin estas dos puntas la barra y la pestaña no se pueden atar.
+  describe('la capa inicial y el aviso de qué pestaña quedó activa', () => {
+    const crearBrowserDePrueba = ({ onTab } = {}) => createBrowser({
+      container, onView: () => {}, onError: () => {}, ...(onTab ? { onTab } : {}),
+    })
+
+    const pestañaActiva = () => container
+      .querySelector('[role="tab"][aria-selected="true"]')
+      ?.firstChild.textContent
+
+    beforeEach(() => { global.fetch = vi.fn(async () => paginaOk()) })
+
+    it('abre la capa que se le pide en vez de la primera', () => {
+      const b = crearBrowserDePrueba()
+      b.show(dep, 'radios')
+      expect(pestañaActiva()).toBe('Radios censales')
+    })
+
+    it('una capa que el objeto no tiene cae en la primera, no en una pestaña vacía', () => {
+      const b = crearBrowserDePrueba()
+      b.show(dep, 'departamentos')
+      expect(pestañaActiva()).toBe('Fracciones censales')
+    })
+
+    // Una capa en cero no es pestaña (NAV-R9): pedirla por URL tiene que
+    // caer en la primera, no dejar la fila con una pestaña que no existe.
+    it('una capa en cero tampoco se abre: cae en la primera', () => {
+      const b = crearBrowserDePrueba()
+      b.show({ t: 'dep', c: '94028', n: 'Antártida Argentina', ch: { fracciones: 3, vias: 0 } }, 'vias')
+      expect(pestañaActiva()).toBe('Fracciones censales')
+    })
+
+    it('sin capa pedida sigue abriendo la primera, como siempre', () => {
+      const b = crearBrowserDePrueba()
+      b.show(dep)
+      expect(pestañaActiva()).toBe('Fracciones censales')
+    })
+
+    it('avisa qué pestaña quedó activa, para que la URL la pueda guardar', () => {
+      const onTab = vi.fn()
+      const b = crearBrowserDePrueba({ onTab })
+      b.show(dep, 'radios')
+      expect(onTab).toHaveBeenCalledWith('radios')
+    })
+
+    it('también avisa la primera, cuando nadie pidió ninguna', () => {
+      const onTab = vi.fn()
+      const b = crearBrowserDePrueba({ onTab })
+      b.show(dep)
+      expect(onTab).toHaveBeenCalledWith('fracciones')
+    })
+
+    it('avisa cada vez que el usuario cambia de pestaña', () => {
+      const onTab = vi.fn()
+      const b = crearBrowserDePrueba({ onTab })
+      b.show(dep)
+      onTab.mockClear()
+      container.querySelectorAll('[role="tab"]')[1].click()
+      expect(onTab).toHaveBeenCalledWith('radios')
+    })
+
+    // NAV-R7 llega hasta acá: un enlace con `capa=vias` abre el panel de
+    // costo, no le cobra al que lo abre hasta 99 s que nunca pidió.
+    it('la capa lenta pedida por URL abre el panel de costo y no la pide', () => {
+      const b = crearBrowserDePrueba()
+      b.show(depVias, 'vias')
+      expect(container.textContent).toMatch(/99 segundos/)
+      expect(boton(/cargar/i)).not.toBe(undefined)
+      const pedidas = global.fetch.mock.calls.map(([url]) => String(url))
+      expect(pedidas.filter((u) => u.includes('vias_de_circulacion'))).toEqual([])
+    })
+
+    it('sin onTab no se rompe: es opcional', () => {
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      expect(() => b.show(dep, 'radios')).not.toThrow()
+    })
+  })
+
+  // NOTA-R3: la pestaña activa es la única que sabe qué capa se está
+  // recorriendo, así que el enlace a su nota vive acá y no en la página que
+  // cablea. Va como hermano de `body`, no adentro: ningún reemplazo de
+  // `body` —"Cargando…", el errorBox o el panel de costo— se lo lleva puesto.
+  describe('el enlace a la nota de la pestaña activa', () => {
+    const enlaceNota = () => container.querySelector('a[href*="/notas/#"]')
+
+    it('enlaza la nota de la primera pestaña, antes de que la tabla llegue', () => {
+      global.fetch = vi.fn(() => new Promise(() => {})) // no resuelve en este test
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep) // fracciones es la primera pestaña de `dep`
+      expect(container.textContent).toMatch(/Cargando/)
+      expect(enlaceNota().getAttribute('href')).toContain('#fraccion-censal')
+    })
+
+    it('cambiar de pestaña cambia el enlace, sin acumularlo', async () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(dep)
+      await vi.waitFor(() => expect(container.querySelector('tbody')).not.toBe(null))
+
+      container.querySelectorAll('[role="tab"]')[1].click() // radios
+      expect(container.querySelectorAll('a[href*="/notas/#"]')).toHaveLength(1)
+      expect(enlaceNota().getAttribute('href')).toContain('#radio-censal')
+    })
+
+    it('sigue visible si la página falla', async () => {
+      vi.useFakeTimers()
+      try {
+        global.fetch = fetchColgado()
+        const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+        b.show(dep)
+        await vi.advanceTimersByTimeAsync(31_000)
+        expect(container.querySelector('button.retry')).not.toBe(null)
+        expect(enlaceNota().getAttribute('href')).toContain('#fraccion-censal')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('en la capa lenta, el panel de costo tampoco se lleva el enlace', () => {
+      global.fetch = vi.fn(async () => paginaOk())
+      const b = createBrowser({ container, onView: () => {}, onError: () => {} })
+      b.show(depVias)
+      container.querySelectorAll('[role="tab"]')[1].click() // vías
+      expect(container.textContent).toMatch(/no tiene un índice útil/)
+      expect(enlaceNota().getAttribute('href')).toContain('#via-de-circulacion')
+    })
+  })
+
+  // Task 6: el permalink recuerda la página, no sólo la pestaña. Sin esto el
+  // Atrás del navegador (Task 4) devolvería a la página 1 de la tabla en vez
+  // de a la que se estaba mirando, una regresión respecto del botón "Volver
+  // a <objeto>" que reemplazó.
+  describe('la página inicial y el aviso de cambio de página', () => {
+    beforeEach(() => { global.fetch = vi.fn(async () => paginaOk()) })
+
+    it('abre la pestaña en la página que le piden', async () => {
+      const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
+      browser.show(dep, 'radios', 3)
+      // `dep` tiene dos pestañas: la primera (fracciones) se auto-selecciona
+      // y pide su página 0 antes de que el `select` explícito la aborte y
+      // pida radios (NAV-R8) — por eso se busca el pedido de radios en vez
+      // de asumir que es el primero de la lista.
+      await vi.waitFor(() => {
+        const radios = global.fetch.mock.calls.map(([u]) => String(u)).find((u) => u.includes('radios_censales2'))
+        expect(radios).toContain('startIndex=60')
+      })
+    })
+
+    it('avisa cada cambio de página', async () => {
+      const onPage = vi.fn()
+      const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage })
+      browser.show(dep, 'radios')
+      await vi.waitFor(() => expect(container.querySelector('.pager')).not.toBeNull())
+      boton('Siguiente').click()
+      await vi.waitFor(() => expect(onPage).toHaveBeenCalledWith('radios', 1))
+    })
+
+    // SITIO-R3: recordar la página no es motivo para pedirla.
+    it('una página inicial de vías no dispara ningún pedido', async () => {
+      const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
+      browser.show(depVias, 'vias', 3)
+      await vi.waitFor(() => expect(boton('Cargar igual')).not.toBeNull())
+      // `depVias` también tiene una primera pestaña (fracciones) que se
+      // auto-carga sola, ajena a vías: lo que SITIO-R3 prohíbe es el pedido
+      // de vías, no cualquier pedido (mismo patrón que el test ya existente
+      // "la capa lenta pedida por URL abre el panel de costo y no la pide").
+      const pedidasVias = global.fetch.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('vias_de_circulacion'))
+      expect(pedidasVias).toEqual([])
+    })
   })
 })

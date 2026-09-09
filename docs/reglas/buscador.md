@@ -47,8 +47,9 @@ deriva en una pasada al arrancar.
 Como beneficio lateral, normalizar la provincia tapa una inconsistencia del INDEC: la misma
 provincia viene "Entre Rios" en localidades y "Entre Ríos" en gobiernos locales (DES-R8).
 
-### BUS-R4 — Los resultados salen en cuatro niveles, del match más literal al más laxo
+### BUS-R4 — Los resultados salen en cinco niveles, del match más literal al más laxo
 
+0. la consulta es el código exacto de un objeto
 1. la consulta entera **empieza** el nombre
 2. la consulta entera está **adentro** del nombre
 3. todos los términos caen en el nombre
@@ -59,4 +60,25 @@ Dentro de un mismo nivel desempata el orden de tipos (`TYPE_ORDER`) y después e
 **Por qué:** aflojar el matching sin ordenar por qué tan literal fue el match hunde el
 resultado obvio entre los laxos: `rosario` tiene que dar Rosario antes que Villa Rosario, y
 `santa rosario` tiene que dar Rosario Santa Ana antes que el Rosario que sólo coincide porque
-está en Santa Fe.
+está en Santa Fe. El código va primero porque es la afirmación más literal que se puede escribir
+en ese campo: quien lo escribe sabe exactamente qué quiere.
+
+### BUS-R5 — Se busca por código, los ocho tipos, sin pedir nada hasta que elegís
+
+Una consulta de puros dígitos se resuelve por coincidencia exacta contra el código del catálogo,
+para los cinco tipos que están ahí. Para los tres que no están —fracción, radio y vía— el largo
+del código dice cuál es: 7, 9 y 13 dígitos, y ninguno de esos largos lo usa un tipo del catálogo.
+Esos tres aparecen como una fila armada del código, **sin un solo pedido al GeoServer**. Para
+fracción y radio el pedido ocurre recién en la ficha, apenas el usuario elige la fila: su ficha
+dibuja sola al abrirse. Para vía ni elegir la fila alcanza —elegirla sólo navega—: su ficha
+tampoco pide nada hasta que el usuario aprieta "Cargar igual" (SITIO-R3).
+
+Los ceros a la izquierda importan: el código es una cadena y la coincidencia es exacta. `6840` no
+encuentra el departamento `06840`, y tampoco inventa un aglomerado de cuatro dígitos.
+
+**Por qué:** fracciones y radios no tienen nombre publicado (NAV-R4), así que el código es el
+único handle que tienen; sin esto no hay forma de llegar a un radio salvo bajando por la ficha de
+su padre. Y que la fila sintética no toque la red es la mitad del diseño: tipear un código no
+puede costar los 12 segundos medidos de un feature de vías. Esa espera se paga una sola vez y
+siempre después de un acto del usuario: elegir la fila sintética de una vía navega y no pide
+nada, y el pedido queda esperando el clic en "Cargar igual" dentro de la ficha (SITIO-R3).

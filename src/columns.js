@@ -4,9 +4,21 @@
  *
  * Fracciones y radios no traen nombre en el Marco Geoestadístico: se
  * identifican por número y por su código. No se les inventa un rótulo.
+ *
+ * `titleField` es el campo con el nombre publicado, cuando existe. Lo lee la
+ * ficha de un objeto sin catálogo —fracción, radio o vía—, que no tiene un
+ * nombre que venga del catálogo y arma su título con esto o, si la capa no
+ * lo declara, con "<capa> <código>" (NAV-R4). Las capas que además son tipos
+ * del catálogo lo declaran igual: su ficha usa el nombre del catálogo, pero
+ * la declaración sigue siendo cierta sobre el dato que publica el INDEC.
  */
 
-const urbanoRural = (v) => (v === 'U' ? 'Urbano' : v === 'R' ? 'Rural' : v)
+// El Marco Geoestadístico clasifica el radio en urbano, rural o mixto: son
+// tres, no dos. Los 2.683 mixtos medidos mostraban una "M" cruda en la
+// tabla. Cualquier otro valor pasa sin traducir —el INDEC no documentó un
+// cuarto, y los 26 radios que no traen ninguno son un dato que falta, no un
+// rótulo que inventar (DES-R8)—.
+const urbanoRural = (v) => (v === 'U' ? 'Urbano' : v === 'R' ? 'Rural' : v === 'M' ? 'Mixto' : v)
 
 /** Las vías se muestran con los 21 campos publicados, en el orden del GeoServer. */
 const VIA_FIELDS = [
@@ -21,6 +33,7 @@ export const LAYER_SPECS = {
   departamentos: {
     sortBy: 'cde',
     idField: 'cde',
+    titleField: 'nam',
     columns: [
       { field: 'nam', label: 'Nombre', kind: 'text' },
       { field: 'cde', label: 'Código', kind: 'code' },
@@ -29,6 +42,7 @@ export const LAYER_SPECS = {
   fracciones: {
     sortBy: 'cod_indec',
     idField: 'cod_indec',
+    // Sin titleField: el Marco no publica nombre para fracciones (NAV-R4).
     columns: [
       { field: 'cfn', label: 'Fracción', kind: 'num' },
       { field: 'cod_indec', label: 'Código', kind: 'code' },
@@ -37,6 +51,7 @@ export const LAYER_SPECS = {
   radios: {
     sortBy: 'cod_indec',
     idField: 'cod_indec',
+    // Sin titleField: el Marco no publica nombre para radios (NAV-R4).
     columns: [
       { field: 'cro', label: 'Radio', kind: 'num' },
       { field: 'cfn', label: 'Fracción', kind: 'num' },
@@ -47,6 +62,7 @@ export const LAYER_SPECS = {
   localidades: {
     sortBy: 'clc',
     idField: 'clc',
+    titleField: 'nam',
     columns: [
       { field: 'nam', label: 'Nombre', kind: 'text' },
       { field: 'gna', label: 'Tipo', kind: 'text' },
@@ -59,6 +75,7 @@ export const LAYER_SPECS = {
     // sin desempate el paginado podría repetir o saltear filas entre páginas.
     sortBy: 'cod_indec,id',
     idField: 'cod_indec',
+    titleField: 'fna',
     // Única capa con 21 columnas: la tabla necesita scroll horizontal.
     // Lo declara la capa, no lo adivina table.js contando.
     wide: true,

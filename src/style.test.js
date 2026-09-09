@@ -165,12 +165,6 @@ describe('columna fija de vías: ancla la que declara la capa, no la primera', (
     expect(bloques[0]).toMatch(/position:\s*sticky/)
     expect(css).not.toMatch(/table\.wide\s+(th|td):first-child/)
   })
-
-  it('la variante de fila seleccionada también ancla por clase, no por :first-child', () => {
-    const bloques = rule('table.wide tbody tr[aria-selected="true"] td.col-anchor')
-    expect(bloques.length).toBe(1)
-    expect(css).not.toMatch(/aria-selected="true"\]\s*td:first-child/)
-  })
 })
 
 describe('lo que cambia sin mouse', () => {
@@ -182,5 +176,38 @@ describe('lo que cambia sin mouse', () => {
     const bloque = media('(hover: hover)')
     expect(bloque).not.toBe(null)
     expect(bloque).toMatch(/\.results li:hover/)
+  })
+})
+
+// El body trae `data-pagina` (cada página lo pone en su propio <body>) y
+// el link del nav, `data-nav` (lo pone el shell, en build): sin un
+// selector que combine los dos, quedan dos mitades de un mecanismo sin el
+// puente, y el nav activo nunca se marca. Esto lo fija para que no se
+// vuelva a evaporar; las tareas 6 y 8 suman acá el par de servicios y de
+// resultados al crear esas páginas.
+//
+// El selector va entero: `[^{]*` no cruza la llave pero sí cruza la coma,
+// así que con los cuatro pares en una sola lista de selectores los cuatro
+// casos seguían pasando aunque se invirtieran dos pares entre sí.
+describe('el nav marca la página activa', () => {
+  const par = (pagina, nav) =>
+    new RegExp(`\\[data-pagina="${pagina}"\\] \\.site-nav \\[data-nav="${nav}"\\]`)
+
+  it('home', () => {
+    expect(css).toMatch(par('home', 'home'))
+  })
+
+  it('notas', () => {
+    expect(css).toMatch(par('notas', 'notas'))
+  })
+
+  it('servicios', () => {
+    expect(css).toMatch(par('servicios', 'servicios'))
+  })
+
+  // /resultados/ no es una entrada del nav: es la ficha a la que lleva el
+  // buscador del home, así que marca "Inicio".
+  it('resultados marca Inicio', () => {
+    expect(css).toMatch(par('resultados', 'home'))
   })
 })

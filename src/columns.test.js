@@ -52,6 +52,17 @@ describe('LAYER_SPECS', () => {
       expect(spec.anchorField, key).toBeUndefined()
     }
   })
+
+  it('sólo declaran título las capas que tienen nombre publicado (NAV-R4)', () => {
+    const con = Object.entries(LAYER_SPECS).filter(([, s]) => s.titleField).map(([k]) => k)
+    expect(con.sort()).toEqual(['departamentos', 'localidades', 'vias'])
+  })
+
+  it('el campo del título siempre es una columna que se pide al GeoServer', () => {
+    for (const [key, spec] of Object.entries(LAYER_SPECS)) {
+      if (spec.titleField) expect(queryFields(key)).toContain(spec.titleField)
+    }
+  })
 })
 
 describe('specOf', () => {
@@ -61,6 +72,20 @@ describe('specOf', () => {
 
   it('tira con una capa desconocida', () => {
     expect(() => specOf('parcelas')).toThrow(/parcelas/)
+  })
+
+  it('el tipo de radio tiene tres valores, no dos (MGN)', () => {
+    const tipo = specOf('radios').columns.find((c) => c.field === 'tro')
+    expect(tipo.map('U')).toBe('Urbano')
+    expect(tipo.map('R')).toBe('Rural')
+    // 2.683 radios son mixtos y hasta hoy mostraban una "M" cruda.
+    expect(tipo.map('M')).toBe('Mixto')
+  })
+
+  // Un valor que el INDEC no documentó se muestra tal cual: no se inventa
+  // un rótulo (DES-R8).
+  it('un tipo desconocido pasa sin traducir', () => {
+    expect(specOf('radios').columns.find((c) => c.field === 'tro').map('X')).toBe('X')
   })
 })
 

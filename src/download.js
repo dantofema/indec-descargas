@@ -3,17 +3,31 @@ import { specOf } from './columns.js'
 export const GEOSERVER = 'https://geonode.indec.gob.ar/geoserver/ows'
 
 /**
- * Capa propia y campo de filtro de cada tipo de objeto buscable. `det` es
- * el determinante que le corresponde al `label`: la interfaz está en
- * castellano y dos de los cinco tipos son femeninos. `plural` es la
- * etiqueta con la que el tipo aparece en el filtro del buscador.
+ * Capa propia y campo de filtro de cada tipo de objeto. `det` es el
+ * determinante que le corresponde al `label`: la interfaz está en castellano
+ * y varios tipos son femeninos. `plural` es la etiqueta con la que el tipo
+ * aparece en el filtro del buscador —que sale de `TYPE_ORDER`, no de acá, y
+ * por eso los tres tipos sin catálogo no aparecen en él: no tienen nombre
+ * que buscar (NAV-R4)—.
+ *
+ * `len` es el largo del código, verificado el 2026-09-08 contra el GeoServer
+ * y el catálogo. Los ocho son distintos y no colisionan: es lo que deja que
+ * una consulta de puros dígitos se resuelva sola (BUS-R5) y lo que separa un
+ * enlace bueno de `?t=rad&c=0684042`.
+ *
+ * `catalogo` dice si el objeto está en `catalog.json`. Los tres que no lo
+ * están se resuelven con un GetFeature por código: el catálogo hace falta
+ * para buscar por nombre, no para direccionar.
  */
 export const TYPES = {
-  jur:  { layer: 'geonode:jurisdicciones',        field: 'cpr',     label: 'Jurisdicción',     plural: 'Jurisdicciones',       det: 'esta' },
-  dep:  { layer: 'geonode:departamentos',         field: 'cde',     label: 'Departamento',     plural: 'Departamentos',        det: 'este' },
-  loc:  { layer: 'geonode:localidades_censales',  field: 'clc',     label: 'Localidad censal', plural: 'Localidades censales', det: 'esta' },
-  gl:   { layer: 'geonode:gobiernos_locales4',    field: 'cmu',     label: 'Gobierno local',   plural: 'Gobiernos locales',    det: 'este' },
-  aglo: { layer: 'geonode:aglomerados',           field: 'codaglo', label: 'Aglomerado',       plural: 'Aglomerados',          det: 'este' },
+  jur:  { layer: 'geonode:jurisdicciones',        field: 'cpr',       len: 2,  catalogo: true,  label: 'Jurisdicción',       plural: 'Jurisdicciones',       det: 'esta' },
+  aglo: { layer: 'geonode:aglomerados',           field: 'codaglo',   len: 4,  catalogo: true,  label: 'Aglomerado',         plural: 'Aglomerados',          det: 'este' },
+  dep:  { layer: 'geonode:departamentos',         field: 'cde',       len: 5,  catalogo: true,  label: 'Departamento',       plural: 'Departamentos',        det: 'este' },
+  gl:   { layer: 'geonode:gobiernos_locales4',    field: 'cmu',       len: 6,  catalogo: true,  label: 'Gobierno local',     plural: 'Gobiernos locales',    det: 'este' },
+  frac: { layer: 'geonode:fracciones_censales',   field: 'cod_indec', len: 7,  catalogo: false, label: 'Fracción censal',    plural: 'Fracciones censales',  det: 'esta' },
+  loc:  { layer: 'geonode:localidades_censales',  field: 'clc',       len: 8,  catalogo: true,  label: 'Localidad censal',   plural: 'Localidades censales', det: 'esta' },
+  rad:  { layer: 'geonode:radios_censales2',      field: 'cod_indec', len: 9,  catalogo: false, label: 'Radio censal',       plural: 'Radios censales',      det: 'este' },
+  via:  { layer: 'geonode:vias_de_circulacion',   field: 'cod_indec', len: 13, catalogo: false, label: 'Vía de circulación', plural: 'Vías de circulación',  det: 'esta' },
 }
 
 /** Capas que un objeto puede ofrecer como hijas. */
@@ -24,6 +38,25 @@ export const CHILD_LAYERS = {
   localidades:   { layer: 'geonode:localidades_censales', label: 'Localidades censales' },
   vias:          { layer: 'geonode:vias_de_circulacion',  label: 'Vías de circulación' },
 }
+
+/**
+ * La capa hija que corresponde a un tipo direccionable. Existe porque las
+ * columnas de un objeto las decide `specOf`, que se indexa por clave de
+ * `CHILD_LAYERS`, y la ficha se indexa por tipo: sin este puente, la ficha
+ * de un radio no sabe qué campos mostrar.
+ */
+export const LAYER_OF_TYPE = {
+  dep: 'departamentos',
+  loc: 'localidades',
+  frac: 'fracciones',
+  rad: 'radios',
+  via: 'vias',
+}
+
+/** La inversa: qué tipo direccionable es una fila de esta capa. La usa el "Ver" para armar el permalink. */
+export const TYPE_OF_LAYER = Object.fromEntries(
+  Object.entries(LAYER_OF_TYPE).map(([t, capa]) => [capa, t]),
+)
 
 /**
  * Los códigos del INDEC son siempre dígitos con ceros a la izquierda.
@@ -41,15 +74,13 @@ export function assertCode(code) {
 }
 
 export function typeOf(obj) {
-  const type = TYPES[obj?.t]
-  if (!type) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
-  return type
+  if (!Object.hasOwn(TYPES, obj?.t)) throw new Error(`tipo de objeto desconocido: ${JSON.stringify(obj?.t)}`)
+  return TYPES[obj.t]
 }
 
 export function childOf(childKey) {
-  const child = CHILD_LAYERS[childKey]
-  if (!child) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
-  return child
+  if (!Object.hasOwn(CHILD_LAYERS, childKey)) throw new Error(`capa hija desconocida: ${JSON.stringify(childKey)}`)
+  return CHILD_LAYERS[childKey]
 }
 
 const GPKG = 'geopackage'

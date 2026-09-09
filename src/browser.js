@@ -3,7 +3,8 @@ import { fetchPage } from './features.js'
 import { renderTable, renderPager } from './table.js'
 import { nonEmptyChildrenOf } from './catalog.js'
 import { childOf } from './download.js'
-import { fmt } from './ui.js'
+import { fmt, costPanel } from './ui.js'
+import { noteFor, noteHref, NOTE_BY_LAYER } from './notes.js'
 
 /**
  * Capas que no cargan solas al abrir su pestaña. Medido contra el
@@ -71,12 +72,14 @@ const timeoutOf = (childKey, parentType) => {
 }
 
 /**
- * Medido contra el GeoServer real el 2026-09-06: un solo feature con
- * geometría —lo que pide el botón "Ver"— tarda 12,4 s en vías, contra
- * 0,65 s en radios. Sin este aviso, el clic deja la interfaz "muerta" ese
- * rato sin que el usuario sepa si se colgó.
+ * Medido contra el GeoServer real el 2026-09-06: traer una vía con geometría
+ * tarda 12,4 s, contra 0,65 s en radios. Lo usa la ficha de una vía, que por
+ * eso no pide nada al abrirse y muestra este costo con un botón (SITIO-R3).
+ *
+ * Vive en este módulo, que no lo consume, porque acá están todos los costos
+ * medidos de vías del repo: partirlos en dos archivos es cómo divergen.
  */
-const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
+export const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geometría de una vía.'
 
 /**
  * La fila que se recorre: una pestaña por capa hija, y adentro la página que
@@ -87,8 +90,17 @@ const VIAS_VIEW_NOTICE = 'El GeoServer tarda unos 12 segundos en traer la geomet
  * `show` devuelve si dibujó algo: quién puede recorrerse lo decide esta
  * fila, no quien la cablea. Duplicar la decisión afuera es cómo aparece una
  * fila visible y vacía.
+ *
+ * `onTab` avisa qué pestaña quedó activa —la primera al abrir, y cada
+ * cambio después—. El browser no sabe que existe una URL: la página que lo
+ * cablea es la que decide qué hacer con ese aviso.
+ *
+ * `onPage` avisa desde `load`, antes del `await fetchPage(...)`: el aviso
+ * llega cuando la página se pide de verdad, no cuando termina de cargar
+ * —ese pedido todavía puede abortarse o fallar—. El browser no sabe que
+ * existe una URL, sólo qué se está pidiendo.
  */
-export function createBrowser({ container, onView, onError }) {
+export function createBrowser({ container, onView, onError, onTab = () => {}, onPage = () => {} }) {
   let obj = null
   let active = null
   let pages = new Map()
@@ -96,6 +108,7 @@ export function createBrowser({ container, onView, onError }) {
   let confirmed = new Set()
   let token = 0
   let body = null
+  let noteBox = null
   // El pedido en vuelo, para poder abortarlo y no sólo ignorarlo.
   let inFlight = null
 
@@ -109,7 +122,14 @@ export function createBrowser({ container, onView, onError }) {
     inFlight = null
   }
 
-  function show(next) {
+  /**
+   * `initialLayer` es la capa que pide la URL. Se abre sólo si el objeto la
+   * tiene y no está en cero: una capa que no es pestaña dejaría la fila
+   * mostrando un panel vacío, y caer en la primera es mejor respuesta que
+   * un error (lo mismo que hace `permalink.parse` con una capa que no
+   * existe).
+   */
+  function show(next, initialLayer = null, initialPage = 0) {
     abortInFlight('se eligió otro objeto')
     obj = next
     active = null
@@ -118,6 +138,11 @@ export function createBrowser({ container, onView, onError }) {
     token += 1
     container.replaceChildren()
 
+    // La página inicial es de la capa que el enlace nombró y de ninguna
+    // otra: sembrarla en todas haría que cambiar de pestaña arrancara en la
+    // página 4 de una capa que nadie pidió.
+    if (initialLayer && initialPage > 0) pages.set(initialLayer, initialPage)
+
     // Sin los ceros: una pestaña "Vías de circulación 0" ofrece recorrer lo
     // que no existe, y su panel de costo cobra 17 s medidos por una página
     // vacía (ver `nonEmptyChildrenOf`).
@@ -125,17 +150,25 @@ export function createBrowser({ container, onView, onError }) {
     if (!kids.length) return false
 
     const tabsBox = document.createElement('div')
+    // Enlace a la nota de la capa activa (NOTA-R3): va arriba de la tabla,
+    // como hermano de `body` y no adentro, así ningún `body.replaceChildren`
+    // de `load`/`costPane`/`errorBox` se lo lleva puesto —sigue visible
+    // mientras la página carga o si falla—.
+    noteBox = document.createElement('p')
+    noteBox.className = 'note-link'
     body = document.createElement('div')
     body.className = 'pane'
-    container.append(tabsBox, body)
+    container.append(tabsBox, noteBox, body)
 
-    createTabs({
+    const tabs = createTabs({
       container: tabsBox,
       items: kids.map(({ key, count }) => ({
         key, label: childOf(key).label, badge: fmt(count),
       })),
       onSelect: (key) => {
         active = key
+        onTab(key)
+        noteBox.replaceChildren(layerNoteLink(key))
         if (LAZY_KEYS.has(key) && !confirmed.has(key)) {
           // Este camino no pasa por `load()` —muestra el panel de costo, no
           // pide nada—, pero es tan "cambiar de pestaña" como cualquier
@@ -148,25 +181,32 @@ export function createBrowser({ container, onView, onError }) {
         load(key, pages.get(key) ?? 0)
       },
     })
+
+    // `createTabs` ya seleccionó la primera al construirse, y corta el
+    // reclic sobre la activa: pedir la primera explícitamente no dispara
+    // nada de más, y pedir otra aborta el pedido de la primera (NAV-R8).
+    if (kids.some(({ key }) => key === initialLayer)) tabs.select(initialLayer)
     return true
+  }
+
+  /** El enlace "Qué es..." de la capa que se está recorriendo (NOTA-R3). */
+  function layerNoteLink(key) {
+    const a = document.createElement('a')
+    const slug = NOTE_BY_LAYER[key]
+    a.href = noteHref(slug)
+    a.textContent = `Qué es ${noteFor(slug).label.toLowerCase()} →`
+    return a
   }
 
   /** El costo medido y el botón para cargar la página igual. */
   function costPane(key) {
-    const wrap = document.createElement('div')
-    const p = document.createElement('p')
-    p.className = 'note'
-    p.textContent = VIAS_COST_NOTICE
-    const b = document.createElement('button')
-    b.type = 'button'
-    b.className = 'btn ghost mini'
-    b.textContent = 'Cargar igual'
-    b.addEventListener('click', () => {
-      confirmed.add(key)
-      load(key, pages.get(key) ?? 0)
+    return costPanel({
+      message: VIAS_COST_NOTICE,
+      onClick: () => {
+        confirmed.add(key)
+        load(key, pages.get(key) ?? 0)
+      },
     })
-    wrap.append(p, b)
-    return wrap
   }
 
   async function load(key, page) {
@@ -182,13 +222,14 @@ export function createBrowser({ container, onView, onError }) {
       ms,
     )
     pages.set(key, page)
+    onPage(key, page)
     body.replaceChildren(metaParagraph('Cargando…'))
     try {
       const { rows, total } = await fetchPage(obj, key, page, controller.signal)
       // Llegó tarde: el usuario ya está en otra pestaña o en otra página.
       if (mine !== token || key !== active) return
 
-      const tableEl = renderTable(key, rows, (row, childKey) => markRow(tableEl, rows, row, childKey))
+      const tableEl = renderTable(key, rows, (row, childKey) => onView(row, childKey))
       const panels = [tableEl, renderPager({ page, total, count: rows.length, onPage: (p) => load(key, p) })]
       if (LAZY_KEYS.has(key)) panels.push(metaParagraph(VIAS_COST_REMINDER))
       body.replaceChildren(...panels)
@@ -202,51 +243,6 @@ export function createBrowser({ container, onView, onError }) {
       clearTimeout(timer)
       if (inFlight === controller) inFlight = null
     }
-  }
-
-  /**
-   * Marca la fila vista con `aria-selected` —la regla ya existe en
-   * style.css— y avisa. Se ubica por identidad dentro de `rows`, no por
-   * texto: es la misma referencia que `renderTable` le pasa a `onView`.
-   *
-   * Además deja el botón "Ver" en estado de carga mientras `onView` tarda
-   * —puede devolver una promesa; si no devuelve nada, se restaura en el
-   * siguiente microtask—. En vías es la única forma de que el usuario sepa
-   * que los ~12 s medidos están corriendo y no que la interfaz se colgó.
-   *
-   * `onView` es una interfaz pública genérica: no podemos asumir que quien
-   * la implementa ya capturó sus propios errores (hoy `main.js` sí lo hace,
-   * pero no es parte del contrato). Un rechazo sin `.catch` acá quedaría
-   * como Unhandled Rejection. `onError` ya existe para justo esto —avisar
-   * un fallo sin cortar el resto de la ficha—, así que lo reusamos en vez
-   * de tragarnos el error con un `.catch(() => {})` mudo.
-   */
-  function markRow(tableEl, rows, row, childKey) {
-    const idx = rows.indexOf(row)
-    tableEl.querySelectorAll('tbody tr').forEach((tr, i) => {
-      tr.setAttribute('aria-selected', String(i === idx))
-    })
-
-    const button = [...tableEl.querySelectorAll('tbody tr')][idx]?.querySelector('button')
-    let notice = null
-    if (button) {
-      button.disabled = true
-      button.textContent = 'Viendo…'
-      if (childKey === 'vias') {
-        notice = metaParagraph(VIAS_VIEW_NOTICE)
-        button.insertAdjacentElement('afterend', notice)
-      }
-    }
-
-    Promise.resolve(onView(row, childKey))
-      .catch(onError)
-      .finally(() => {
-        if (button) {
-          button.disabled = false
-          button.textContent = 'Ver'
-        }
-        notice?.remove()
-      })
   }
 
   function metaParagraph(texto) {

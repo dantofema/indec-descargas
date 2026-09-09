@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { GEOSERVER, assertCode, selfUrl } from './download.js'
+import { selfUrl } from './download.js'
 
 /**
  * Basemap del IGN. Es TMS, que numera el eje Y al revés que XYZ:
@@ -12,7 +12,6 @@ const ARGENTINA = [[-55.5, -74], [-21.5, -53]]
 
 let map = null
 let layer = null
-let featureCallback = () => {}
 let pending = 0
 
 export function initMap(containerId) {
@@ -23,50 +22,39 @@ export function initMap(containerId) {
     attribution: 'Instituto Geográfico Nacional, OpenStreetMap',
   }).addTo(map)
   map.fitBounds(ARGENTINA)
-}
-
-/** Registra a quién avisarle cuando llegan las propiedades del objeto. */
-export function onFeature(callback) {
-  featureCallback = callback
+  // El prefijo por defecto del control de atribución es el enlace a Leaflet,
+  // y desde 1.9 se lleva adentro una bandera de Ucrania (leaflet-src.js:5762).
+  // Se saca entero: la licencia BSD-2-Clause de Leaflet no pide crédito en la
+  // interfaz, sólo el aviso de copyright en el código, que sigue donde estaba.
+  // La atribución del IGN no se toca: esa sí es del dato que se está viendo.
+  map.attributionControl.setPrefix(false)
 }
 
 /**
- * Arma la URL de un GetFeature en GeoJSON a partir de capa, campo y código
- * sueltos —lo que necesita dibujar una fila cualquiera de una capa hija—.
- * El código pasa por `assertCode`: es lo único que se interpola en el CQL.
+ * El mapa se creó con `#detail` oculto: Leaflet midió altura cero. Quien
+ * destapa el panel llama a esto para que Leaflet vuelva a medir, se dibuje
+ * algo enseguida o no —la ficha de una vía (SITIO-R3) puede destaparlo sin
+ * pedir nada hasta el clic en "Cargar igual", y sin este aviso se queda en
+ * cero píxeles hasta entonces—.
  */
-function featureQueryUrl(layerName, field, code) {
-  const p = new URLSearchParams({
-    service: 'WFS',
-    version: '2.0.0',
-    request: 'GetFeature',
-    typenames: layerName,
-    outputFormat: 'application/json',
-    srsName: 'EPSG:4326',
-    CQL_FILTER: `${field}='${assertCode(code)}'`,
-  })
-  return `${GEOSERVER}?${p}`
+export function syncMapSize() {
+  if (map) map.invalidateSize()
 }
 
-/** El mapa se creó con `#detail` oculto: Leaflet midió altura cero y hay
- * que avisarle recién ahora que ya es visible. También arranca la marca de
- * carrera que comparten showObject y showFeature —son la misma pelea por
- * "quién es la última selección"—.
+/** Arranca la marca de carrera que decide "quién es la última selección"
+ * (ver drawFromUrl).
  *
  * Lo que había dibujado no se toca acá: se borra recién cuando hay con qué
  * reemplazarlo (ver drawFromUrl). */
 function beginRequest() {
-  const request = ++pending
-  map.invalidateSize()
-  return request
+  return ++pending
 }
 
 /**
  * Pide el GeoJSON de `url`, lo dibuja si para cuando llega sigue siendo la
- * petición vigente, y devuelve las propiedades del feature —quien llama
- * decide qué hacer con ellas, ver más abajo por qué—. Es la parte que
- * showObject y showFeature comparten entera: sólo cambia de dónde sale la
- * URL, no qué se hace con ella.
+ * petición vigente, y devuelve las propiedades del primer feature junto con
+ * cuántos vinieron —quien llama decide qué hacer con ellas, ver más abajo
+ * por qué—.
  *
  * Una petición superada no escribe nada: ni el mapa, ni la línea de
  * estado. El chequeo va antes de mirar el status, y el try/catch cubre
@@ -87,9 +75,9 @@ async function drawFromUrl(request, url) {
 
     if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
 
-    // Recién acá: un "Ver" que falla deja el mapa como estaba, y uno que
-    // tarda —12,4 s medidos en vías— lo deja como estaba mientras tanto,
-    // en vez de mostrar un mapa vacío que parece un error.
+    // Recién acá: un dibujo que falla deja el mapa como estaba, y uno que
+    // tarda lo deja como estaba mientras tanto, en vez de mostrar un mapa
+    // vacío que parece un error.
     if (layer) {
       layer.remove()
       layer = null
@@ -100,31 +88,26 @@ async function drawFromUrl(request, url) {
     }).addTo(map)
 
     map.fitBounds(layer.getBounds(), { padding: [16, 16] })
-    return geojson.features[0].properties
+    // El conteo, además de las propiedades del primero: en vías un código no
+    // identifica un tramo sino una calle entera, y sus tramos comparten el
+    // código —80 filas en el caso más partido medido, la AUTOPISTA DEL OESTE
+    // (`0684001002660`)—. Sin este número la ficha describiría el tramo 1
+    // mientras el mapa dibuja los 80, que es justo la contradicción que
+    // NAV-R11 vino a eliminar.
+    return { props: geojson.features[0].properties, count: geojson.features.length }
   } catch (err) {
     if (request !== pending) return undefined
     throw err
   }
 }
 
-export async function showObject(obj) {
-  if (!map) return
-  // Sólo el objeto de la búsqueda avisa sus propiedades: esa línea describe
-  // la ficha, y una petición superada devuelve `undefined` (ver arriba).
-  const props = await drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
-  if (props) featureCallback(props)
-}
-
 /**
- * Dibuja un feature suelto de una capa hija: la fila que se está "viendo"
- * desde la tabla de la fila 3, no el objeto de la búsqueda. A propósito no
- * avisa al callback de `onFeature`: esa línea describe la identidad del
- * objeto de la ficha y no tiene que cambiar con cada "Ver" —mirar una fila
- * ya se señala marcándola en la tabla, no reescribiendo el nombre de al
- * lado del mapa—. Antes lo hacía, y cada "Ver" le pegaba otro tramo de
- * texto sin límite a `#detail-meta`.
+ * Dibuja el objeto de la ficha, sea de catálogo o resuelto contra el
+ * GeoServer: la ficha de un objeto sin catálogo se construye entera con lo
+ * que esto devuelve —no tiene un nombre que venga del catálogo—. Una
+ * petición superada devuelve `undefined` (ver `drawFromUrl`).
  */
-export async function showFeature(layerName, field, code) {
-  if (!map) return
-  await drawFromUrl(beginRequest(), featureQueryUrl(layerName, field, code))
+export async function showObject(obj) {
+  if (!map) return undefined
+  return drawFromUrl(beginRequest(), selfUrl(obj, 'application/json'))
 }

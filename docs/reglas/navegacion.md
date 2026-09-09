@@ -48,7 +48,10 @@ el síntoma es la tabla equivocada bajo la pestaña correcta.
 Descartar la respuesta es lo que esta regla decide; que además se aborte el pedido lo decide
 NAV-R8, y por otro motivo (la conexión, no la pintura).
 
-### NAV-R6 — La fila de notas aparece sólo si el objeto tiene alguna nota
+### ~~NAV-R6 — La fila de notas aparece sólo si el objeto tiene alguna nota~~
+
+**Muerta:** la fila de notas dejó de existir. Las notas se mudaron a /notas/ y la ficha enlaza
+en vez de repetir; la reemplaza NOTA-R3 de notas.md.
 
 Sin notas para ninguna de sus capas hijas, la fila no se renderiza.
 
@@ -62,19 +65,21 @@ vacía en un tercio de las fichas del sitio.
 ### NAV-R7 — Vías no auto-carga: muestra el costo medido y un botón para cargar igual
 
 Al abrir la pestaña de vías no se dispara ningún pedido. En su lugar se muestra el costo medido
-y un botón para cargar de todos modos. El "Ver" de una fila de vías también avisa la espera
-mientras trae el feature completo.
+y un botón para cargar de todos modos. La ficha de una vía tampoco pide nada al abrirse: muestra
+el mismo costo medido y su botón (SITIO-R3). Antes ese aviso vivía en el "Ver" de la fila, que
+traía el feature; desde que "Ver" navega (NAV-R11), la espera es de la ficha de destino y el
+aviso se mudó con ella.
 
 **Por qué:** vías es lenta para todo, no sólo para descargar, y esto no lo sabía el diseño
 original. Medido el 2026-09-06 contra el GeoServer del INDEC: una página de 20 filas sin
 geometría tarda 14–20 s filtrando por departamento, 17–18 s filtrando por localidad censal
 (`clc=06840010` dio 18,0 s y `clc=82084010`, 17,2 s) y 88–99 s filtrando por provincia; traer un
-solo feature con geometría —lo que hace "Ver"— tarda 12,4 s. Los mismos pedidos sobre radios
-tardan 0,65 s y 0,89 s. No es el payload (10 KB) ni el orden: es una tabla de 477.588 filas sin
-índice útil para los campos por los que se filtra. Auto-cargar esa pestaña, o dejar que "Ver"
-trabaje en silencio, cuelga la interfaz sin avisar; borrar la pestaña porque es lenta sería
-peor, porque el usuario la pidió por nombre. Avisar y dejar elegir es lo único que no le miente
-a nadie.
+solo feature con geometría —lo que hace la ficha de una vía— tarda 12,4 s. Los mismos pedidos
+sobre radios tardan 0,65 s y 0,89 s. No es el payload (10 KB) ni el orden: es una tabla de
+477.588 filas sin índice útil para los campos por los que se filtra. Auto-cargar esa pestaña, o
+dejar que la ficha de una vía trabaje en silencio, cuelga la interfaz sin avisar; borrar la
+pestaña porque es lenta sería peor, porque el usuario la pidió por nombre. Avisar y dejar elegir
+es lo único que no le miente a nadie.
 
 El caso de la localidad censal no es marginal: es el 58% de las fichas donde el aviso aparece
 —4.023 de los 6.977 objetos del catálogo son localidades con vías como única capa hija—, así que
@@ -118,21 +123,40 @@ Abortar, además de descartar, es por la conexión y no por la pintura: un pedid
 ocupando una de las ~6 que el browser permite por origen, y el mapa pide al mismo origen. Con unos
 pocos pedidos de vías colgados, la fila 1 deja de dibujar por culpa de la fila 3.
 
-### NAV-R9 — Una capa hija en cero no se recorre ni se anota
+### NAV-R9 — Una capa hija en cero no se recorre
 
-Una capa con conteo cero no abre pestaña en la fila 3 ni trae su nota en la fila 4. Aparece sólo
-en la fila 2, con el botón deshabilitado y el motivo (DES-R3). Si todas las capas de un objeto
-están en cero, la fila 3 no se muestra.
+Una capa con conteo cero no abre pestaña en la fila 3. Aparece sólo en la fila 2, con el botón
+deshabilitado y el motivo (DES-R3). Si todas las capas de un objeto están en cero, la fila 3 no
+se muestra.
 
-**Por qué:** las tres filas decían cosas distintas sobre el mismo dato. Grytviken —una de las 11
-combinaciones (objeto, capa) del catálogo con conteo cero— decía bien en la fila 2 que no hay
-vías, y abría igual en la fila 3 una pestaña «Vías de circulación 0» con el panel de costo
+La mitad de esta regla que decía "ni se anota" se fue con NAV-R6: la fila 4 de notas ya no
+existe, así que no hay nada que ocultar ahí.
+
+**Por qué:** la fila 2 y la fila 3 decían cosas distintas sobre el mismo dato. Grytviken —una de
+las 11 combinaciones (objeto, capa) del catálogo con conteo cero— decía bien en la fila 2 que no
+hay vías, y abría igual en la fila 3 una pestaña «Vías de circulación 0» con el panel de costo
 avisando 88 a 99 segundos y un botón para cargar igual. Medido el 2026-09-06, ese pedido tarda 17
 segundos y vuelve con `totalFeatures: 0`: el usuario paga la espera entera para no recibir nada
-que la fila 2 no le dijera gratis. La fila 4, mientras tanto, le explicaba la trampa de una capa
-que ese objeto no tiene.
+que la fila 2 no le dijera gratis.
 
 El conteo cero sigue llegando entero a la fila 2 —DES-R3 lo necesita para dibujar el botón muerto
 con su motivo, y es el único lugar del sitio donde el cero se explica—, así que el filtro es una
-pregunta aparte y no un recorte en la fuente. Las 11 combinaciones con cero caen todas en capas
-que tienen nota, así que la fila 4 era el otro lugar donde se notaba.
+pregunta aparte y no un recorte en la fuente.
+
+### ~~NAV-R10 — La ficha describe lo que el mapa está dibujando~~
+
+**Muerta:** el "Ver" de una fila dejó de reemplazar media ficha y pasó a navegar, así que ya no
+hay dos objetos en la misma página que puedan contradecirse. La reemplaza NAV-R11.
+
+### NAV-R11 — Un objeto por página
+
+El "Ver" de una fila hija navega a la ficha de esa fila. No hay previsualización dentro de la
+ficha de otro objeto: la página describe un solo objeto, y el mapa dibuja ése. Volver es el botón
+Atrás del navegador, que funciona porque es navegación de verdad (SITIO-R2).
+
+**Por qué:** NAV-R10 pedía que la ficha siguiera al mapa, y para cumplirlo hacían falta un panel
+de identidad que se reemplazaba, un botón de volver que restauraba el anterior, un chequeo de
+carrera para que un "Ver" de 12 s que llegaba tarde no pisara lo que se estaba mirando, y una
+marca de fila que había que limpiar al volver. Cinco piezas para sostener una promesa que se
+cumple sola si hay un solo objeto por página. Además la ficha estaba arriba de la tabla: el
+cambio ocurría fuera de la pantalla y se sentía que no había pasado nada.

@@ -158,3 +158,28 @@ export function buildCatalog(input) {
 
   return { catalog: { generated, objects }, warnings }
 }
+
+/** Los tipos de objeto buscables, que se cuentan de a uno. */
+const TIPOS = ['jur', 'dep', 'loc', 'gl', 'aglo']
+
+/** Las capas que no son objeto buscable y sólo existen como hijas. */
+const CAPAS = ['fracciones', 'radios', 'vias']
+
+/**
+ * Los números que muestra el home. Salen del catálogo ya armado, no de los
+ * CSV: así no pueden decir algo distinto de lo que el sitio publica.
+ *
+ * Las capas sin objeto propio se suman sobre las 24 jurisdicciones y no
+ * sobre todos los objetos: el país está particionado por jurisdicción, así
+ * que sumar todo contaría los radios de un departamento otra vez dentro de
+ * su provincia.
+ */
+export function buildTotales(catalog) {
+  const totales = { generated: catalog.generated }
+  for (const t of TIPOS) totales[t] = catalog.objects.filter((o) => o.t === t).length
+  const jurisdicciones = catalog.objects.filter((o) => o.t === 'jur')
+  for (const capa of CAPAS) {
+    totales[capa] = jurisdicciones.reduce((acc, o) => acc + (o.ch?.[capa] ?? 0), 0)
+  }
+  return totales
+}

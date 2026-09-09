@@ -1,0 +1,193 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { injectShell, readPartials } from '../../scripts/shell.mjs'
+
+// El home es la página comercial: hero, buscador y totales. No baja el
+// catálogo —673 KB— hasta que alguien toca el campo, y elegir un objeto no
+// abre nada acá: navega a /resultados/.
+const totales = {
+  generated: '2026-09-06',
+  jur: 24, dep: 529, loc: 4023, gl: 2282, aglo: 119,
+  fracciones: 6571, radios: 66515, vias: 477588,
+}
+
+const catalogo = {
+  generated: '2026-09-06',
+  objects: [
+    { t: 'dep', c: '06840', n: 'Tres de Febrero', s: 'tres de febrero', p: 'Buenos Aires' },
+    { t: 'jur', c: '06', n: 'Buenos Aires', s: 'buenos aires', p: 'Buenos Aires' },
+  ],
+}
+
+const crudo = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8')
+const html = injectShell(crudo, { partials: readPartials(), base: '/' })
+const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '')
+
+const $ = (sel) => document.querySelector(sel)
+
+/** Escribe en el buscador como lo haría una persona. */
+function buscar(texto) {
+  $('#q').value = texto
+  $('#q').dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+const pedidos = () => global.fetch.mock.calls.map(([url]) => String(url))
+const pedidosDe = (que) => pedidos().filter((u) => u.includes(que))
+
+let navigate
+
+beforeEach(() => {
+  document.body.innerHTML = ''
+  Element.prototype.scrollIntoView = () => {}
+  navigate = vi.fn()
+  global.fetch = vi.fn(async (url) => (String(url).includes('catalog.json')
+    ? { ok: true, json: async () => catalogo }
+    : { ok: true, json: async () => totales }))
+})
+
+/**
+ * El import va con el body vacío a propósito: `home.js` es el entry de Vite
+ * y se auto-invoca al cargar, y sin su DOM montado se va sin cablear nada.
+ * Así cada caso corre una sola instancia, la que se arma acá.
+ */
+async function montar() {
+  vi.resetModules()
+  const { initHome } = await import('./home.js')
+  document.body.innerHTML = body
+  initHome({ navigate })
+}
+
+/** Monta y espera a que los totales hayan llegado. */
+async function montarConTotales() {
+  await montar()
+  await vi.waitFor(() => expect($('#totals').children.length).toBeGreaterThan(0))
+}
+
+describe('los totales del home', () => {
+  it('pinta los ocho objetos, en orden y con sus números', async () => {
+    await montarConTotales()
+    const tiles = [...$('#totals').children]
+    expect(tiles).toHaveLength(8)
+    expect(tiles.map((li) => li.querySelector('.totales-label').textContent)).toEqual([
+      'Jurisdicciones', 'Departamentos', 'Fracciones censales', 'Radios censales',
+      'Localidades censales', 'Gobiernos locales', 'Aglomerados', 'Vías de circulación',
+    ])
+    expect(tiles.map((li) => li.querySelector('.totales-n').textContent)).toEqual([
+      '24', '529', '6.571', '66.515', '4.023', '2.282', '119', '477.588',
+    ])
+  })
+
+  it('cada uno trae su icono dibujado a mano, sin librería', async () => {
+    await montarConTotales()
+    const svgs = $('#totals').querySelectorAll('svg')
+    expect(svgs).toHaveLength(8)
+    expect([...svgs].every((s) => s.getAttribute('stroke') === 'currentColor')).toBe(true)
+    // Ocho dibujos distintos, no el mismo repetido ocho veces.
+    expect(new Set([...svgs].map((s) => s.innerHTML)).size).toBe(8)
+  })
+
+  // `initHome` es el entry de Vite y se auto-invoca: tiene que poder
+  // llamarse de nuevo sin duplicar nada de lo que dibuja.
+  it('dibuja una sola vez aunque se vuelva a cablear', async () => {
+    await montarConTotales()
+    const { initHome } = await import('./home.js')
+    initHome({ navigate })
+    await vi.waitFor(() => expect($('#totals').children).toHaveLength(8))
+    expect($('#type').options).toHaveLength(6)
+  })
+
+  it('el pie dice cuándo se generó el catálogo', async () => {
+    await montarConTotales()
+    expect($('#generated').textContent).toContain('2026-09-06')
+  })
+
+  it('si los totales no cargan, el buscador sigue sirviendo', async () => {
+    global.fetch = vi.fn(async (url) => (String(url).includes('catalog.json')
+      ? { ok: true, json: async () => catalogo }
+      : { ok: false, status: 500 }))
+    await montar()
+    await new Promise((r) => setTimeout(r, 0))
+    expect($('#totals').children).toHaveLength(0)
+
+    buscar('tres')
+    await vi.waitFor(() => expect($('#results').children).toHaveLength(1))
+  })
+})
+
+describe('el catálogo se pide tarde', () => {
+  it('al cargar la página sólo se piden los totales', async () => {
+    await montarConTotales()
+    expect(pedidosDe('totales.json')).toHaveLength(1)
+    expect(pedidosDe('catalog.json')).toHaveLength(0)
+  })
+
+  it('tocar el campo lo pide', async () => {
+    await montarConTotales()
+    $('#q').focus()
+    expect(pedidosDe('catalog.json')).toHaveLength(1)
+  })
+
+  it('escribir sin haber enfocado también lo pide', async () => {
+    await montarConTotales()
+    buscar('tre')
+    expect(pedidosDe('catalog.json')).toHaveLength(1)
+  })
+
+  it('lo pide una sola vez, por más que se toque el campo mil veces', async () => {
+    await montarConTotales()
+    $('#q').focus()
+    buscar('tres')
+    buscar('tres de')
+    $('#q').focus()
+    expect(pedidosDe('catalog.json')).toHaveLength(1)
+  })
+
+  // Es lo que le permite al home no bajar el catálogo hasta que alguien
+  // escribe: lo que ya está escrito se vuelve a buscar solo cuando llega.
+  it('lo que se escribió mientras tanto se busca solo al llegar el catálogo', async () => {
+    await montarConTotales()
+    buscar('tres')
+    expect($('#results').children).toHaveLength(0)
+    await vi.waitFor(() => expect($('#results').children).toHaveLength(1))
+    expect($('#results').textContent).toContain('Tres de Febrero')
+  })
+
+  it('avisa si el catálogo no carga', async () => {
+    global.fetch = vi.fn(async (url) => (String(url).includes('catalog.json')
+      ? { ok: false, status: 503 }
+      : { ok: true, json: async () => totales }))
+    await montarConTotales()
+    buscar('tres')
+    await vi.waitFor(() => expect($('#status').textContent).toMatch(/503/))
+    expect($('#status').className).toContain('error')
+  })
+})
+
+describe('elegir un objeto', () => {
+  it('navega a su ficha en /resultados/', async () => {
+    await montarConTotales()
+    buscar('tres')
+    await vi.waitFor(() => expect($('#results').children).toHaveLength(1))
+    $('#results').children[0].click()
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/resultados\/\?t=dep&c=06840$/))
+  })
+
+  it('con el teclado hace lo mismo', async () => {
+    await montarConTotales()
+    buscar('buenos')
+    await vi.waitFor(() => expect($('#results').children).toHaveLength(1))
+    $('#q').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+    $('#q').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/resultados\/\?t=jur&c=06$/))
+  })
+
+  // BUS-R1: el filtro por tipo también vive en el home.
+  it('el filtro por tipo arranca en todos y ofrece los cinco', async () => {
+    await montarConTotales()
+    expect($('#type').value).toBe('')
+    expect([...$('#type').options].map((o) => o.value))
+      .toEqual(['', 'jur', 'dep', 'loc', 'gl', 'aglo'])
+  })
+})

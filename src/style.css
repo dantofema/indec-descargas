@@ -32,10 +32,84 @@ main, .site-header, .site-footer {
   margin: 0 auto;
   padding: 0 1rem;
 }
+/* Antes ese aire lo daba el padding-top del header, que ahora es una
+   barra angosta de marca y nav compartida entre páginas. */
+main { padding-top: 1.75rem; }
 
-.site-header { padding-top: 2rem; }
-.site-header h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+/* El header comparte marca y nav en todas las páginas (lo resuelve el
+   shell en build, ver scripts/shell.mjs): una fila que se envuelve en vez
+   de apilarse, para que cada página no tenga que decidir su propio layout. */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+/* El h1 de /resultados/. Vivía en el header cuando el sitio era una sola
+   página; ahora el header es marca y nav compartidos y no lleva ninguno,
+   así que la regla es de la página. */
+.resultados h1 { font-size: 1.4rem; margin: 0 0 1.25rem; }
 .subtitle { color: var(--muted); margin: 0 0 1.5rem; }
+.brand { color: var(--fg); font-weight: 600; text-decoration: none; }
+.brand:hover { text-decoration: underline; }
+.site-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.site-nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+.site-nav a:hover { color: var(--fg); }
+/* Marca en el nav cuál página estás mirando. El body trae `data-pagina`
+   —cada página lo pone en su propio <body>— y el link, `data-nav` —lo pone
+   el shell, en build—: el puente entre los dos es CSS puro, sin JS, así
+   que no hay estado que se pueda desincronizar del body real.
+   /resultados/ marca "Inicio": no es una entrada propia del nav, es la
+   ficha a la que lleva el buscador del home. */
+body[data-pagina="home"] .site-nav [data-nav="home"],
+body[data-pagina="resultados"] .site-nav [data-nav="home"],
+body[data-pagina="notas"] .site-nav [data-nav="notas"],
+body[data-pagina="servicios"] .site-nav [data-nav="servicios"] {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* El CTA institucional, entre el contenido y el footer en toda página. */
+.cta { max-width: 60rem; margin: 2rem auto 0; padding: 0 1rem; }
+.cta a {
+  display: inline-block;
+  padding: .5rem .9rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: .9rem;
+}
+.cta a:hover { background: var(--hl); }
+
+/* El home: el hero con el buscador arriba y los totales abajo. */
+.home .hero { margin: 1.5rem 0 3rem; }
+.home h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .6rem; max-width: 24ch; }
+.home .subtitle { font-size: 1.05rem; max-width: 60ch; }
+.home .totales h2 { font-size: 1.15rem; margin: 0 0 1rem; }
+.totales { margin: 0 0 3rem; }
+
+/* Ocho tiles que se acomodan solos: sin breakpoint propio, la grilla
+   reparte lo que haya de ancho. */
+.totales-grid {
+  list-style: none; padding: 0; margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: .75rem;
+}
+.totales-tile {
+  display: flex; flex-direction: column; gap: .15rem;
+  padding: .9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.totales-tile svg { color: var(--accent); margin-bottom: .35rem; }
+.totales-n { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.totales-label { color: var(--muted); font-size: .85rem; }
 
 .search { position: relative; }
 
@@ -96,11 +170,75 @@ main, .site-header, .site-footer {
 
 .row-identity { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .row-bulk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 1.5rem; }
+/* La página de notas colapsa a una columna con el mismo criterio. */
+.notas-layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 2rem; }
 @media (max-width: 48rem) {
-  .row-identity, .row-bulk { grid-template-columns: 1fr; }
+  .row-identity, .row-bulk, .notas-layout { grid-template-columns: 1fr; }
 }
 
+.notas h1 { font-size: 1.4rem; margin: 0 0 1.5rem; }
+
+/* Nav vertical de notas: mismo patrón de tablist que .tabs (ver tabs.js),
+   en columna en vez de en fila. */
+.nota-nav { display: flex; flex-direction: column; gap: .15rem; }
+.nota-tab {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: .9rem;
+  text-align: left;
+  padding: .55rem .7rem;
+  cursor: pointer;
+}
+.nota-tab:hover { background: var(--hl); }
+.nota-tab[aria-selected="true"] {
+  background: var(--hl);
+  border-color: var(--line);
+  color: var(--fg);
+  font-weight: 600;
+}
+.nota-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.servicios h1 { font-size: 1.4rem; margin: 0 0 .4rem; }
+.servicios section { margin: 0 0 2.5rem; }
+.servicios h2 { font-size: 1.15rem; margin: 0 0 .75rem; }
+/* Subtítulos de bloque dentro de una sección: mismo tratamiento visual que
+   `.block-title` en la ficha de objeto, para no inventar un segundo patrón
+   de "etiqueta chica en mayúsculas" en el mismo sitio. */
+.servicios .block-title { margin-top: 1.5rem; }
+.servicios code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .85em; }
+.servicios p code, .servicios .capas code { background: var(--hl); padding: .05em .35em; border-radius: var(--radius); }
+
+/* Lista de las diez capas del WFS, cada una con su etiqueta de uso. */
+.capas { list-style: none; padding: 0; margin: 0 0 1.5rem; display: flex; flex-direction: column; gap: .3rem; }
+.capas li {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .5rem 1rem; padding: .4rem .6rem; border: 1px solid var(--line); border-radius: var(--radius);
+}
+.tag-capa { font-size: .78rem; padding: .15rem .5rem; border-radius: var(--radius); white-space: nowrap; }
+.tag-capa.usa { color: var(--accent); background: var(--hl); }
+.tag-capa.no-usa { color: var(--muted); background: var(--disabled); }
+
+/* URL de ejemplo de la receta de código: puede ser más ancha que la
+   columna en una pantalla angosta, así que scrollea en vez de desbordar. */
+.ejemplo {
+  overflow-x: auto;
+  margin: .5rem 0 0;
+  padding: .75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--hl);
+}
+.ejemplo code { background: none; padding: 0; }
+
 .identity { display: flex; flex-direction: column; justify-content: center; }
+/* El nombre y el "Copiar enlace" comparten fila: el botón acompaña al
+   objeto que se está mirando, no al bloque entero. */
+.identity-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; }
+.identity-head h2 { margin: 0 0 .3rem; }
 
 .block-title {
   font-size: .78rem; text-transform: uppercase; letter-spacing: .06em;
@@ -117,6 +255,11 @@ main, .site-header, .site-footer {
    bundle, así que empatar no alcanza. */
 #map .leaflet-control-attribution { background: #fff; }
 .meta { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
+
+/* Enlace chico a la nota del objeto o de la capa activa (NOTA-R3): agrega
+   contexto sin competir con las descargas que están al lado. */
+.note-link { font-size: .85rem; margin: 0 0 .75rem; }
+.note-link a { color: var(--accent); }
 
 .rel { list-style: none; padding: 0; margin: 0; }
 .rel li {
@@ -195,10 +338,17 @@ main, .site-header, .site-footer {
 }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-/* Panel de texto de la fila de notas: ancho de lectura, no el de la ficha
-   entera. */
+/* Panel de texto de una nota, en /notas/: ancho de lectura, no el de la
+   página entera. */
 .nota-body { max-width: 72ch; }
 .nota-body p { margin: 0 0 .7rem; }
+
+/* Fuentes externas al pie de una nota (NOTA-R2, mitad nueva): mismo peso
+   visual que `.meta`, sin viñetas, para que lea como referencia y no como
+   otro párrafo del cuerpo. Vacía —la mayoría de las notas— no se nota. */
+.nota-fuentes { list-style: none; padding: 0; margin: 0; max-width: 72ch; color: var(--muted); font-size: .9rem; }
+.nota-fuentes li { margin: 0 0 .3rem; }
+.nota-fuentes a { color: var(--accent); }
 
 /* Tabla de una página de hijos. `.table-scroll` es el contenedor que
    scrollea: vías tiene 21 columnas y no entra en el ancho del sitio. */
@@ -233,15 +383,12 @@ td.acts .note { white-space: normal; max-width: 20rem; }
    (`anchorField` en columns.js) — no `:first-child`: el primer campo
    publicado por el GeoServer es `id`, un número interno que no identifica
    nada para quien mira. El fondo propio evita que el contenido de las
-   columnas que van pasando por detrás se transparente; el segundo, que se
-   note el corte con el resto de la fila cuando está seleccionada. */
+   columnas que van pasando por detrás se transparente. */
 table.wide th.col-anchor, table.wide td.col-anchor {
   position: sticky;
   left: 0;
   background: var(--bg);
 }
-table.wide tbody tr[aria-selected="true"] td.col-anchor { background: var(--hl); }
-tbody tr[aria-selected="true"] { background: var(--hl); }
 
 /* Anterior / dónde estoy / siguiente, debajo de la tabla. */
 .pager { display: flex; align-items: center; gap: 1rem; margin: .75rem 0 0; }
