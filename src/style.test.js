@@ -252,8 +252,31 @@ describe('la conversión de color del gate', () => {
     expect(luminance('#1f6feb')).toBeCloseTo(0.17658, 4)
   })
 
+  // Agarra un error de signo o de escala en los coeficientes de la fila L.
+  // No agarra un cubo faltante ni un signo invertido en el matiz —0 y 1 son
+  // puntos fijos de x³ y con croma 0 el matiz no participa—: eso lo cubren
+  // las anclas de abajo.
   it('los extremos caen donde tienen que caer', () => {
     expect(luminance('oklch(1 0 0)')).toBeCloseTo(1, 2)
     expect(luminance('oklch(0 0 0)')).toBeCloseTo(0, 2)
+  })
+
+  // Dos anclas más, con croma de verdad y a 180° de distancia entre sí: sin
+  // esto, borrar el `** 3` de la conversión pasa desapercibido, porque 0 y 1
+  // son puntos fijos del cubo y con croma 0 los términos de matiz se anulan.
+  // El acento y el aviso que el sitio tiene hoy en su paleta oscura sirven
+  // de patrón: son colores reales, no valores de laboratorio.
+  it('un color con croma también cae donde corresponde', () => {
+    expect(luminance('oklch(0.6470 0.1718 259.9)')).toBeCloseTo(luminance('#4b8bf5'), 2)
+    expect(luminance('oklch(0.7829 0.1258 82.3)')).toBeCloseTo(luminance('#e0b050'), 2)
+  })
+
+  // Fuera del gamut sRGB la conversión da canales negativos o mayores a 1, y
+  // sin recortarlos el contraste saldría un número imposible. Este croma no
+  // existe en sRGB a esa luminosidad.
+  it('un color fuera del gamut sRGB se recorta en vez de mentir', () => {
+    const l = luminance('oklch(0.7 0.4 150)')
+    expect(l).toBeGreaterThanOrEqual(0)
+    expect(l).toBeLessThanOrEqual(1)
   })
 })
