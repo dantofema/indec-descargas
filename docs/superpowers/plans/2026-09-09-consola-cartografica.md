@@ -52,8 +52,11 @@ describe('la conversión de color del gate', () => {
   // oklch podría estar mal y los contrastes de la paleta nueva serían
   // números inventados con cara de medidos.
   it('oklch y hex del mismo color dan la misma luminancia', () => {
-    // #1f6feb, el acento que el sitio tiene hoy, en oklch.
-    expect(luminance('oklch(0.5513 0.1983 259.5)')).toBeCloseTo(luminance('#1f6feb'), 2)
+    // #1f6feb, el acento que el sitio tiene hoy, convertido el 2026-09-09.
+    // Su luminancia WCAG medida es 0.17658: si la conversión oklch no cae
+    // ahí, está mal la conversión, no el valor esperado.
+    expect(luminance('oklch(0.5686 0.2023 259.7)')).toBeCloseTo(luminance('#1f6feb'), 2)
+    expect(luminance('#1f6feb')).toBeCloseTo(0.17658, 4)
   })
 
   it('los extremos caen donde tienen que caer', () => {
