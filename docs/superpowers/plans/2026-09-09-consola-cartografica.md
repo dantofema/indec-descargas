@@ -210,7 +210,6 @@ Bloque claro (`:root`), con los alias viejos apuntando a los nuevos:
   --accent-fg: var(--ground);
   --disabled: var(--raise);
   --warn: var(--amber);
-  --radius: 8px;
 }
 ```
 
@@ -390,7 +389,7 @@ Run: `npx vitest run src/style.test.js`
 
 Recorrer `src/style.css` aplicando, sin cambiar ninguna estructura ni ningún selector:
 
-- `--radius` pasa de `6px` a `8px`; los tiles y el pozo del mapa usan `10px`–`12px`.
+- `--radius` pasa de `6px` a `8px` —**esto vive acá y no en la Task 2**, que sólo toca colores; el radio es geometría—; los tiles y el pozo del mapa usan `10px`–`12px`.
 - Títulos, botones y pestañas: `font-family: var(--display)`; peso 500, salvo el `h1` del home que va 700.
 - Todo número, código y metadato: `font-family: var(--mono)` **más** `font-variant-numeric: tabular-nums`. Alcanza a `.totales-n`, la columna de códigos de la tabla, `#generated`, el paginador y los metadatos de la ficha.
 - `.btn:hover`: sacar `filter: brightness(1.08)`, poner `box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 22%, transparent)`. `.btn:active` baja 1 px.

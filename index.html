@@ -12,7 +12,10 @@
 
     <main class="home">
       <section class="hero">
-        <h1>La cartografía del INDEC más fácil de descargar y usarla en tus proyectos</h1>
+        <!-- El descargo abre la página, no sólo el pie: quien entra y se va
+             sin scrollear tiene que haber leído que esto no es del INDEC. -->
+        <p class="eyebrow">Sitio no oficial · Datos del INDEC</p>
+        <h1>La cartografía del INDEC, lista para tus proyectos.</h1>
         <p class="subtitle">Buscá una provincia, departamento, localidad, municipio o aglomerado y descargalo en GeoPackage. Sin saber WFS, sin cuenta, sin instalar nada.</p>
         <div class="search">
           <div class="search-row">
@@ -23,7 +26,7 @@
               id="q"
               type="search"
               autocomplete="off"
-              placeholder="Escribí un nombre. Por ejemplo: Tres de Febrero"
+              placeholder="Escribí un nombre o un código. Por ejemplo: Tres de Febrero"
               aria-label="Buscar un objeto geográfico"
               role="combobox"
               aria-autocomplete="list"
@@ -33,11 +36,17 @@
           </div>
           <ul id="results" class="results" role="listbox" hidden></ul>
         </div>
+        <!-- Lo llena home.js: los dos números salen de totales.json y de
+             qué tipos tienen `catalogo: true`, no van escritos acá. -->
+        <p id="hero-meta" class="hero-meta"></p>
         <p id="status" class="status"></p>
       </section>
 
       <section class="totales">
-        <h2>Qué hay adentro</h2>
+        <div class="totales-head">
+          <h2>Qué hay adentro</h2>
+          <span class="totales-nota">ocho objetos del Marco</span>
+        </div>
         <ul id="totals" class="totales-grid"></ul>
       </section>
     </main>

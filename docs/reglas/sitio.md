@@ -72,8 +72,12 @@ cambió. La respuesta útil ante eso es dejar buscar de nuevo, no un error termi
 
 ### SITIO-R5 — Cada página lleva el CTA al Geoportal INDEC
 
-Home, resultados, notas y servicios llevan un enlace chico a `https://geonode.indec.gob.ar/`,
-con `target="_blank"`.
+Home, resultados, notas y servicios llevan un panel a `https://geonode.indec.gob.ar/`, con
+`target="_blank"`, que dice la cuenta de capas y para qué sirve ir.
+
+**Corregida el 2026-09-09 al construir el rediseño:** decía "un enlace chico". Un enlace chico y
+suelto entre el contenido y el pie no se lee como una salida, se lee como un botón huérfano: no
+dice a qué se va ni por qué, así que la regla se cumplía y su propósito no.
 
 **Por qué:** este sitio usa 8 de las 47 capas que publica el INDEC; quien necesita más tiene que
 saber a dónde ir. `geoportal.indec.gob.ar` **no existe** —verificado el 2026-09-08, sin registro

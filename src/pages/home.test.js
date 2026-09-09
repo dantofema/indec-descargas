@@ -231,3 +231,54 @@ describe('los contadores corren (APAR-R4)', () => {
     expect([...document.querySelectorAll('.totales-n')].map((e) => e.textContent)).toContain('66.515')
   })
 })
+
+/**
+ * El canvas aprobado (`Main.dc.html`) traía una composición que la rama
+ * nunca portó: se tradujeron los tokens y las animaciones, y el markup
+ * quedó igual al de antes del rediseño. Estos casos fijan lo que el hero
+ * tiene que decir, que es donde estaba la diferencia visible.
+ */
+describe('el hero porta la composición del canvas', () => {
+  it('lleva el descargo arriba del título, no sólo en el pie', async () => {
+    await montar()
+    expect($('.hero .eyebrow').textContent).toBe('Sitio no oficial · Datos del INDEC')
+  })
+
+  it('el titular es una oración que cierra', async () => {
+    await montar()
+    // El anterior decía "más fácil de descargar y usarla en tus proyectos":
+    // arranca comparando y termina coordinando un infinitivo con un
+    // gerundio. No concuerda, y era lo primero que se leía del sitio.
+    expect($('.hero h1').textContent).toBe('La cartografía del INDEC, lista para tus proyectos.')
+  })
+
+  it('el campo anuncia que también busca por código', async () => {
+    await montar()
+    // La búsqueda por código se implementó en la rama anterior y el
+    // placeholder se quedó viejo: la función existía y nadie la veía.
+    expect($('#q').placeholder).toContain('código')
+  })
+})
+
+describe('la línea meta del hero (BUS-R5)', () => {
+  it('separa lo buscable por nombre de lo direccionable por código', async () => {
+    await montarConTotales()
+    const meta = $('.hero-meta').textContent
+    // 24 + 119 + 529 + 2282 + 4023: los cinco tipos con `catalogo: true`.
+    expect(meta).toContain('6.977')
+    // Los ocho tipos sumados: todo el Marco es direccionable por código,
+    // aunque sólo cinco entren al catálogo de nombres.
+    expect(meta).toContain('557.651')
+  })
+
+  it('cada número queda pegado a la vía de búsqueda que le corresponde', async () => {
+    await montarConTotales()
+    const meta = $('.hero-meta').textContent
+    // Decir "557.651 objetos indexados" —lo que pedía el artboard— sería
+    // falso: radios, fracciones y vías no están en catalog.json. Que los
+    // dos números aparezcan no alcanza: cruzados, la página miente igual,
+    // así que cada uno se exige junto a su palabra.
+    expect(meta).toMatch(/6\.977[^·]*nombre/)
+    expect(meta).toMatch(/557\.651[^·]*código/)
+  })
+})

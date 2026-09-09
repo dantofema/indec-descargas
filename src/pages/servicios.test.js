@@ -47,7 +47,7 @@ describe('la página de servicios', () => {
 
   it('trae el shell completo', () => {
     expect(html).toContain('Sitio no oficial')
-    expect(html).toContain('Más info, más mapas, más capas en Geoportal INDEC')
+    expect(html).toContain('Ir al Geoportal INDEC')
     expect(crudo).toContain('<!--#shell:header-->')
   })
 })

@@ -71,7 +71,10 @@ body {
 }
 
 main, .site-header, .site-footer {
-  max-width: 60rem;
+  /* 70rem = los 1120 px de contenido del artboard (1440 menos los márgenes).
+     A 60rem el hero quedaba en una columna angosta con medio ancho vacío
+     al lado, que era la mitad de por qué el rediseño no se notaba. */
+  max-width: 70rem;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -141,17 +144,44 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
 }
 
 /* El CTA institucional, entre el contenido y el footer en toda página. */
-.cta { max-width: 60rem; margin: 2rem auto 0; padding: 0 1rem; }
+.cta { max-width: 70rem; margin: 3rem auto 0; padding: 0 1rem; }
+/* El panel: título, una línea de para qué, y el enlace a la derecha. Antes
+   era un botón suelto que no decía a dónde llevaba (SITIO-R5, corregida). */
+.cta aside, .cta {
+  --cta-gap: 1.25rem;
+}
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cta-gap);
+  padding: 1.4rem 1.6rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.cta-texto { flex: 1 1 22rem; }
+.cta-texto h2 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin: 0 0 .3rem;
+}
+.cta-texto p { color: var(--muted); font-size: .92rem; margin: 0; max-width: 46ch; }
 .cta a {
+  flex: 0 0 auto;
   display: inline-block;
-  padding: .5rem .9rem;
+  padding: .6rem 1rem;
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   color: var(--accent);
   text-decoration: none;
+  white-space: nowrap;
+  transition: background 200ms cubic-bezier(.2, .7, .3, 1), color 200ms cubic-bezier(.2, .7, .3, 1);
   font-size: .9rem;
 }
-.cta a:hover { background: var(--hl); }
+.cta a:hover { background: var(--accent); color: var(--accent-fg); }
 
 /* El home: el hero con el buscador arriba y los totales abajo. */
 .home .hero { margin: 1.5rem 0 3rem; }
@@ -169,24 +199,63 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
 .home .subtitle { animation-delay: 80ms; }
 .home .search { animation-delay: 160ms; }
 .home .totales { animation-delay: 240ms; }
+/* Mono, versalitas y apagado: la firma de la consola para todo lo que es
+   dato sobre el sitio y no contenido del sitio. */
+.home .eyebrow {
+  font-family: var(--mono);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 .9rem;
+}
 /* El único h1 en peso 700: es la única pieza de la consola que lleva el
-   peso más pesado de Space Grotesk, el título del home. */
-.home h1 { font-family: var(--display); font-weight: 700; font-size: 2rem; line-height: 1.2; margin: 0 0 .6rem; max-width: 24ch; }
-.home .subtitle { font-size: 1.05rem; max-width: 60ch; }
-.home .totales h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 1rem; }
+   peso más pesado de Space Grotesk, el título del home. `clamp` porque a
+   2rem fijos el titular era del tamaño de un h2 y no abría nada. */
+.home h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2.1rem, 5.2vw, 3.9rem);
+  line-height: 1.06;
+  letter-spacing: -.02em;
+  margin: 0 0 .9rem;
+  max-width: 18ch;
+}
+/* Los dos universos de búsqueda, bajo el campo. Los llena home.js. */
+.home .hero-meta {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--muted);
+  margin: .85rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.home .subtitle { font-size: 1.1rem; max-width: 54ch; margin: 0 0 1.8rem; }
+/* El encabezado de los totales es una fila: título a la izquierda y la
+   cuenta a la derecha, como el rótulo de un instrumento. */
+.totales-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+.home .totales h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0; }
+.totales-nota { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
 .totales { margin: 0 0 3rem; }
 
 /* Ocho tiles que se acomodan solos: sin breakpoint propio, la grilla
-   reparte lo que haya de ancho. */
+   reparte lo que haya de ancho. El mínimo es 16rem y no 10rem para que a
+   ancho completo den 4 + 4 —la grilla del artboard— en vez de 5 + 3, que
+   dejaba una fila coja. */
 .totales-grid {
   list-style: none; padding: 0; margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: .75rem;
 }
 .totales-tile {
   display: flex; flex-direction: column; gap: .15rem;
-  padding: .9rem 1rem;
+  padding: 1.15rem 1.25rem;
   border: 1px solid var(--line);
   background: var(--panel);
   /* No usa `--radius`: es un tile, no un control, y la consola les da a
@@ -216,7 +285,7 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
   .totales-tile:hover::after { transform: scaleX(1); }
 }
 .totales-tile svg { color: var(--accent); margin-bottom: .35rem; }
-.totales-n { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.totales-n { font-family: var(--mono); font-size: 1.9rem; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .totales-label { color: var(--muted); font-size: .85rem; }
 
 .search { position: relative; }
