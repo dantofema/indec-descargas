@@ -280,3 +280,42 @@ describe('la conversión de color del gate', () => {
     expect(l).toBeLessThanOrEqual(1)
   })
 })
+
+describe('la paleta de la consola (APAR-R6)', () => {
+  const { light, dark } = palettes()
+  const pares = [
+    ['--fg', '--ground', 7],
+    ['--fg', '--panel', 7],
+    ['--muted', '--ground', 4.5],
+    ['--muted', '--panel', 4.5],
+    ['--accent', '--ground', 4.5],
+    ['--ground', '--accent', 4.5],
+  ]
+
+  for (const [modo, tokens] of [['clara', light], ['oscura', dark]]) {
+    for (const [a, b, piso] of pares) {
+      it(`${a} sobre ${b} llega a ${piso}:1 en la paleta ${modo}`, () => {
+        expect(contrast(resolve(a, tokens), resolve(b, tokens))).toBeGreaterThanOrEqual(piso)
+      })
+    }
+  }
+
+  // Los dos acentos comparten croma y luminosidad y sólo cambian de matiz:
+  // es lo que hace que ninguno pese más que el otro (APAR-R2).
+  it('los dos acentos comparten croma y luminosidad en las dos paletas', () => {
+    for (const tokens of [light, dark]) {
+      const [, la, ca] = resolve('--accent', tokens).match(/oklch\(([\d.]+) ([\d.]+)/)
+      const [, lb, cb] = resolve('--amber', tokens).match(/oklch\(([\d.]+) ([\d.]+)/)
+      expect(+la).toBeCloseTo(+lb, 3)
+      expect(+ca).toBeCloseTo(+cb, 3)
+    }
+  })
+
+  it('todo token de color se declara en oklch (APAR-R2)', () => {
+    for (const tokens of [light, dark]) {
+      for (const t of ['--ground', '--panel', '--raise', '--line', '--fg', '--muted', '--accent', '--amber']) {
+        expect(resolve(t, tokens), t).toMatch(/^oklch\(/)
+      }
+    }
+  })
+})

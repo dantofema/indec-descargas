@@ -1,14 +1,29 @@
 :root {
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #666666;
-  --line: #e0e0e0;
-  --accent: #1f6feb;
-  --accent-fg: #ffffff;
-  --hl: #f5f8ff;
+  /* La consola, paleta clara. Las cuatro superficies comparten un solo eje
+     de matiz (250, azul frío) y sólo varían en luminosidad; los dos acentos
+     comparten croma y luminosidad y sólo cambian de matiz, así que ninguno
+     pesa más que el otro (APAR-R2). Los pisos de contraste los verifica la
+     suite, no esta tabla (APAR-R6). */
+  --ground: oklch(0.99 0.002 250);
+  --panel:  oklch(0.975 0.004 250);
+  --raise:  oklch(0.95 0.006 250);
+  --line:   oklch(0.90 0.006 250);
+  --fg:     oklch(0.22 0.012 250);
+  --muted:  oklch(0.50 0.014 250);
+  /* L bajado de 0.55 (spec) a 0.50: a 0.55 el acento medía 4,127:1 contra
+     --ground, por debajo del piso de 4,5:1 que exige el gate (APAR-R6). */
+  --accent: oklch(0.50 0.14 190);
+  --amber:  oklch(0.50 0.14 75);
+
+  /* Los nombres que el resto de la hoja ya usa, en términos de los de
+     arriba: así el rediseño de superficie no obliga a reescribir cada
+     regla en la misma tarea que cambia los colores. */
+  --bg: var(--ground);
+  --hl: var(--raise);
   --hl-mark: var(--accent);
-  --disabled: #f2f2f2;
-  --warn: #8a5a00;
+  --accent-fg: var(--ground);
+  --disabled: var(--raise);
+  --warn: var(--amber);
   --radius: 6px;
 }
 
@@ -412,9 +427,18 @@ table.wide th.col-anchor, table.wide td.col-anchor {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #14161a; --fg: #e8e8e8; --muted: #9aa0a6; --line: #2c3038;
-    --accent: #4b8bf5; --accent-fg: #0d0f12; --disabled: #21252b; --warn: #e0b050;
-    --hl: #1c2230;
+    /* La consola, paleta oscura. Mismo eje de matiz que la clara (250) y
+       misma lógica de acentos (croma y luminosidad compartidos, sólo
+       cambia el matiz); los alias de abajo no se repiten porque `var()`
+       se resuelve en uso y heredan solos del `:root` de afuera. */
+    --ground: oklch(0.17 0.012 250);
+    --panel:  oklch(0.215 0.014 250);
+    --raise:  oklch(0.26 0.015 250);
+    --line:   oklch(0.32 0.014 250);
+    --fg:     oklch(0.96 0.005 250);
+    --muted:  oklch(0.72 0.012 250);
+    --accent: oklch(0.80 0.125 190);
+    --amber:  oklch(0.80 0.125 75);
   }
   /* #b32020 sobre este fondo mide 2,71:1, por debajo del 4,5:1 de WCAG AA,
      justo en la única cadena que el usuario más necesita poder leer.
