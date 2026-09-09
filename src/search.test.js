@@ -101,7 +101,7 @@ describe('search por provincia', () => {
   })
 })
 
-// BUS-R4: cuatro niveles, del match más literal al más laxo.
+// BUS-R4: cinco niveles, del match más literal al más laxo.
 describe('el orden de los resultados', () => {
   it('pone la coincidencia entera antes que la que necesita la provincia', () => {
     const objs = [
