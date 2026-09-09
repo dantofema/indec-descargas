@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalize, search } from './search.js'
+import { normalize, search, codeMatches } from './search.js'
 
 // El `gl` va antes que el `dep` a propósito: `Array.prototype.sort` es
 // estable, así que con el orden natural el resultado esperado salía del
@@ -133,5 +133,45 @@ describe('search filtrada por tipo', () => {
 
   it('devuelve vacío si nada del tipo pedido coincide', () => {
     expect(search(objects, 'tres de febrero', { type: 'jur' })).toEqual([])
+  })
+})
+
+describe('buscar por código (BUS-R5)', () => {
+  const objetos = [
+    { t: 'dep', c: '06469', n: 'Malvinas Argentinas', s: 'malvinas argentinas', sp: 'buenos aires' },
+    { t: 'loc', c: '06469080', n: 'Grand Bourg', s: 'grand bourg', sp: 'buenos aires' },
+  ]
+
+  it('un código del catálogo devuelve su objeto y sólo ése', () => {
+    expect(search(objetos, '06469').map((o) => o.c)).toEqual(['06469'])
+  })
+
+  it('el código gana a cualquier coincidencia de nombre (BUS-R4, nivel 0)', () => {
+    const conHomonimo = [...objetos, { t: 'loc', c: '99999999', n: '06469', s: '06469', sp: 'x' }]
+    expect(search(conHomonimo, '06469')[0].c).toBe('06469')
+  })
+
+  it('los ceros a la izquierda importan: el código es una cadena', () => {
+    expect(search(objetos, '6469')).toEqual([])
+  })
+
+  it('siete, nueve y trece dígitos son fracción, radio y vía', () => {
+    expect(codeMatches('0646908')).toMatchObject([{ t: 'frac', c: '0646908' }])
+    expect(codeMatches('064690801')).toMatchObject([{ t: 'rad', c: '064690801' }])
+    expect(codeMatches('0646908000600')).toMatchObject([{ t: 'via', c: '0646908000600' }])
+  })
+
+  it('un largo que es de un tipo del catálogo no arma fila sintética', () => {
+    // Ese largo lo resuelve el catálogo, que es quien sabe si existe.
+    expect(codeMatches('06469')).toEqual([])
+  })
+
+  it('el filtro de tipo también acota la búsqueda por código (BUS-R1)', () => {
+    expect(codeMatches('064690801', { type: 'frac' })).toEqual([])
+    expect(codeMatches('064690801', { type: 'rad' })).toHaveLength(1)
+  })
+
+  it('lo que no son puros dígitos no arma fila sintética', () => {
+    expect(codeMatches('grand bourg')).toEqual([])
   })
 })

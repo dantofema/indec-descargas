@@ -6,7 +6,7 @@ documento mienta.
 
 | Superficie | Reglas |
 |---|---|
-| [buscador](buscador.md) | BUS-R1 … BUS-R4 |
+| [buscador](buscador.md) | BUS-R1 … BUS-R5 |
 | [descargas](descargas.md) | DES-R1 … DES-R10 |
 | [navegacion](navegacion.md) | NAV-R1 … NAV-R11 |
 | [notas](notas.md) | NOTA-R1 … NOTA-R3 |

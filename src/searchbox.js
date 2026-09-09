@@ -1,4 +1,4 @@
-import { search, TYPE_ORDER } from './search.js'
+import { search, codeMatches, TYPE_ORDER } from './search.js'
 import { TYPES } from './download.js'
 import { createCombobox } from './combobox.js'
 
@@ -49,7 +49,13 @@ export function createSearchBox({ input, select, list, onPick }) {
 
   function runSearch() {
     if (!objects) return
-    combo.render(search(objects, input.value, { type: select.value }))
+    const q = input.value.trim()
+    // Las dos listas nunca se pisan: ningún código del catálogo mide 7, 9 ni
+    // 13 caracteres, que son los tres largos que arman fila sintética.
+    combo.render([
+      ...search(objects, q, { type: select.value }),
+      ...codeMatches(q, { type: select.value }),
+    ])
   }
 
   // El `change` también busca: cambiar de tipo tiene que acotar lo que ya

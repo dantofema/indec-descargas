@@ -77,4 +77,12 @@ describe('createSearchBox', () => {
     searchbox.setObjects(objetos)
     expect(el.list.children).toHaveLength(2)
   })
+
+  it('tipear el código de una vía no le pide nada al GeoServer (BUS-R5)', () => {
+    searchbox.setObjects(objetos)
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    escribir('0646908000600')
+    expect(document.querySelectorAll('#results li')).toHaveLength(1)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
 })
