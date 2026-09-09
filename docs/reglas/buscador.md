@@ -47,7 +47,7 @@ deriva en una pasada al arrancar.
 Como beneficio lateral, normalizar la provincia tapa una inconsistencia del INDEC: la misma
 provincia viene "Entre Rios" en localidades y "Entre Ríos" en gobiernos locales (DES-R8).
 
-### BUS-R4 — Los resultados salen en cuatro niveles, del match más literal al más laxo
+### BUS-R4 — Los resultados salen en cinco niveles, del match más literal al más laxo
 
 0. la consulta es el código exacto de un objeto
 1. la consulta entera **empieza** el nombre
