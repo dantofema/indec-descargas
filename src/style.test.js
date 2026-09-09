@@ -395,10 +395,6 @@ describe('los controles de la consola', () => {
     expect(css).not.toMatch(/outline:\s*(none|0)\s*;(?![^}]*:focus-visible)/)
   })
 
-  it('todo número va en cifras tabulares', () => {
-    expect(css).toMatch(/font-variant-numeric:\s*tabular-nums/)
-  })
-
   // Un `outline` sólido sobre el anillo se lee como un borde doble; sacarlo
   // del todo rompe el alto contraste forzado, donde el sistema pinta outlines
   // y descarta sombras. Transparente es la única forma que cumple las dos.
@@ -407,4 +403,21 @@ describe('los controles de la consola', () => {
     expect(foco).toMatch(/outline:\s*2px solid transparent/)
     expect(foco).toMatch(/box-shadow/)
   })
+})
+
+// Cada lugar donde el sitio muestra un número, por separado. La versión
+// anterior buscaba la propiedad en toda la hoja y pasaba con que un solo
+// selector la tuviera: pasaba en verde incluso antes de que existieran
+// cuatro de estos seis. Un número sin cifras tabulares cambia de ancho al
+// animarse, y la grilla del home late.
+describe('las cifras tabulares están donde hay números', () => {
+  const conNumeros = ['.totales-n', 'td.code', 'td.num', '.pager .where', '#generated', '#detail-meta']
+
+  for (const sel of conNumeros) {
+    it(`${sel} las declara`, () => {
+      const bloques = rule(sel)
+      expect(bloques.length, `${sel} no existe en la hoja`).toBeGreaterThan(0)
+      expect(bloques.join(' ')).toMatch(/font-variant-numeric:\s*tabular-nums/)
+    })
+  }
 })
