@@ -379,3 +379,23 @@ describe('las fuentes se sirven desde acá (APAR-R3)', () => {
     }
   })
 })
+
+describe('los controles de la consola', () => {
+  // El brillo no sirve como hover cuando el acento ya es luminoso: en la
+  // paleta oscura, subirle 8% a un cián no se percibe.
+  it('el hover del botón es un anillo, no un filtro de brillo', () => {
+    const btn = rule('.btn:hover')
+    expect(btn.length).toBeGreaterThan(0)
+    expect(btn.join(' ')).toMatch(/box-shadow/)
+    expect(btn.join(' ')).not.toMatch(/brightness/)
+  })
+
+  it('el foco visible nunca se saca', () => {
+    expect(css).toMatch(/:focus-visible/)
+    expect(css).not.toMatch(/outline:\s*(none|0)\s*;(?![^}]*:focus-visible)/)
+  })
+
+  it('todo número va en cifras tabulares', () => {
+    expect(css).toMatch(/font-variant-numeric:\s*tabular-nums/)
+  })
+})
