@@ -1026,32 +1026,35 @@ export function format(obj, layer = null, page = 0) {
 
 - [ ] **Step 4: Escribir el test del browser que falla, en `src/browser.test.js`**
 
+**Ojo con los nombres, verificados el 2026-09-08:** este archivo **no** tiene un espía con nombre —usa `global.fetch` directo, a diferencia de `resultados.test.js`, donde sí existe `fetchSpy`—. Y ya trae un helper `boton(texto)` que busca un botón por su texto dentro del contenedor: usalo en vez de un selector posicional, que en este DOM es ambiguo porque las pestañas también son `<button>`. Los objetos de prueba del archivo son `dep` y `depVias`.
+
 ```js
 it('abre la pestaña en la página que le piden', async () => {
-  const onPage = vi.fn()
-  const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage })
-  browser.show(objConRadios, 'radios', 3)
-  await tick()
-  expect(fetchSpy.mock.calls[0][0]).toContain('startIndex=60')
+  const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
+  browser.show(dep, 'radios', 3)
+  await vi.waitFor(() => expect(global.fetch).toHaveBeenCalled())
+  expect(global.fetch.mock.calls[0][0]).toContain('startIndex=60')
 })
 
 it('avisa cada cambio de página', async () => {
   const onPage = vi.fn()
   const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage })
-  browser.show(objConRadios, 'radios')
-  await tick()
-  document.querySelector('.pager button:last-child').click()
-  expect(onPage).toHaveBeenCalledWith('radios', 1)
+  browser.show(dep, 'radios')
+  await vi.waitFor(() => expect(container.querySelector('.pager')).not.toBeNull())
+  boton('Siguiente').click()
+  await vi.waitFor(() => expect(onPage).toHaveBeenCalledWith('radios', 1))
 })
 
 // SITIO-R3: recordar la página no es motivo para pedirla.
 it('una página inicial de vías no dispara ningún pedido', async () => {
   const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
-  browser.show(objConVias, 'vias', 3)
-  await tick()
-  expect(fetchSpy).not.toHaveBeenCalled()
+  browser.show(depVias, 'vias', 3)
+  await vi.waitFor(() => expect(boton('Cargar igual')).not.toBeNull())
+  expect(global.fetch).not.toHaveBeenCalled()
 })
 ```
+
+El tercero espera a que exista el botón de "Cargar igual" **antes** de afirmar que no se pidió nada: sin esa espera sería una aserción negativa que pasa aunque el `show` no haya llegado a dibujar. En esta misma rama ya hubo un test que pasaba trivialmente por no tener esa precaución.
 
 - [ ] **Step 5: Correr y verificar que falla**
 
