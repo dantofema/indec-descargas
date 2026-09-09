@@ -541,3 +541,40 @@ describe('el movimiento (APAR-R4)', () => {
     expect((bloque.match(/scaleX\(1\)/g) ?? []).length).toBeGreaterThan(1)
   })
 })
+
+/**
+ * El desplegable del buscador contra los tiles del home.
+ *
+ * `hero-in` anima un `transform`, y con `animation-fill-mode: both` ese
+ * transform queda puesto para siempre. Un transform crea un contexto de
+ * apilamiento, así que `.home .search` y `.home .totales` terminan siendo
+ * dos contextos hermanos: el `z-index: 1100` de `.results` queda encerrado
+ * adentro del primero y no puede ganarle al segundo. Con los dos en
+ * `z-index: auto` decide el orden del DOM, y `.totales` va después.
+ *
+ * Encontrado en un browser de verdad —jsdom no apila ni pinta—: los tiles y
+ * el título "Qué hay adentro" se dibujaban arriba de los resultados.
+ */
+describe('el desplegable del buscador gana a lo que tiene abajo', () => {
+  it('hero-in sigue moviendo con transform, que es lo que crea el problema', () => {
+    // Si algún día la entrada deja de usar transform, el resto de este
+    // bloque deja de tener sentido y hay que revisarlo, no borrarlo a ciegas.
+    const kf = css.slice(css.indexOf('@keyframes hero-in'))
+    expect(kf.slice(0, kf.indexOf('}\n}'))).toContain('transform')
+  })
+
+  it('.home .search declara z-index, o los tiles lo tapan', () => {
+    const bloques = rule('.home .search')
+    expect(bloques.length, 'no hay una regla propia para .home .search').toBeGreaterThan(0)
+    expect(bloques.some((b) => /z-index:\s*\d/.test(b)), '.home .search no declara z-index').toBe(true)
+  })
+
+  it('el desplegable no se pinta del color del fondo de la página', () => {
+    // Aparte del apilamiento: sobre una superficie que es igual al fondo,
+    // un panel flotante no se lee como flotante. `--bg` es el suelo; una
+    // lista que se abre encima va en una superficie elevada.
+    const b = rule('.results')[0]
+    expect(b).toBeTruthy()
+    expect(b).toMatch(/background:\s*var\(--panel\)/)
+  })
+})

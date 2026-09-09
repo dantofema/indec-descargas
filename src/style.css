@@ -195,8 +195,14 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
   animation: hero-in 550ms cubic-bezier(.2, .7, .3, 1) both;
 }
 .home .subtitle { animation-delay: 80ms; }
-.home .search { animation-delay: 160ms; }
 .home .totales { animation-delay: 240ms; }
+/* El z-index no es decoración: `hero-in` anima un `transform` y con
+   `fill-mode: both` queda puesto para siempre, así que `.home .search` y
+   `.home .totales` son dos contextos de apilamiento hermanos. Los dos en
+   `auto` los ordena el DOM, y `.totales` va después: el `z-index: 1100` de
+   `.results` queda encerrado adentro de `.search` y los tiles se pintaban
+   arriba del desplegable. Esto saca a `.search` del empate. */
+.home .search { animation-delay: 160ms; position: relative; z-index: 2; }
 /* Mono, versalitas y apagado: la firma de la consola para todo lo que es
    dato sobre el sitio y no contenido del sitio. */
 .home .eyebrow {
@@ -351,10 +357,16 @@ body[data-pagina="servicios"] .site-nav [data-nav="servicios"]::after {
   list-style: none;
   max-height: 22rem;
   overflow-y: auto;
-  background: var(--bg);
+  /* `--panel` y no `--bg`: una lista que se abre encima del contenido es
+     una superficie elevada, y pintada del color del suelo no se lee como
+     que flota. */
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgb(0 0 0 / .10);
+  /* Al 10% la sombra existía sólo en la paleta clara: sobre el fondo
+     oscuro no se despega nada de nada. Con la difusión negativa la sombra
+     queda pegada al panel en vez de manchar media pantalla. */
+  box-shadow: 0 14px 34px -10px rgb(0 0 0 / .55);
 }
 .results li { padding: .6rem 1rem; cursor: pointer; display: flex; justify-content: space-between; gap: 1rem; }
 /* Sólo donde hay un puntero que flota de verdad: en táctil el `:hover`
@@ -684,6 +696,11 @@ table.wide th.col-anchor, table.wide td.col-anchor {
 /* La fecha de generación del catálogo, en el pie de las cuatro páginas
    (ver scripts/shell.mjs): es un dato, no prosa. */
 #generated { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* La única línea del pie que pide algo, así que su enlace no se apaga con
+   el resto: `.site-footer a { color: inherit }` los pinta a todos de
+   --muted, y una dirección de correo que no se distingue del texto no
+   invita a escribir. */
+.contacto a { color: var(--accent); }
 
 /* La paleta clara: sólo entra cuando la persona la pide con el botón del
    header (APAR-R7). No hay `@media (prefers-color-scheme)` en toda la hoja
