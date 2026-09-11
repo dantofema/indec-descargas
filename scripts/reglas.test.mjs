@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import {
   DOCUMENTOS_DE_REGLAS, DOCUMENTO_POR_PREFIJO, CONCEPTOS_CON_DUENO,
-  DIR, todasLasReglas, todasLasAbiertas, renderIndiceDeReglas,
+  PRESUPUESTO_DE_PREGUNTA, DIR, todasLasReglas, todasLasAbiertas,
+  renderIndiceDeReglas, cuerpoDePregunta, cuerpoPendiente, pesarCuerpo,
 } from './reglas-index.mjs'
 import { join } from 'node:path'
 
@@ -243,6 +244,56 @@ describe('el tablero', () => {
       const t = readFileSync(join(DIR, `${doc}.md`), 'utf8')
       expect(t, `${doc}.md no tiene <!-- abiertas -->`).toContain('<!-- abiertas -->')
       expect(t, `${doc}.md no tiene <!-- /abiertas -->`).toContain('<!-- /abiertas -->')
+    }
+  })
+
+  it('toda pregunta abierta tiene dónde contestarse', () => {
+    // La respuesta va **inline en el documento**, no en un chat: una
+    // conclusión dicha al pasar se evapora y al rato reaparece disfrazada de
+    // hecho adentro de un test. La línea `> **Tu respuesta:**` es ese lugar,
+    // y va **después** de la tabla de opciones: `cuerpoPendiente` mide lo que
+    // queda antes de ella, así que arriba de todo no mediría nada.
+    for (const q of todasLasAbiertas()) {
+      const cuerpo = cuerpoDePregunta(q)
+      expect(cuerpo, `${q.id} no tiene dónde escribir la respuesta`).toMatch(/^> \*\*Tu respuesta:\*\*/m)
+      const marca = cuerpo.search(/^> \*\*Tu respuesta:\*\*/m)
+      const tabla = cuerpo.lastIndexOf('| **(')
+      if (tabla !== -1) {
+        expect(marca, `${q.id} pone la respuesta antes de las opciones`).toBeGreaterThan(tabla)
+      }
+    }
+  })
+
+  it('toda pregunta abierta ofrece sacar la cosa', () => {
+    // Tres veces en un día la respuesta fue una opción que nadie había
+    // escrito, y las tres eran quitar la promesa en vez de arreglarla.
+    for (const q of todasLasAbiertas()) {
+      expect(cuerpoDePregunta(q), `${q.id} no ofrece sacar la cosa`).toMatch(/Sacar la cosa/i)
+    }
+  })
+
+  it('ninguna pregunta abierta se pasa del presupuesto', () => {
+    const excedidas = []
+    for (const q of todasLasAbiertas()) {
+      const medido = pesarCuerpo(cuerpoPendiente(cuerpoDePregunta(q)))
+      for (const [metrica, tope] of Object.entries(PRESUPUESTO_DE_PREGUNTA)) {
+        if (medido[metrica] > tope) excedidas.push(`${q.id}: ${metrica} ${medido[metrica]} > ${tope}`)
+      }
+    }
+    expect(excedidas, 'una pregunta que no entra en el presupuesto no se contesta: se parte').toEqual([])
+  })
+
+  it('la sección de abiertas dice algo aunque esté vacía', () => {
+    // Dos comentarios HTML no se ven al leer el markdown renderizado: la
+    // sección quedaba en blanco y parecía rota.
+    for (const doc of DOCUMENTOS_DE_REGLAS) {
+      const t = readFileSync(join(DIR, `${doc}.md`), 'utf8')
+      const bloque = t.match(/<!-- abiertas -->\n([\s\S]*?)<!-- \/abiertas -->\n([\s\S]*?)\n## /)
+      expect(bloque, `${doc}.md no tiene la sección de abiertas donde va`).not.toBe(null)
+      const [, filas, despues] = bloque
+      if (!filas.trim()) {
+        expect(despues.trim(), `${doc}.md tiene la sección vacía y sin explicar`).not.toBe('')
+      }
     }
   })
 

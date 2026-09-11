@@ -8,6 +8,8 @@ Nacional.
 <!-- abiertas -->
 <!-- /abiertas -->
 
+**Ninguna.** Lo que se decidió está más abajo, en ✅ Reglas.
+
 ## ✅ Reglas
 
 | # | Regla | Estado |
