@@ -93,8 +93,10 @@ const REGLAS_CITADAS_SIN_DOCUMENTO = [
  */
 const REGLAS_SIN_CITA = []
 
-/** Decididas y todavía sin código. Hoy ninguna: las 43 vivas están construidas. */
-const REGLAS_NO_IMPLEMENTADAS = []
+/** Decididas y todavía sin código. */
+const REGLAS_NO_IMPLEMENTADAS = [
+  'descargas.md DES-R11',
+]
 
 /**
  * Sin el tag de grupo en el nombre del test. Pest tiene `->group()`; Vitest
@@ -237,6 +239,22 @@ describe('el tablero', () => {
   it('el índice del README está al día', () => {
     expect(readFileSync(join(DIR, 'README.md'), 'utf8'),
       'corré: node scripts/reglas-index.mjs').toBe(renderIndiceDeReglas())
+  })
+
+  it('el rango de cada superficie llega hasta su última regla', () => {
+    // Esa tabla se escribe a mano y es lo primero que se lee del tablero.
+    // Cerrar una pregunta agrega una regla al final y el rango queda corto
+    // sin que nada avise: DES-R11 nació y el índice seguía diciendo R10.
+    const readme = readFileSync(join(DIR, 'README.md'), 'utf8')
+    for (const doc of DOCUMENTOS_DE_REGLAS) {
+      const ids = todasLasReglas().filter((r) => r.doc === doc)
+        .map((r) => Number(r.id.split('-R')[1]))
+      const fila = readme.match(new RegExp(`\\| \\[${doc}\\]\\(${doc}\\.md\\) \\| ([^|]+) \\|`))
+      expect(fila, `el índice no lista ${doc}`).not.toBe(null)
+      const prefijo = todasLasReglas().find((r) => r.doc === doc).id.split('-R')[0]
+      expect(fila[1].trim(), `el rango de ${doc} quedó viejo`)
+        .toBe(`${prefijo}-R${Math.min(...ids)} … ${prefijo}-R${Math.max(...ids)}`)
+    }
   })
 
   it('cada documento trae los marcadores de abiertas', () => {
