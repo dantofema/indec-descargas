@@ -11,6 +11,10 @@ const sumaEnJurisdicciones = (capa) => catalog.objects
   .filter((o) => o.t === 'jur')
   .reduce((acc, o) => acc + (o.ch?.[capa] ?? 0), 0)
 
+/**
+ * Cierra NOTA-R1 de `docs/reglas/notas.md`: hay una nota por objeto del Marco,
+ * ocho, cada una con ancla propia.
+ */
 describe('las ocho notas', () => {
   it('son ocho, una por objeto del Marco', () => {
     expect(NOTES).toHaveLength(8)

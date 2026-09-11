@@ -4,6 +4,11 @@ import { estimateBytes, estimateSeconds, weightNotice, childRows } from './child
 
 const MB = 1024 * 1024
 
+/**
+ * Cierra DES-R2 de `docs/reglas/descargas.md`: superar el peso estimado avisa,
+ * no deshabilita. Las dos constantes —973 bytes por feature en polígonos, 420
+ * en vías— son las que la regla declara medidas, no estimadas.
+ */
 describe('estimateBytes', () => {
   it('usa la constante de líneas para vías', () => {
     expect(estimateBytes('vias', 1000)).toBe(420 * 1000)
@@ -64,6 +69,11 @@ describe('childRows: la demora fija de las vías', () => {
 describe('childRows', () => {
   const obj = { t: 'jur', c: '06', n: 'Buenos Aires', ch: { radios: 23901, localidades: 621 } }
 
+  /**
+   * Cierra DES-R1 de `docs/reglas/descargas.md`: no hay tope superior de features.
+   * Ninguna capa hija deshabilita su botón por **superar** una cantidad; el piso
+   * lo decide DES-R3, que es el caso de más abajo.
+   */
   it('da un enlace de descarga vivo aunque la capa sea enorme', () => {
     const filas = childRows(obj)
     const radios = filas.find((li) => li.textContent.includes('Radios'))

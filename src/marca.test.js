@@ -4,6 +4,9 @@ import { resolve } from 'node:path'
 import { injectShell, readPartials } from '../scripts/shell.mjs'
 
 /**
+ * Cierra APAR-R8 de `docs/reglas/apariencia.md`: la marca es «Marco» y sus
+ * archivos declaran de qué token salieron.
+ *
  * La marca del sitio: el favicon, el icono de iOS y la tarjeta para
  * compartir. Son archivos que viven fuera de la hoja de estilo, así que
  * nada los ata a la paleta salvo estos casos.

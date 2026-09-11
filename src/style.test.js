@@ -129,6 +129,11 @@ function media(consulta) {
 
 // El resto de este archivo audita colores contra `palettes()`, así que
 // primero se verifica que `palettes()` esté mirando las paletas que dice.
+/**
+ * Cierra APAR-R1 de `docs/reglas/apariencia.md`: hay dos paletas y las dos son
+ * la misma consola. Este bloque es el que verifica que existan las dos y que
+ * no estén cambiadas de lugar; el resto del archivo audita sus colores.
+ */
 describe('de dónde salen las paletas que se auditan', () => {
   it('hay exactamente una paleta clara y una oscura, y están donde se las busca', () => {
     expect(() => palettes()).not.toThrow()

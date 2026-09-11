@@ -32,8 +32,11 @@ import { join } from 'node:path'
  * y con grupo. Pasó: el caso de grupos usaba la variante sin excluir y daba
  * verde sólo mientras este archivo no estaba trackeado todavía.
  */
-const TESTS_AJENOS = execSync(
-  'cat $(git ls-files "*.test.js" "*.test.mjs" | grep -v reglas.test.mjs)', { encoding: 'utf8' })
+const ARCHIVOS_AJENOS = execSync(
+  'git ls-files "*.test.js" "*.test.mjs" | grep -v reglas.test.mjs', { encoding: 'utf8' })
+  .trim().split('\n')
+  .map((ruta) => ({ ruta, texto: readFileSync(ruta, 'utf8') }))
+const TESTS_AJENOS = ARCHIVOS_AJENOS.map((a) => a.texto).join('\n')
 
 const vivas = () => todasLasReglas().filter((r) => !r.muerta)
 
@@ -42,16 +45,52 @@ const vivas = () => todasLasReglas().filter((r) => !r.muerta)
  * entra sin declararse pone el gate en rojo, que es la idea. Sólo bajan.
  */
 
-/** Implementadas cuyo test no las nombra. Ficha #1. */
-const REGLAS_SIN_CITA = [
-  'apariencia.md APAR-R1', 'apariencia.md APAR-R8',
-  'descargas.md DES-R1', 'descargas.md DES-R2', 'descargas.md DES-R4',
-  'descargas.md DES-R6', 'descargas.md DES-R7', 'descargas.md DES-R9',
-  'descargas.md DES-R10',
-  'navegacion.md NAV-R2', 'navegacion.md NAV-R3', 'navegacion.md NAV-R5',
-  'notas.md NOTA-R1',
-  'sitio.md SITIO-R7', 'sitio.md SITIO-R8',
+/**
+ * Citadas por su ID pero sin nombrar el documento. Ficha #4.
+ *
+ * Son las citas anteriores al 2026-09-11: nombran `SITIO-R5` en un comentario
+ * y nunca dicen de qué archivo sale. Las quince de la ficha #1 nacieron ya con
+ * el documento adentro, así que no están acá.
+ */
+const REGLAS_CITADAS_SIN_DOCUMENTO = [
+  'apariencia.md APAR-R2 se cita sin nombrar su documento',
+  'apariencia.md APAR-R3 se cita sin nombrar su documento',
+  'apariencia.md APAR-R4 se cita sin nombrar su documento',
+  'apariencia.md APAR-R5 se cita sin nombrar su documento',
+  'apariencia.md APAR-R6 se cita sin nombrar su documento',
+  'apariencia.md APAR-R7 se cita sin nombrar su documento',
+  'buscador.md BUS-R1 se cita sin nombrar su documento',
+  'buscador.md BUS-R2 se cita sin nombrar su documento',
+  'buscador.md BUS-R3 se cita sin nombrar su documento',
+  'buscador.md BUS-R4 se cita sin nombrar su documento',
+  'buscador.md BUS-R5 se cita sin nombrar su documento',
+  'descargas.md DES-R8 se cita sin nombrar su documento',
+  'navegacion.md NAV-R1 se cita sin nombrar su documento',
+  'navegacion.md NAV-R11 se cita sin nombrar su documento',
+  'navegacion.md NAV-R4 se cita sin nombrar su documento',
+  'navegacion.md NAV-R8 se cita sin nombrar su documento',
+  'navegacion.md NAV-R9 se cita sin nombrar su documento',
+  'notas.md NOTA-R2 se cita sin nombrar su documento',
+  'notas.md NOTA-R3 se cita sin nombrar su documento',
+  'sitio.md SITIO-R1 se cita sin nombrar su documento',
+  'sitio.md SITIO-R2 se cita sin nombrar su documento',
+  'sitio.md SITIO-R3 se cita sin nombrar su documento',
+  'sitio.md SITIO-R4 se cita sin nombrar su documento',
+  'sitio.md SITIO-R5 se cita sin nombrar su documento',
+  'sitio.md SITIO-R6 se cita sin nombrar su documento',
+  'sitio.md SITIO-R9 se cita sin nombrar su documento',
 ]
+
+/**
+ * Implementadas cuyo test no las nombra. **Vacío desde el 2026-09-11** (ficha
+ * #1): las 43 vivas están citadas, con el documento y el ID adentro de la
+ * cita — `R5` pelado matchea dos numeraciones distintas y daría verde por
+ * coincidencia.
+ *
+ * Queda como lista y no como aserción directa para que agregar una regla sin
+ * citarla obligue a declararla acá a propósito, en vez de pasar de largo.
+ */
+const REGLAS_SIN_CITA = []
 
 /** Decididas y todavía sin código. Hoy ninguna: las 43 vivas están construidas. */
 const REGLAS_NO_IMPLEMENTADAS = []
@@ -137,6 +176,29 @@ describe('los trinquetes de deuda', () => {
   it('las implementadas sin cita son exactamente las declaradas', () => {
     const reales = vivas().filter((r) => r.implementada && !TESTS_AJENOS.includes(r.id)).map(clave)
     expect(ordenado(reales)).toEqual(ordenado(REGLAS_SIN_CITA))
+  })
+
+  it('la cita nombra el documento, no sólo el ID', () => {
+    // `R1` pelado matchea dos numeraciones sin relación y daría verde por
+    // coincidencia; por eso la disciplina pide documento **y** ID. El caso de
+    // arriba sólo mira el ID: sin esto, cambiar "NOTA-R1 de notas.md" por un
+    // "R1" suelto en otro archivo pasaba igual.
+    const fallas = []
+    for (const r of vivas().filter((x) => x.implementada)) {
+      // Por cercanía y no por archivo: dos reglas del mismo documento en el
+      // mismo archivo hacían que una sola mención del documento cubriera a
+      // las dos, que es un verde que no dice nada.
+      let citada = false, conDocumento = false
+      for (const a of ARCHIVOS_AJENOS) {
+        for (const m of a.texto.matchAll(new RegExp(r.id.replace('-', '\\-'), 'g'))) {
+          citada = true
+          const cerca = a.texto.slice(Math.max(0, m.index - 200), m.index + 200)
+          if (cerca.includes(`docs/reglas/${r.doc}.md`)) conDocumento = true
+        }
+      }
+      if (citada && !conDocumento) fallas.push(`${clave(r)} se cita sin nombrar su documento`)
+    }
+    expect(ordenado(fallas)).toEqual(ordenado(REGLAS_CITADAS_SIN_DOCUMENTO))
   })
 
   it('las todavía sin implementar son exactamente las declaradas', () => {

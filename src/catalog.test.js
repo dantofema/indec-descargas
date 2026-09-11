@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import { childrenOf, nonEmptyChildrenOf, loadCatalog } from './catalog.js'
 import { CHILD_LAYERS } from './download.js'
 
@@ -90,5 +92,37 @@ describe('loadCatalog', () => {
     global.fetch = responder([{ t: 'jur', n: 'Santa Fe', s: 'santa fe' }])
     const c = await loadCatalog('/catalog.json')
     expect(c.objects[0].sp).toBe('')
+  })
+})
+
+/**
+ * Cierra DES-R6 de `docs/reglas/descargas.md`: el catálogo se regenera a mano
+ * y se versiona.
+ *
+ * Es la única de las quince que no tenía ningún test. Los demás casos de este
+ * archivo corren contra un fixture, así que ninguno se entera si el catálogo
+ * real deja de estar commiteado o si el comando que lo produce cambia de
+ * nombre. Las dos mitades de la regla se rompen en silencio: el deploy sigue
+ * verde hasta que alguien clona y el sitio no tiene qué buscar.
+ */
+describe('el catálogo commiteado (DES-R6)', () => {
+  it('está versionado, no generado en el deploy', () => {
+    const trackeado = execSync('git ls-files public/catalog.json', { encoding: 'utf8' }).trim()
+    expect(trackeado, 'public/catalog.json dejó de estar commiteado').toBe('public/catalog.json')
+  })
+
+  it('lo produce el comando que la regla nombra', () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+    expect(pkg.scripts['build:index'], 'se fue el script que la regla nombra').toBeTruthy()
+    expect(pkg.scripts['build:index']).toContain('scripts/build-index.mjs')
+  })
+
+  it('el archivo commiteado es el que el sitio lee, y tiene objetos adentro', () => {
+    // Que exista y esté trackeado no alcanza: un JSON válido y vacío pasaría
+    // las dos aserciones de arriba y dejaría el buscador mudo.
+    const real = JSON.parse(readFileSync(new URL('../public/catalog.json', import.meta.url), 'utf8'))
+    expect(Array.isArray(real.objects)).toBe(true)
+    expect(real.objects.length).toBeGreaterThan(6000)
+    expect(real.generated).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })

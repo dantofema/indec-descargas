@@ -7,6 +7,10 @@ import { loadTotales } from './totales.js'
 
 const leer = (p) => JSON.parse(readFileSync(resolve(process.cwd(), p), 'utf8'))
 
+/**
+ * Cierra SITIO-R7 de `docs/reglas/sitio.md`: los totales del home salen del build
+ * y no pueden envejecer sin que un test lo diga.
+ */
 describe('public/totales.json', () => {
   it('dice exactamente lo que sale de sumar el catálogo commiteado', () => {
     // Si esto falla es porque se regeneró el catálogo sin regenerar los
