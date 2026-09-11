@@ -9,3 +9,7 @@ scripts/.cache/
 
 # workspace de subagent-driven-development (scratch)
 .superpowers/
+
+# El backlog vive en su propio repo (~/Projects/backlog).
+# docs/backlog es un symlink a ../../backlog/indec-descargas.
+/docs/backlog
