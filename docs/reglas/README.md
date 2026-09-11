@@ -8,7 +8,7 @@ el documento mienta.
 |---|---|
 | [apariencia](apariencia.md) | APAR-R1 … APAR-R8 |
 | [buscador](buscador.md) | BUS-R1 … BUS-R5 |
-| [descargas](descargas.md) | DES-R1 … DES-R10 |
+| [descargas](descargas.md) | DES-R1 … DES-R11 |
 | [navegacion](navegacion.md) | NAV-R1 … NAV-R11 |
 | [notas](notas.md) | NOTA-R1 … NOTA-R3 |
 | [sitio](sitio.md) | SITIO-R1 … SITIO-R9 |
@@ -28,9 +28,7 @@ Toda pregunta ofrece **sacar la cosa** como una de sus salidas, y toda pregunta 
 presupuesto de más abajo — la que no entra no se contesta, se parte.
 
 <!-- bloque:abiertas -->
-| Pregunta | Superficie | De qué se trata |
-|---|---|---|
-| **DES-Q1** | [descargas](descargas.md) | Qué hace el sitio cuando alguien direcciona un objeto que no existe |
+Ninguna. Todo lo que se destapó está contestado.
 <!-- /bloque:abiertas -->
 
 ## 🔨 Decididas, sin construir
@@ -38,7 +36,9 @@ presupuesto de más abajo — la que no entra no se contesta, se parte.
 Lo que ya se decidió y espera turno.
 
 <!-- bloque:sin-construir -->
-Ninguna: todas las reglas vivas están construidas.
+| Regla | Superficie | Qué decide | Estado |
+|---|---|---|---|
+| **DES-R11** | [descargas](descargas.md) | El objeto direccionable que no está en el catálogo se ofrece igual, y la ficha dice la verdad cuando el pedido vuelve sin nada. | decidida, sin construir · #5 |
 <!-- /bloque:sin-construir -->
 
 ## 🔗 Cruces entre superficies
@@ -56,6 +56,7 @@ para descubrirlo.
 | **BUS-R5** | [buscador](buscador.md) | **SITIO-R3** | ✅ **implementada 2026-09-08** |
 | **BUS-R5** | [buscador](buscador.md) | **NAV-R4** | ✅ **implementada 2026-09-06** |
 | **DES-R10** | [descargas](descargas.md) | **NAV-R4** | ✅ **implementada 2026-09-06** |
+| **DES-R11** | [descargas](descargas.md) | **SITIO-R3** | ✅ **implementada 2026-09-08** |
 | **NAV-R3** | [navegacion](navegacion.md) | **DES-R9** | ✅ **implementada 2026-09-06** |
 | **NAV-R6** | [navegacion](navegacion.md) | **NOTA-R3** | ✅ **implementada 2026-09-08** |
 | **NAV-R6** | [navegacion](navegacion.md) | **DES-R7** | ✅ **implementada 2026-09-04** |
@@ -76,9 +77,5 @@ Una pregunta que no entra en el presupuesto no se contesta: se parte.
 <!-- bloque:complejidad -->
 Presupuesto por pregunta: **≤ 250 palabras**, **≤ 3 opciones**, **0 fichas**, **≤ 3 IDs de reglas**.
 
-| Dónde | # | Palabras | Opciones | Fichas | Cruces | |
-| --- | --- | --- | --- | --- | --- | --- |
-| [descargas](descargas.md) | DES-Q1 | 233 | 3 | 0 | 1 | ✅ |
-
-**Ninguna se pasa.**
+Sin preguntas abiertas que medir.
 <!-- /bloque:complejidad -->

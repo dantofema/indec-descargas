@@ -5,10 +5,13 @@ Decisiones de producto sobre qué se puede descargar y con qué límite.
 ## ⏳ Abiertas
 
 <!-- abiertas -->
-| **DES-Q1** | Qué hace el sitio cuando alguien direcciona un objeto que no existe |
 <!-- /abiertas -->
 
-### DES-Q1 · Qué hace el sitio cuando alguien direcciona un objeto que no existe
+**Ninguna.** Lo que se contestó está más abajo, en ✅ Contestadas, con tu respuesta.
+
+## ✅ Contestadas
+
+### DES-Q1 · Qué hace el sitio cuando alguien direcciona un objeto que no existe → **(b) ofrecer siempre y decir la verdad cuando no vuelve nada** · **cerrada 2026-09-11 → `DES-R11`**
 
 `?t=rad&c=999999999` pasa la validación de largo, abre la ficha y ofrece descargar un objeto
 que no existe. Darle enlace propio a fracción, radio y vía fue correcto; lo que no se reemplazó
@@ -22,7 +25,7 @@ existencia**. El trasfondo y las tres reglas en tensión, en *Un código que no 
 | **(b)** | **Ofrecer siempre y decir la verdad cuando no vuelve nada.** Si el pedido vuelve sin features, la ficha lo dice y apaga la descarga con su motivo | El botón estuvo ofrecido hasta que volvió el pedido; en vías, que no pide nada hasta el clic, sigue ofrecido indefinidamente |
 | **(c)** | **Sacar la cosa:** fracción, radio y vía pierden el enlace propio y vuelven a ser sólo hijas navegables | Se cae la direccionabilidad de la rama anterior, y con ella la búsqueda por código de esos tres tipos |
 
-> **Tu respuesta:** 
+> **Tu respuesta:**  b
 
 ## ✅ Reglas
 
@@ -38,6 +41,7 @@ existencia**. El trasfondo y las tres reglas en tensión, en *Un código que no 
 | **DES-R8** | **Las inconsistencias del INDEC se reportan, no se corrigen.** El build advierte por cada código hijo sin padre y sigue. **Por qué:** los códigos de departamento no cierran entre capas (529 en `departamentos`, 530 en radios, 527 en vías). Silenciarlos haría que el catálogo mienta sobre el dato de origen. | ✅ **implementada 2026-09-04** |
 | **DES-R9** | **La descarga de un hijo suelto filtra por el campo identificador de su capa.** Cada capa hija tiene un campo que identifica una fila para armar su URL de descarga: `cde` en departamentos, `clc` en localidades, `cod_indec` en fracciones, radios y vías. En vías, `cod_indec` identifica la calle, no el tramo, así que descargar cualquier fila de una calle baja la calle entera. **Por qué:** `cod_indec` es el único campo que separa una calle de otra en lo que el INDEC publica; no hay un identificador de tramo que sirva como filtro WFS, sólo un `id` interno que no distingue nada útil por sí solo. Tres de Febrero muestra el tamaño de la diferencia: sus 1.487 vías son 727 calles, y una se parte en 80 tramos idénticos en los 21 campos publicados, distinguibles sólo por ese `id`. Prometer "bajar este tramo" sería prometer algo que el filtro no puede cumplir. | ✅ **implementada 2026-09-06** |
 | **DES-R10** | **Se ofrece la cadena de padres completa; la de catálogo se verifica antes, la sintética no tiene dónde.** La ficha de un objeto también ofrece sus padres. Para los tipos que están en el catálogo — departamento, localidad censal, gobierno local—: departamento → jurisdicción; localidad → departamento, jurisdicción y aglomerado; gobierno local → jurisdicción. Aglomerado y jurisdicción no tienen padre. Cada uno de estos padres se busca en el catálogo antes de ofrecerlo (DES-R8); el que no aparece ahí, no se muestra. Para los tres tipos que no están en el catálogo —fracción censal, radio censal, vía de circulación—, agregados junto con su ficha propia: fracción → departamento, jurisdicción; radio → fracción, departamento, jurisdicción; vía → localidad censal, departamento, jurisdicción. Cada padre de esta cadena que a su vez es de catálogo (departamento, jurisdicción, localidad) se busca igual que arriba y se descarta si no aparece. El que no es de catálogo —la fracción que cuelga de un radio— no tiene dónde buscarse: se deriva del prefijo del código, igual que el objeto mismo, y se ofrece siempre, sin nombre (NAV-R4). Su existencia no la confirma el catálogo sino el GeoServer, recién cuando se abre esa ficha. **Por qué:** las inconsistencias del INDEC (DES-R8) hacen que un código de padre derivado no siempre resuelva a un objeto real. Ofrecer un enlace a un padre de catálogo que no está ahí sería un link roto, y el catálogo es la única fuente contra la que se puede verificar antes de mostrarlo. Un padre sintético no tiene esa fuente para consultar de antemano —no está en ningún catálogo—, así que retenerlo hasta poder verificarlo lo dejaría afuera siempre; se ofrece igual, y es la propia ficha la que dice si hay algo ahí o no. | ✅ **implementada 2026-09-06** |
+| **DES-R11** | **El objeto direccionable que no está en el catálogo se ofrece igual, y la ficha dice la verdad cuando el pedido vuelve sin nada.** La descarga se ofrece sin verificar nada de antemano; si el GetFeature vuelve con cero features, la ficha lo dice y apaga el botón con su motivo, con el mismo patrón que DES-R8 ya usa para una fila sin código. Y el mensaje de error del mapa deja de afirmar que «las descargas siguen funcionando» cuando el objeto no existe, porque ahí es falso. **Lo que se acepta:** entre que se abre el enlace y vuelve el pedido, el botón estuvo ofrecido; y en vías, que no pide nada hasta el clic (SITIO-R3), sigue ofrecido indefinidamente. **Por qué:** verificar antes de ofrecer era la otra salida y choca de frente con SITIO-R3 —cobrarle 12,4 segundos a quien sólo abrió un enlace— y le agrega una espera a fracciones y radios que hoy no tienen. Entre prometer de menos y prometer en falso, esta regla elige no prometer en falso: el botón puede quedar ofrecido un rato, pero el sitio nunca afirma que algo funciona cuando ya sabe que no. | decidida, sin construir · #5 |
 
 ## 📋 Contexto medido
 
