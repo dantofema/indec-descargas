@@ -25,10 +25,13 @@ import { join } from 'node:path'
  * comportamiento a mano antes de marcar ✅.
  */
 
-/** Todo el texto de los tests del repo, que es contra lo que se citan las reglas. */
-const TESTS = execSync('cat $(git ls-files "*.test.js" "*.test.mjs")', { encoding: 'utf8' })
-// Este archivo nombra IDs en sus propios mensajes de error y en los
-// trinquetes: incluirse a sí mismo haría que toda regla parezca citada.
+/**
+ * El texto de los tests del repo **menos este archivo**. La exclusión no es
+ * higiene: acá adentro se nombran IDs de ejemplo y listas enteras de
+ * trinquete, así que incluirse a sí mismo hace que toda regla parezca citada
+ * y con grupo. Pasó: el caso de grupos usaba la variante sin excluir y daba
+ * verde sólo mientras este archivo no estaba trackeado todavía.
+ */
 const TESTS_AJENOS = execSync(
   'cat $(git ls-files "*.test.js" "*.test.mjs" | grep -v reglas.test.mjs)', { encoding: 'utf8' })
 
@@ -142,7 +145,7 @@ describe('los trinquetes de deuda', () => {
   })
 
   it('las que no tienen grupo son exactamente las declaradas', () => {
-    const reales = vivas().filter((r) => !TESTS.includes(`regla:${r.doc}:${r.id}`)).map(clave)
+    const reales = vivas().filter((r) => !TESTS_AJENOS.includes(`regla:${r.doc}:${r.id}`)).map(clave)
     expect(ordenado(reales)).toEqual(ordenado(REGLAS_SIN_GRUPO))
   })
 })
