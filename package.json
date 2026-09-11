@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:index": "node scripts/build-index.mjs"
+    "build:index": "node scripts/build-index.mjs",
+    "reglas": "node scripts/reglas-index.mjs",
+    "reglas:check": "node scripts/reglas-index.mjs --check"
   },
   "dependencies": {
     "leaflet": "^1.9.4"
