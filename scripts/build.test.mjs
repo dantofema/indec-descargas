@@ -6,7 +6,7 @@ import viteConfig from '../vite.config.js'
 // entrada de build. Esa lista no la miraba nadie: sacar `servicios` de
 // `rollupOptions.input` dejaba a CI construyendo y desplegando en verde,
 // con la página faltante y sus enlaces del nav apuntando a un 404.
-describe('las entradas del build (SITIO-R1)', () => {
+describe('las entradas del build (regla:sitio:SITIO-R1)', () => {
   const input = viteConfig.build.rollupOptions.input
 
   it('son las cuatro páginas del sitio', () => {

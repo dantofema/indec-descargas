@@ -188,7 +188,7 @@ describe('elegir un objeto', () => {
   })
 
   // BUS-R1: el filtro por tipo también vive en el home.
-  it('el filtro por tipo arranca en todos y ofrece los cinco', async () => {
+  it('el filtro por tipo arranca en todos y ofrece los cinco (regla:buscador:BUS-R1)', async () => {
     await montarConTotales()
     expect($('#type').value).toBe('')
     expect([...$('#type').options].map((o) => o.value))
@@ -196,7 +196,7 @@ describe('elegir un objeto', () => {
   })
 })
 
-describe('los contadores corren (APAR-R4)', () => {
+describe('los contadores corren (regla:apariencia:APAR-R4)', () => {
   // El único `vi.spyOn` del describe: sin restaurarlo, queda pegado a
   // `window.requestAnimationFrame` para los tests que corran después. Hoy
   // es inofensivo —es pass-through—, pero es la clase de cosa que muerde

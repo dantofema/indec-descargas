@@ -99,12 +99,16 @@ const REGLAS_NO_IMPLEMENTADAS = [
 ]
 
 /**
- * Sin el tag de grupo en el nombre del test. Pest tiene `->group()`; Vitest
- * no, así que el equivalente es el tag en el nombre: con
- * `regla:<documento>:<ID>` adentro del nombre, `vitest -t "regla:sitio:SITIO-R5"`
- * corre exactamente lo que sostiene esa decisión. Ficha #2.
+ * Sin el tag de grupo en el nombre del test. **Vacío desde el 2026-09-11**
+ * (ficha #2).
+ *
+ * Pest tiene `->group()`; Vitest no, así que el equivalente es el tag en el
+ * nombre, entre paréntesis al final — que es la convención que el repo ya
+ * usaba con el ID pelado. Con `regla:<documento>:<ID>` adentro del nombre,
+ * `npx vitest -t "regla:sitio:SITIO-R5"` corre exactamente lo que sostiene
+ * esa decisión.
  */
-const REGLAS_SIN_GRUPO = vivas().map((r) => `${r.doc}.md ${r.id}`)
+const REGLAS_SIN_GRUPO = []
 
 /**
  * Reglas que usan un concepto de otro documento sin citar a su dueño. Es el
@@ -177,7 +181,8 @@ describe('las reglas muertas', () => {
 
 describe('los trinquetes de deuda', () => {
   it('las implementadas sin cita son exactamente las declaradas', () => {
-    const reales = vivas().filter((r) => r.implementada && !TESTS_AJENOS.includes(r.id)).map(clave)
+    const citada = (id) => new RegExp(`\\b${id}\\b`).test(TESTS_AJENOS)
+    const reales = vivas().filter((r) => r.implementada && !citada(r.id)).map(clave)
     expect(ordenado(reales)).toEqual(ordenado(REGLAS_SIN_CITA))
   })
 
@@ -193,7 +198,7 @@ describe('los trinquetes de deuda', () => {
       // las dos, que es un verde que no dice nada.
       let citada = false, conDocumento = false
       for (const a of ARCHIVOS_AJENOS) {
-        for (const m of a.texto.matchAll(new RegExp(r.id.replace('-', '\\-'), 'g'))) {
+        for (const m of a.texto.matchAll(new RegExp(`\\b${r.id}\\b`, 'g'))) {
           citada = true
           const cerca = a.texto.slice(Math.max(0, m.index - 200), m.index + 200)
           if (cerca.includes(`docs/reglas/${r.doc}.md`)) conDocumento = true
@@ -210,7 +215,14 @@ describe('los trinquetes de deuda', () => {
   })
 
   it('las que no tienen grupo son exactamente las declaradas', () => {
-    const reales = vivas().filter((r) => !TESTS_AJENOS.includes(`regla:${r.doc}:${r.id}`)).map(clave)
+    // Sólo a las implementadas: una regla decidida y sin construir todavía no
+    // tiene test que agrupar, y exigírselo confundiría "falta el tag" con
+    // "falta el código".
+    // Con `includes`, el tag de NAV-R11 satisfacía a NAV-R1: es substring
+    // suyo. Lo encontró una mutación —sacarle el tag a NAV-R1 daba verde— y
+    // es la misma clase de error que el ID pelado.
+    const conGrupo = (r) => new RegExp(`regla:${r.doc}:${r.id}\\b`).test(TESTS_AJENOS)
+    const reales = vivas().filter((r) => r.implementada && !conGrupo(r)).map(clave)
     expect(ordenado(reales)).toEqual(ordenado(REGLAS_SIN_GRUPO))
   })
 })

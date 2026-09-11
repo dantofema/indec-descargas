@@ -75,7 +75,7 @@ describe('search', () => {
 
 // BUS-R2: los términos se buscan sueltos, así que el usuario no tiene que
 // acordarse de las palabras de relleno del nombre oficial.
-describe('search con varias palabras', () => {
+describe('search con varias palabras (regla:buscador:BUS-R2)', () => {
   it('encuentra aunque falten las palabras del medio', () => {
     expect(search(objects, 'tres febrero').map((o) => o.c)).toContain('06840')
   })
@@ -146,7 +146,7 @@ describe('buscar por código (BUS-R5)', () => {
     expect(search(objetos, '06469').map((o) => o.c)).toEqual(['06469'])
   })
 
-  it('el código gana a cualquier coincidencia de nombre (BUS-R4, nivel 0)', () => {
+  it('el código gana a cualquier coincidencia de nombre (regla:buscador:BUS-R4, nivel 0)', () => {
     const conHomonimo = [...objetos, { t: 'loc', c: '99999999', n: '06469', s: '06469', sp: 'x' }]
     expect(search(conHomonimo, '06469')[0].c).toBe('06469')
   })

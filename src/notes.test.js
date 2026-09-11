@@ -15,7 +15,7 @@ const sumaEnJurisdicciones = (capa) => catalog.objects
  * Cierra NOTA-R1 de `docs/reglas/notas.md`: hay una nota por objeto del Marco,
  * ocho, cada una con ancla propia.
  */
-describe('las ocho notas', () => {
+describe('las ocho notas (regla:notas:NOTA-R1)', () => {
   it('son ocho, una por objeto del Marco', () => {
     expect(NOTES).toHaveLength(8)
   })
@@ -63,7 +63,7 @@ describe('los dos vocabularios llegan a una nota', () => {
   })
 })
 
-describe('los números que afirma una nota (NOTA-R2)', () => {
+describe('los números que afirma una nota (regla:notas:NOTA-R2)', () => {
   it('coinciden con el catálogo commiteado', () => {
     for (const n of NOTES) {
       if (n.type) expect(n.total, `total de ${n.slug} por tipo`).toBe(porTipo(n.type))

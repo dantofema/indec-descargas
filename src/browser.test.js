@@ -47,7 +47,7 @@ describe('createBrowser', () => {
    * página al abrirse. La excepción —vías— vive en el bloque de más abajo, que
    * cierra NAV-R7.
    */
-  it('dibuja una pestaña por capa hija y carga la primera', async () => {
+  it('cada pestaña se recorre paginada, 20 por página, y carga la primera al abrirse (regla:navegacion:NAV-R1) (regla:navegacion:NAV-R2)', async () => {
     global.fetch = vi.fn(async () => paginaOk())
     const b = createBrowser({ container, onView: () => {}, onError: () => {} })
     b.show(dep)
@@ -72,7 +72,7 @@ describe('createBrowser', () => {
    * Cierra NAV-R5 de `docs/reglas/navegacion.md`: la respuesta de una pestaña
    * abandonada se descarta.
    */
-  it('descarta la respuesta de una pestaña que ya se abandonó', async () => {
+  it('descarta la respuesta de una pestaña que ya se abandonó (regla:navegacion:NAV-R5)', async () => {
     let resolverPrimero
     global.fetch = vi.fn()
       .mockImplementationOnce(() => new Promise((r) => { resolverPrimero = r }))
@@ -170,7 +170,7 @@ describe('createBrowser', () => {
   // una página de vías tarda 14-20 s por departamento y 88-99 s por
   // provincia. Auto-cargarla colgaría la interfaz sin que nadie lo pida.
   describe('la pestaña de vías no auto-carga', () => {
-    it('al abrirla no pide nada: muestra el costo medido y un botón', () => {
+    it('al abrirla no pide nada: muestra el costo medido y un botón (regla:navegacion:NAV-R7)', () => {
       global.fetch = vi.fn(async () => paginaOk())
       const b = createBrowser({ container, onView: () => {}, onError: () => {} })
       b.show(depVias) // dispara el auto-carga de la primera pestaña: fracciones
@@ -410,7 +410,7 @@ describe('createBrowser', () => {
     // no se cortaba al pasar a vías: sobrevivía hasta que venciera su propio
     // timeout, contradiciendo a NAV-R8 ("todo pedido que se abandona... se
     // aborta").
-    it('cambiar a la pestaña de vías sin confirmar aborta el pedido de la anterior', () => {
+    it('cambiar a la pestaña de vías sin confirmar aborta el pedido de la anterior (regla:navegacion:NAV-R8)', () => {
       global.fetch = fetchColgado()
       const b = createBrowser({ container, onView: () => {}, onError: () => {} })
       b.show(depVias) // auto-carga fracciones: queda colgada
@@ -521,7 +521,7 @@ describe('createBrowser', () => {
 
     // Una capa en cero no es pestaña (NAV-R9): pedirla por URL tiene que
     // caer en la primera, no dejar la fila con una pestaña que no existe.
-    it('una capa en cero tampoco se abre: cae en la primera', () => {
+    it('una capa en cero tampoco se abre: cae en la primera (regla:navegacion:NAV-R9)', () => {
       const b = crearBrowserDePrueba()
       b.show({ t: 'dep', c: '94028', n: 'Antártida Argentina', ch: { fracciones: 3, vias: 0 } }, 'vias')
       expect(pestañaActiva()).toBe('Fracciones censales')
@@ -577,7 +577,7 @@ describe('createBrowser', () => {
   // recorriendo, así que el enlace a su nota vive acá y no en la página que
   // cablea. Va como hermano de `body`, no adentro: ningún reemplazo de
   // `body` —"Cargando…", el errorBox o el panel de costo— se lo lleva puesto.
-  describe('el enlace a la nota de la pestaña activa', () => {
+  describe('el enlace a la nota de la pestaña activa (regla:notas:NOTA-R3)', () => {
     const enlaceNota = () => container.querySelector('a[href*="/notas/#"]')
 
     it('enlaza la nota de la primera pestaña, antes de que la tabla llegue', () => {
@@ -653,7 +653,7 @@ describe('createBrowser', () => {
     })
 
     // SITIO-R3: recordar la página no es motivo para pedirla.
-    it('una página inicial de vías no dispara ningún pedido', async () => {
+    it('una página inicial de vías no dispara ningún pedido (regla:sitio:SITIO-R3)', async () => {
       const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
       browser.show(depVias, 'vias', 3)
       await vi.waitFor(() => expect(boton('Cargar igual')).not.toBeNull())

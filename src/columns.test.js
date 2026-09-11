@@ -8,7 +8,7 @@ describe('LAYER_SPECS', () => {
    * Cierra DES-R7 de `docs/reglas/descargas.md`: el gobierno local no ofrece capas
    * hijas; la localidad sí ofrece vías.
    */
-  it('cubre exactamente las capas hijas que existen', () => {
+  it('cubre exactamente las capas hijas que existen (regla:descargas:DES-R7)', () => {
     expect(Object.keys(LAYER_SPECS).sort()).toEqual(Object.keys(CHILD_LAYERS).sort())
   })
 
@@ -28,7 +28,7 @@ describe('LAYER_SPECS', () => {
    * Cierra NAV-R3 de `docs/reglas/navegacion.md`: vías se lista por tramo, con los
    * 21 campos publicados y sin agrupar.
    */
-  it('vías muestra los 21 campos que publica el GeoServer', () => {
+  it('vías muestra los 21 campos que publica el GeoServer (regla:navegacion:NAV-R3)', () => {
     expect(LAYER_SPECS.vias.columns).toHaveLength(21)
     expect(LAYER_SPECS.vias.columns[0].field).toBe('id')
     expect(LAYER_SPECS.vias.columns.at(-1).field).toBe('sag')
@@ -61,7 +61,7 @@ describe('LAYER_SPECS', () => {
     }
   })
 
-  it('sólo declaran título las capas que tienen nombre publicado (NAV-R4)', () => {
+  it('sólo declaran título las capas que tienen nombre publicado (regla:navegacion:NAV-R4)', () => {
     const con = Object.entries(LAYER_SPECS).filter(([, s]) => s.titleField).map(([k]) => k)
     expect(con.sort()).toEqual(['departamentos', 'localidades', 'vias'])
   })
@@ -92,7 +92,7 @@ describe('specOf', () => {
 
   // Un valor que el INDEC no documentó se muestra tal cual: no se inventa
   // un rótulo (DES-R8).
-  it('un tipo desconocido pasa sin traducir', () => {
+  it('un tipo desconocido pasa sin traducir (regla:descargas:DES-R8)', () => {
     expect(specOf('radios').columns.find((c) => c.field === 'tro').map('X')).toBe('X')
   })
 })

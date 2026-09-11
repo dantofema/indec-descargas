@@ -361,7 +361,7 @@ describe('un objeto con una capa hija en cero', () => {
 // reemplazar media ficha con la del padre. Las pestañas y la tabla ya
 // tienen su propio suite en browser.test.js; acá sólo se prueba el
 // cableado real de "Ver".
-describe('el "Ver" de una fila hija (NAV-R11)', () => {
+describe('el "Ver" de una fila hija (regla:navegacion:NAV-R11)', () => {
   it('navega al permalink de esa fila en vez de reemplazar media ficha', async () => {
     await montar('?t=dep&c=06840')
     $('tbody tr .acts button').click()
@@ -663,7 +663,7 @@ describe('la ficha de un objeto que no está en el catálogo', () => {
     expect($('#q').value).toBe('068402311')
   })
 
-  it('un código con el largo de otro tipo muestra el buscador, no una ficha rota (SITIO-R4)', async () => {
+  it('un código con el largo de otro tipo muestra el buscador, no una ficha rota (regla:sitio:SITIO-R4)', async () => {
     await montar('?t=rad&c=0684042')
     expect($('#detail').hidden).toBe(true)
     expect($('#status').classList.contains('error')).toBe(true)

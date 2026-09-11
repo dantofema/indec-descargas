@@ -54,7 +54,7 @@ beforeEach(async () => {
  * Cierra SITIO-R8 de `docs/reglas/sitio.md`: el mapa no acredita a Leaflet; sí al
  * IGN.
  */
-describe('initMap: la interfaz acredita al IGN, no a Leaflet', () => {
+describe('initMap: la interfaz acredita al IGN, no a Leaflet (regla:sitio:SITIO-R8)', () => {
   it('no acredita a Leaflet: ni el enlace ni la bandera que viaja en ese prefijo', () => {
     expect(mapa.attributionControl.setPrefix).toHaveBeenCalledWith(false)
   })
@@ -118,7 +118,7 @@ describe('showObject: la selección más nueva manda', () => {
 // El basemap del IGN es claro en las dos paletas y el color de la geometría
 // tiene que leerse encima en las dos (APAR-R5): por eso sale de --accent, el
 // token del sitio, y no de un azul fijo que ninguna paleta declaró.
-describe('showObject: la geometría toma su color de --accent, no de un literal', () => {
+describe('showObject: la geometría toma su color de --accent, no de un literal (regla:apariencia:APAR-R5)', () => {
   it('no hardcodea el azul de GitHub como color de la geometría', () => {
     const codigo = readFileSync(new NodeURL('./map.js', import.meta.url), 'utf8')
     // El literal puede seguir vivo como fallback de --accent (ver el test de
