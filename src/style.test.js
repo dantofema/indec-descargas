@@ -134,12 +134,12 @@ function media(consulta) {
  * la misma consola. Este bloque es el que verifica que existan las dos y que
  * no estén cambiadas de lugar; el resto del archivo audita sus colores.
  */
-describe('de dónde salen las paletas que se auditan', () => {
+describe('de dónde salen las paletas que se auditan (regla:apariencia:APAR-R1)', () => {
   it('hay exactamente una paleta clara y una oscura, y están donde se las busca', () => {
     expect(() => palettes()).not.toThrow()
   })
 
-  it('la que manda sin que nadie elija nada es la oscura (APAR-R7)', () => {
+  it('la que manda sin que nadie elija nada es la oscura (regla:apariencia:APAR-R7)', () => {
     // El `:root` pelado es lo que ve quien entra por primera vez. Si la
     // clara volviera ahí, la consola dejaría de ser la cara del sitio y la
     // decisión del dueño quedaría sólo en el botón.
@@ -321,7 +321,7 @@ describe('la conversión de color del gate', () => {
   })
 })
 
-describe('la paleta de la consola (APAR-R6)', () => {
+describe('la paleta de la consola (regla:apariencia:APAR-R6)', () => {
   const { light, dark } = palettes()
   const pares = [
     ['--fg', '--ground', 7],
@@ -351,7 +351,7 @@ describe('la paleta de la consola (APAR-R6)', () => {
     }
   })
 
-  it('todo token de color se declara en oklch (APAR-R2)', () => {
+  it('todo token de color se declara en oklch (regla:apariencia:APAR-R2)', () => {
     for (const tokens of [light, dark]) {
       for (const t of ['--ground', '--panel', '--raise', '--line', '--fg', '--muted', '--accent', '--amber']) {
         expect(resolve(t, tokens), t).toMatch(/^oklch\(/)
@@ -415,7 +415,7 @@ describe('el mensaje de error se lee en las dos paletas', () => {
   })
 })
 
-describe('las fuentes se sirven desde acá (APAR-R3)', () => {
+describe('las fuentes se sirven desde acá (regla:apariencia:APAR-R3)', () => {
   it('no hay ningún origen de terceros en la hoja', () => {
     expect(css).not.toMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/)
   })

@@ -16,7 +16,7 @@ const buscar = (t, c) => objects.find((o) => o.t === t && o.c === c)
  * Cierra DES-R10 de `docs/reglas/descargas.md`: se ofrece la cadena de padres
  * completa; la de catálogo se verifica antes y la sintética no tiene dónde.
  */
-describe('parentsOf', () => {
+describe('parentsOf (regla:descargas:DES-R10)', () => {
   it('la jurisdicción no tiene padres', () => {
     expect(parentsOf(buscar('jur', '06'), index)).toEqual([])
   })

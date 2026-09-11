@@ -9,7 +9,7 @@ const MB = 1024 * 1024
  * no deshabilita. Las dos constantes —973 bytes por feature en polígonos, 420
  * en vías— son las que la regla declara medidas, no estimadas.
  */
-describe('estimateBytes', () => {
+describe('estimateBytes (regla:descargas:DES-R2)', () => {
   it('usa la constante de líneas para vías', () => {
     expect(estimateBytes('vias', 1000)).toBe(420 * 1000)
   })
@@ -74,7 +74,7 @@ describe('childRows', () => {
    * Ninguna capa hija deshabilita su botón por **superar** una cantidad; el piso
    * lo decide DES-R3, que es el caso de más abajo.
    */
-  it('da un enlace de descarga vivo aunque la capa sea enorme', () => {
+  it('da un enlace de descarga vivo aunque la capa sea enorme (regla:descargas:DES-R1)', () => {
     const filas = childRows(obj)
     const radios = filas.find((li) => li.textContent.includes('Radios'))
     expect(radios.querySelector('a.btn')).not.toBe(null)

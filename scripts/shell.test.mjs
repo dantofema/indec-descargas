@@ -103,7 +103,7 @@ describe('las páginas del sitio', () => {
     expect(readGenerated()).toBe(`Catálogo generado el ${generated}.`)
   })
 
-  it('el CTA apunta al Geoportal INDEC y abre en otra pestaña (SITIO-R5)', () => {
+  it('el CTA apunta al Geoportal INDEC y abre en otra pestaña (regla:sitio:SITIO-R5)', () => {
     const cta = readPartials().cta
     expect(cta).toContain('https://geonode.indec.gob.ar/')
     expect(cta).toContain('target="_blank"')
@@ -115,7 +115,7 @@ describe('las páginas del sitio', () => {
     expect(cta).toContain('8 de las 47 capas')
   })
 
-  it('todo campo de búsqueda anuncia que también busca por código (BUS-R5)', () => {
+  it('todo campo de búsqueda anuncia que también busca por código (regla:buscador:BUS-R5)', () => {
     // La búsqueda por código se construyó y los dos placeholders quedaron
     // diciendo sólo "un nombre": la función existía y no se veía. Recorre
     // las cuatro páginas para que agregar un buscador a otra no se olvide.
@@ -127,7 +127,7 @@ describe('las páginas del sitio', () => {
     }
   })
 
-  it('ninguna página lleva el bloque institucional del INDEC (SITIO-R9)', () => {
+  it('ninguna página lleva el bloque institucional del INDEC (regla:sitio:SITIO-R9)', () => {
     for (const p of paginas) {
       const html = injectShell(readFileSync(resolve(process.cwd(), p), 'utf8'), {
         partials: readPartials(), base: '/indec-descargas/', generated: '',
@@ -175,7 +175,7 @@ describe('las páginas del sitio', () => {
 describe('el plugin del shell, tal como lo enchufa el build', () => {
   const plugin = (viteConfig.plugins ?? []).flat().find((p) => p?.name === 'indec-shell')
 
-  it('vite.config.js lo tiene enchufado (SITIO-R6)', () => {
+  it('vite.config.js lo tiene enchufado (regla:sitio:SITIO-R6)', () => {
     expect(plugin, 'vite.config.js dejó de enchufar el plugin del shell').toBeDefined()
   })
 

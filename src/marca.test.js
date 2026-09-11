@@ -22,7 +22,7 @@ function token(bloque, nombre) {
   return m && m[1].replace(/\s+/g, ' ')
 }
 
-describe('los archivos de la marca existen', () => {
+describe('los archivos de la marca existen (regla:apariencia:APAR-R8)', () => {
   it.each([
     ['public/favicon.svg', 400],
     ['public/favicon-32.png', 200],
