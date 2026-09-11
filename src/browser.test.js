@@ -42,6 +42,11 @@ beforeEach(() => {
 })
 
 describe('createBrowser', () => {
+  /**
+   * Cierra NAV-R2 de `docs/reglas/navegacion.md`: una pestaña carga su primera
+   * página al abrirse. La excepción —vías— vive en el bloque de más abajo, que
+   * cierra NAV-R7.
+   */
   it('dibuja una pestaña por capa hija y carga la primera', async () => {
     global.fetch = vi.fn(async () => paginaOk())
     const b = createBrowser({ container, onView: () => {}, onError: () => {} })
@@ -63,6 +68,10 @@ describe('createBrowser', () => {
 
   // La carrera más fácil de provocar: cambiar de pestaña con un pedido en
   // vuelo. La respuesta vieja no puede pisar a la nueva.
+  /**
+   * Cierra NAV-R5 de `docs/reglas/navegacion.md`: la respuesta de una pestaña
+   * abandonada se descarta.
+   */
   it('descarta la respuesta de una pestaña que ya se abandonó', async () => {
     let resolverPrimero
     global.fetch = vi.fn()

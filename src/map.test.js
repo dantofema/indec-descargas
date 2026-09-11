@@ -50,6 +50,10 @@ beforeEach(async () => {
 // El prefijo por defecto del attributionControl es el enlace a Leaflet, y
 // desde 1.9 trae adentro una bandera de Ucrania: no es la atribución del
 // dato que se está mostrando, así que no tiene lugar en la interfaz.
+/**
+ * Cierra SITIO-R8 de `docs/reglas/sitio.md`: el mapa no acredita a Leaflet; sí al
+ * IGN.
+ */
 describe('initMap: la interfaz acredita al IGN, no a Leaflet', () => {
   it('no acredita a Leaflet: ni el enlace ni la bandera que viaja en ese prefijo', () => {
     expect(mapa.attributionControl.setPrefix).toHaveBeenCalledWith(false)

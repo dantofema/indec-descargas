@@ -4,6 +4,10 @@ import { CHILD_LAYERS } from './download.js'
 
 describe('LAYER_SPECS', () => {
   // El test que se rompe cuando alguien agrega una capa y se olvida la mitad.
+  /**
+   * Cierra DES-R7 de `docs/reglas/descargas.md`: el gobierno local no ofrece capas
+   * hijas; la localidad sí ofrece vías.
+   */
   it('cubre exactamente las capas hijas que existen', () => {
     expect(Object.keys(LAYER_SPECS).sort()).toEqual(Object.keys(CHILD_LAYERS).sort())
   })
@@ -20,6 +24,10 @@ describe('LAYER_SPECS', () => {
     expect(LAYER_SPECS.vias.sortBy).toBe('cod_indec,id')
   })
 
+  /**
+   * Cierra NAV-R3 de `docs/reglas/navegacion.md`: vías se lista por tramo, con los
+   * 21 campos publicados y sin agrupar.
+   */
   it('vías muestra los 21 campos que publica el GeoServer', () => {
     expect(LAYER_SPECS.vias.columns).toHaveLength(21)
     expect(LAYER_SPECS.vias.columns[0].field).toBe('id')

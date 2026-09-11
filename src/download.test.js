@@ -14,12 +14,20 @@ describe('selfUrl', () => {
     expect(selfUrl(treFeb).startsWith(GEOSERVER)).toBe(true)
   })
 
+  /**
+   * Cierra DES-R9 de `docs/reglas/descargas.md`: la descarga de un hijo suelto
+   * filtra por el campo identificador de su capa, no por uno genérico.
+   */
   it('pide el objeto en su propia capa filtrando por su campo', () => {
     const p = params(selfUrl(treFeb))
     expect(p.typenames).toBe('geonode:departamentos')
     expect(p.CQL_FILTER).toBe("cde='06840'")
   })
 
+  /**
+   * Cierra DES-R4 de `docs/reglas/descargas.md`: la descarga es siempre GPKG en
+   * EPSG:4326.
+   */
   it('pide siempre GPKG en EPSG:4326', () => {
     const p = params(selfUrl(treFeb))
     expect(p.outputFormat).toBe('geopackage')

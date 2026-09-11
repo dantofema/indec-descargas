@@ -12,6 +12,10 @@ const index = codeIndex(objects)
 const codigos = (obj) => parentsOf(obj, index).map((o) => `${o.t}:${o.c}`)
 const buscar = (t, c) => objects.find((o) => o.t === t && o.c === c)
 
+/**
+ * Cierra DES-R10 de `docs/reglas/descargas.md`: se ofrece la cadena de padres
+ * completa; la de catálogo se verifica antes y la sintética no tiene dónde.
+ */
 describe('parentsOf', () => {
   it('la jurisdicción no tiene padres', () => {
     expect(parentsOf(buscar('jur', '06'), index)).toEqual([])
