@@ -8,6 +8,8 @@ movimiento, y el tratamiento del basemap del IGN dentro de la consola.
 <!-- abiertas -->
 <!-- /abiertas -->
 
+**Ninguna.** Lo que se decidió está más abajo, en ✅ Reglas.
+
 ## ✅ Reglas
 
 | # | Regla | Estado |

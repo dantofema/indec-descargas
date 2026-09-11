@@ -18,8 +18,14 @@ el documento mienta.
 
 ## ⏳ Esperan tu respuesta
 
-Decisiones que el trabajo destapó y que no son del que las encontró. Se contestan **inline en el
-documento**, no en un chat, y ahí se convierten en regla.
+Decisiones que el trabajo destapó y que no son del que las encontró.
+
+**Dónde se contesta:** inline en el archivo, en la línea `> **Tu respuesta:**` de cada pregunta,
+que va debajo de su tabla de opciones. No en un chat: una conclusión dicha al pasar se evapora y
+al rato reaparece disfrazada de hecho adentro de un test.
+
+Toda pregunta ofrece **sacar la cosa** como una de sus salidas, y toda pregunta entra en el
+presupuesto de más abajo — la que no entra no se contesta, se parte.
 
 <!-- bloque:abiertas -->
 | Pregunta | Superficie | De qué se trata |
@@ -68,7 +74,11 @@ para descubrirlo.
 Una pregunta que no entra en el presupuesto no se contesta: se parte.
 
 <!-- bloque:complejidad -->
-| Pregunta | Caracteres | Opciones | ¿Entra? |
-|---|---|---|---|
-| **DES-Q1** | 10668 / 4000 | 0 / 5 | ⚠️ **partir** |
+Presupuesto por pregunta: **≤ 250 palabras**, **≤ 3 opciones**, **0 fichas**, **≤ 3 IDs de reglas**.
+
+| Dónde | # | Palabras | Opciones | Fichas | Cruces | |
+| --- | --- | --- | --- | --- | --- | --- |
+| [descargas](descargas.md) | DES-Q1 | 233 | 3 | 0 | 1 | ✅ |
+
+**Ninguna se pasa.**
 <!-- /bloque:complejidad -->

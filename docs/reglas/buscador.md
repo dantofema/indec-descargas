@@ -7,6 +7,8 @@ Decisiones de producto sobre cómo se encuentra un objeto antes de descargarlo.
 <!-- abiertas -->
 <!-- /abiertas -->
 
+**Ninguna.** Lo que se decidió está más abajo, en ✅ Reglas.
+
 ## ✅ Reglas
 
 | # | Regla | Estado |

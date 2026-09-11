@@ -8,54 +8,21 @@ Decisiones de producto sobre qué se puede descargar y con qué límite.
 | **DES-Q1** | Qué hace el sitio cuando alguien direcciona un objeto que no existe |
 <!-- /abiertas -->
 
-### DES-Q1 — Qué hace el sitio cuando alguien direcciona un objeto que no existe
+### DES-Q1 · Qué hace el sitio cuando alguien direcciona un objeto que no existe
 
-**Qué pasa hoy, verificado el 2026-09-08 leyendo el código:** `?t=rad&c=999999999` pasa la
-validación de largo —nueve dígitos es el largo correcto de un radio—, abre la ficha, escribe
-«Radio censal 999999999» y ofrece **«Descargar este radio censal»**, apuntando a un GetFeature
-que va a devolver un `.gpkg` vacío. Si además el mapa falla, el mensaje dice *«las descargas
-siguen funcionando»*, que en ese caso es falso.
+`?t=rad&c=999999999` pasa la validación de largo, abre la ficha y ofrece descargar un objeto
+que no existe. Darle enlace propio a fracción, radio y vía fue correcto; lo que no se reemplazó
+es la otra función que el catálogo cumplía sin que nadie la nombrara: **era el chequeo de
+existencia**. El trasfondo y las tres reglas en tensión, en *Un código que no existe*
+(📋 Contexto medido).
 
-**Por qué apareció.** El plan de direccionabilidad decidió, con razón, que el catálogo hace
-falta para **buscar por nombre** y no para **direccionar**: por eso fracción, radio y vía
-tienen enlace propio aunque no estén en `catalog.json`. Lo que no se reemplazó es la otra
-función que el catálogo cumplía sin que nadie la nombrara: **era el chequeo de existencia**.
-Para los cinco tipos que están en él, un código inexistente cae en SITIO-R4 y muestra el
-buscador; para los tres nuevos, no hay nada que lo atrape.
+| | Qué se hace | Qué se paga |
+|---|---|---|
+| **(a)** | **Verificar antes de ofrecer.** El objeto sin catálogo no muestra su botón hasta que el servidor confirma que existe | En vías cuesta los 12,4 segundos que SITIO-R3 prohíbe cobrar por abrir un enlace, y suma espera a fracciones y radios |
+| **(b)** | **Ofrecer siempre y decir la verdad cuando no vuelve nada.** Si el pedido vuelve sin features, la ficha lo dice y apaga la descarga con su motivo | El botón estuvo ofrecido hasta que volvió el pedido; en vías, que no pide nada hasta el clic, sigue ofrecido indefinidamente |
+| **(c)** | **Sacar la cosa:** fracción, radio y vía pierden el enlace propio y vuelven a ser sólo hijas navegables | Se cae la direccionabilidad de la rama anterior, y con ella la búsqueda por código de esos tres tipos |
 
-**No hace falta un error de tipeo para llegar.** DES-R8 documenta que los códigos del INDEC no
-cierran entre capas —529 departamentos en una, 530 en otra, 527 en la tercera—, que es
-exactamente el escenario para el que se escribió la mitad de DES-R10.
-
-**Qué reglas quedan en tensión:** SITIO-R4 promete «nunca una ficha rota», DES-R3 dice que «un
-`.gpkg` vacío parece un error del usuario, no un dato», y SITIO-R3 exige que la descarga de una
-vía funcione **sin pedir nada**, porque pedir cuesta 12,4 segundos medidos.
-
-**Las salidas, con lo que cuesta cada una:**
-
-1. **Verificar antes de ofrecer.** La ficha de un objeto sin catálogo no muestra el botón de
-   descarga hasta que el GeoServer confirma que existe. Cumple DES-R3 y DES-R10 al pie.
-   *Cuesta:* choca de frente con SITIO-R3 en vías —la descarga de un tramo dejaría de funcionar
-   sin red, que es justamente lo que esa regla protege— y le agrega una espera a fracciones y
-   radios, que hoy no la tienen.
-2. **Ofrecer siempre, y decir la verdad cuando no vuelve nada.** El botón queda, pero si el
-   pedido vuelve sin features la ficha lo dice y apaga la descarga con su motivo, usando el
-   mismo patrón que DES-R8 ya tiene para una fila sin código. El mensaje de error deja de
-   afirmar que las descargas funcionan cuando no es cierto. *Cuesta:* entre que se abre el
-   enlace y que vuelve el pedido, el botón estuvo ofrecido; y en vías, donde no se pide nada
-   hasta el clic, sigue ofrecido indefinidamente.
-3. **Que el largo no alcance: exigir que el código exista antes de abrir la ficha.** Un pedido
-   de verificación al montar, y si no existe, el buscador con su mensaje, como manda SITIO-R4.
-   *Cuesta:* un pedido más en cada ficha de los tres tipos nuevos, y en vías ese pedido es el
-   de 12,4 segundos que SITIO-R3 prohíbe cobrarle a quien sólo abrió un enlace.
-4. **Sacar la promesa:** que fracción, radio y vía no tengan permalink propio y se vuelva a
-   llegar a ellos sólo bajando por la ficha del padre. *Cuesta:* deshace el plan entero, y
-   fracciones y radios vuelven a ser inalcanzables por búsqueda —no tienen nombre publicado
-   (NAV-R4), así que el código era su único handle—.
-
-**Lo que no puede quedar** es DES-R10 y SITIO-R4 diciendo una cosa y el código haciendo otra.
-La corrección de DES-R10 que entró con esta rama sinceró el texto sobre los padres sintéticos,
-pero no cierra la pregunta de fondo: qué se le muestra a alguien que pide un objeto que no está.
+> **Tu respuesta:** 
 
 ## ✅ Reglas
 
@@ -71,3 +38,21 @@ pero no cierra la pregunta de fondo: qué se le muestra a alguien que pide un ob
 | **DES-R8** | **Las inconsistencias del INDEC se reportan, no se corrigen.** El build advierte por cada código hijo sin padre y sigue. **Por qué:** los códigos de departamento no cierran entre capas (529 en `departamentos`, 530 en radios, 527 en vías). Silenciarlos haría que el catálogo mienta sobre el dato de origen. | ✅ **implementada 2026-09-04** |
 | **DES-R9** | **La descarga de un hijo suelto filtra por el campo identificador de su capa.** Cada capa hija tiene un campo que identifica una fila para armar su URL de descarga: `cde` en departamentos, `clc` en localidades, `cod_indec` en fracciones, radios y vías. En vías, `cod_indec` identifica la calle, no el tramo, así que descargar cualquier fila de una calle baja la calle entera. **Por qué:** `cod_indec` es el único campo que separa una calle de otra en lo que el INDEC publica; no hay un identificador de tramo que sirva como filtro WFS, sólo un `id` interno que no distingue nada útil por sí solo. Tres de Febrero muestra el tamaño de la diferencia: sus 1.487 vías son 727 calles, y una se parte en 80 tramos idénticos en los 21 campos publicados, distinguibles sólo por ese `id`. Prometer "bajar este tramo" sería prometer algo que el filtro no puede cumplir. | ✅ **implementada 2026-09-06** |
 | **DES-R10** | **Se ofrece la cadena de padres completa; la de catálogo se verifica antes, la sintética no tiene dónde.** La ficha de un objeto también ofrece sus padres. Para los tipos que están en el catálogo — departamento, localidad censal, gobierno local—: departamento → jurisdicción; localidad → departamento, jurisdicción y aglomerado; gobierno local → jurisdicción. Aglomerado y jurisdicción no tienen padre. Cada uno de estos padres se busca en el catálogo antes de ofrecerlo (DES-R8); el que no aparece ahí, no se muestra. Para los tres tipos que no están en el catálogo —fracción censal, radio censal, vía de circulación—, agregados junto con su ficha propia: fracción → departamento, jurisdicción; radio → fracción, departamento, jurisdicción; vía → localidad censal, departamento, jurisdicción. Cada padre de esta cadena que a su vez es de catálogo (departamento, jurisdicción, localidad) se busca igual que arriba y se descarta si no aparece. El que no es de catálogo —la fracción que cuelga de un radio— no tiene dónde buscarse: se deriva del prefijo del código, igual que el objeto mismo, y se ofrece siempre, sin nombre (NAV-R4). Su existencia no la confirma el catálogo sino el GeoServer, recién cuando se abre esa ficha. **Por qué:** las inconsistencias del INDEC (DES-R8) hacen que un código de padre derivado no siempre resuelva a un objeto real. Ofrecer un enlace a un padre de catálogo que no está ahí sería un link roto, y el catálogo es la única fuente contra la que se puede verificar antes de mostrarlo. Un padre sintético no tiene esa fuente para consultar de antemano —no está en ningún catálogo—, así que retenerlo hasta poder verificarlo lo dejaría afuera siempre; se ofrece igual, y es la propia ficha la que dice si hay algo ahí o no. | ✅ **implementada 2026-09-06** |
+
+## 📋 Contexto medido
+
+### Un código que no existe — el trasfondo de DES-Q1
+
+**Verificado el 2026-09-08 leyendo el código.** Para los cinco tipos que están en
+`catalog.json`, un código inexistente cae en `SITIO-R4` y muestra el buscador. Para los tres que
+se volvieron direccionables sin estar en él —fracción, radio y vía— no hay nada que lo atrape:
+la validación de largo los deja pasar y la ficha se arma igual. Si además el mapa falla, el
+mensaje dice *«las descargas siguen funcionando»*, que en ese caso es falso.
+
+**No hace falta un error de tipeo para llegar.** `DES-R8` documenta que los códigos del INDEC no
+cierran entre capas —529 departamentos en una, 530 en otra, 527 en la tercera—, que es
+exactamente el escenario para el que se escribió la mitad de `DES-R10`.
+
+**Las tres reglas en tensión:** `SITIO-R4` promete «nunca una ficha rota»; `DES-R3` dice que un
+`.gpkg` vacío parece un error del usuario y no un dato; y `SITIO-R3` exige que la descarga de una
+vía funcione **sin pedir nada**, porque pedir cuesta 12,4 segundos medidos.

@@ -8,6 +8,8 @@ navegable, y qué información institucional lleva cada una.
 <!-- abiertas -->
 <!-- /abiertas -->
 
+**Ninguna.** Lo que se decidió está más abajo, en ✅ Reglas.
+
 ## ✅ Reglas
 
 | # | Regla | Estado |
