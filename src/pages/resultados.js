@@ -267,6 +267,21 @@ function loadFeatureButton(obj) {
 }
 
 /**
+ * El objeto que la URL direcciona no existe (DES-R11).
+ *
+ * No se esconde la ficha ni se manda al buscador: el enlace prometía un
+ * objeto concreto y lo útil es decir cuál no está, con su código a la vista
+ * para que se pueda comparar contra la fuente. Lo que se apaga es la
+ * descarga, con su motivo, igual que DES-R8 hace con una fila sin código.
+ */
+function showMissing(obj) {
+  const label = TYPES[obj.t].label.toLowerCase()
+  const motivo = `El INDEC no publica ${TYPES[obj.t].det} ${label} con código ${obj.c}: el objeto no existe.`
+  setStatus(el.status, motivo, true)
+  el.self.replaceChildren(disabledButton('Descargar', motivo))
+}
+
+/**
  * Dibuja el objeto de la ficha en el mapa. Va después de destapar `#detail`
  * y de `syncMapSize()`: sin eso Leaflet sigue midiendo lo que midió con el
  * panel oculto, que es 0×0.
@@ -284,7 +299,12 @@ function drawObject(obj, onFail = () => {}) {
       // Un objeto sin catálogo llega a la página con nada más que su tipo y
       // su código: los campos que lo describen los trae el mismo pedido que
       // dibuja el mapa, así que la identidad se completa acá y no antes.
-      if (drawn && !TYPES[obj.t].catalogo) {
+      if (!drawn) return
+      // El servidor contestó y no tiene ese objeto. El largo del código lo
+      // dejó pasar —nueve dígitos es el largo correcto de un radio— así que
+      // hasta acá la ficha lo ofrecía como si existiera (DES-R11).
+      if (drawn.count === 0) return showMissing(obj)
+      if (!TYPES[obj.t].catalogo) {
         showFeatureIdentity(LAYER_OF_TYPE[obj.t], drawn.props, drawn.count)
       }
     })
