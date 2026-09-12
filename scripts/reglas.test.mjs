@@ -111,21 +111,28 @@ const REGLAS_NO_IMPLEMENTADAS = [
 const REGLAS_SIN_GRUPO = []
 
 /**
- * Reglas que usan un concepto de otro documento sin citar a su dueño. Es el
- * trinquete de lo que ya estaba escrito antes de que hubiera dueños. Ficha #3
- * — y ojo, no todas son deuda: el gate no distingue *usar el término* de
- * *decidir sobre el concepto*, así que hay que leerlas de a una.
+ * Usos que **nombran** el concepto sin decidir nada sobre él. El gate no
+ * distingue una cosa de la otra, así que la separación es a mano y con el
+ * motivo escrito (ficha #3). No son deuda: exigirles una cita dejaría escrito
+ * un vínculo que no existe.
+ */
+const USOS_SIN_DECIDIR = {
+  'buscador.md BUS-R2': 'dice "medio catálogo" como cantidad coloquial, hablando de cuántos resultados devolvería un OR',
+  'navegacion.md NAV-R7': 'lo usa como medición —4.023 de 6.977— para justificar a quién le habla el aviso',
+  'navegacion.md NAV-R8': 'lo usa como medición, por el mismo motivo, para elegir el tier de timeout',
+}
+
+/**
+ * Reglas que deciden algo apoyadas en un concepto de otro documento sin citar
+ * a su dueño. Las tres que quedan dependen de **qué tipos entran al
+ * catálogo**, y eso no lo decide ninguna regla todavía: está abierto en
+ * DES-Q2. Citar a DES-R6 —que sólo habla del build— sería citar un precedente
+ * que no dice lo que se necesita.
  */
 const REGLAS_SIN_CITAR_AL_DUENO = [
-  'buscador.md BUS-R2 usa "catálogo" (dueño: descargas.md) sin citarlo',
   'buscador.md BUS-R5 usa "catálogo" (dueño: descargas.md) sin citarlo',
   'navegacion.md NAV-R1 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'navegacion.md NAV-R7 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'navegacion.md NAV-R8 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'notas.md NOTA-R2 usa "catálogo" (dueño: descargas.md) sin citarlo',
   'sitio.md SITIO-R4 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'sitio.md SITIO-R6 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'sitio.md SITIO-R7 usa "catálogo" (dueño: descargas.md) sin citarlo',
 ]
 
 const clave = (r) => `${r.doc}.md ${r.id}`
@@ -240,7 +247,9 @@ describe('dueño único por concepto', () => {
         // citar un ID del documento dueño.
         const citaAlDueno = [...r.texto.matchAll(/(?:APAR|BUS|DES|NAV|NOTA|SITIO)-R\d+/g)]
           .some((m) => DOCUMENTO_POR_PREFIJO[m[0].split('-')[0]] === dueno)
-        if (!citaAlDueno) fallas.push(`${clave(r)} usa "${concepto}" (dueño: ${dueno}.md) sin citarlo`)
+        if (citaAlDueno) continue
+        if (USOS_SIN_DECIDIR[clave(r)]) continue
+        fallas.push(`${clave(r)} usa "${concepto}" (dueño: ${dueno}.md) sin citarlo`)
       }
     }
     expect(ordenado(fallas)).toEqual(ordenado(REGLAS_SIN_CITAR_AL_DUENO))
