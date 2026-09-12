@@ -30,6 +30,7 @@ presupuesto de más abajo — la que no entra no se contesta, se parte.
 <!-- bloque:abiertas -->
 | Pregunta | Superficie | De qué se trata |
 |---|---|---|
+| **DES-Q3** | [descargas](descargas.md) | Qué pasa con los padres sintéticos cuando el objeto de la ficha no existe |
 | **DES-Q2** | [descargas](descargas.md) | Quién decide qué tipos entran al catálogo, que hoy tres reglas describen y ninguna decide |
 <!-- /bloque:abiertas -->
 
@@ -38,9 +39,7 @@ presupuesto de más abajo — la que no entra no se contesta, se parte.
 Lo que ya se decidió y espera turno.
 
 <!-- bloque:sin-construir -->
-| Regla | Superficie | Qué decide | Estado |
-|---|---|---|---|
-| **DES-R11** | [descargas](descargas.md) | El objeto direccionable que no está en el catálogo se ofrece igual, y la ficha dice la verdad cuando el pedido vuelve sin nada. | decidida, sin construir · #5 |
+Ninguna: todas las reglas vivas están construidas.
 <!-- /bloque:sin-construir -->
 
 ## 🔗 Cruces entre superficies
@@ -84,6 +83,7 @@ Presupuesto por pregunta: **≤ 250 palabras**, **≤ 3 opciones**, **0 fichas**
 
 | Dónde | # | Palabras | Opciones | Fichas | Cruces | |
 | --- | --- | --- | --- | --- | --- | --- |
+| [descargas](descargas.md) | DES-Q3 | 248 | 3 | 0 | 3 | ✅ |
 | [descargas](descargas.md) | DES-Q2 | 250 | 3 | 0 | 3 | ✅ |
 
 **Ninguna se pasa.**

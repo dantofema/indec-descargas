@@ -161,10 +161,20 @@ describe('showObject: la que está vigente sí avisa del error', () => {
     await expect(p).rejects.toThrow(/503/)
   })
 
-  it('propaga la respuesta sin geometría', async () => {
+  /**
+   * Cierra DES-R11 de `docs/reglas/descargas.md`: el objeto direccionable que
+   * no está en el catálogo se ofrece igual, y la ficha dice la verdad cuando
+   * el pedido vuelve sin nada.
+   *
+   * Antes esto tiraba, y por eso cero features caía en el mismo `catch` que
+   * una red cortada: la página avisaba «las descargas siguen funcionando»
+   * sobre un objeto que no existe. El servidor contestó bien; lo que no hay
+   * es el objeto, y eso es un dato, no un fallo del mapa.
+   */
+  it('una respuesta sin geometría vuelve como count 0, no como error (regla:descargas:DES-R11)', async () => {
     const p = showObject(objeto)
     pendientes[0].resolve(respuesta({ features: [] }))
-    await expect(p).rejects.toThrow(/geometría/)
+    await expect(p).resolves.toEqual({ props: null, count: 0 })
   })
 })
 
@@ -198,7 +208,9 @@ describe('lo dibujado no se borra hasta que hay con qué reemplazarlo', () => {
 
     const segundo = showObject(otro)
     pendientes[1].resolve(respuesta({ features: [] }))
-    await expect(segundo).rejects.toThrow(/geometría/)
+    // Desde DES-R11 esto resuelve en vez de tirar, pero la garantía no
+    // cambia: sin geometría nueva, la vieja se queda.
+    await expect(segundo).resolves.toEqual({ props: null, count: 0 })
     expect(capa.remove).not.toHaveBeenCalled()
   })
 

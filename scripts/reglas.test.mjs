@@ -67,9 +67,7 @@ const REGLAS_CITADAS_SIN_DOCUMENTO = []
 const REGLAS_SIN_CITA = []
 
 /** Decididas y todavía sin código. */
-const REGLAS_NO_IMPLEMENTADAS = [
-  'descargas.md DES-R11',
-]
+const REGLAS_NO_IMPLEMENTADAS = []
 
 /**
  * Sin el tag de grupo en el nombre del test. **Vacío desde el 2026-09-11**

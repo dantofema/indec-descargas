@@ -671,3 +671,65 @@ describe('la ficha de un objeto que no está en el catálogo', () => {
     expect($('#status').classList.contains('error')).toBe(true)
   })
 })
+
+/**
+ * Cierra DES-R11 de `docs/reglas/descargas.md`: el objeto direccionable que no
+ * está en el catálogo se ofrece igual, y la ficha dice la verdad cuando el
+ * pedido vuelve sin nada.
+ *
+ * Sale de DES-Q1, contestada con la opción (b). Antes, cero features caía en
+ * el mismo `catch` que un mapa roto y la página decía «Las descargas siguen
+ * funcionando» para un objeto que no existe: el único caso donde esa frase es
+ * mentira.
+ */
+describe('el objeto que no existe (regla:descargas:DES-R11)', () => {
+  /** Un GeoServer que contesta bien y no tiene ese objeto. */
+  const sinGeometria = () => {
+    global.fetch = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+      return { ok: true, status: 200, json: async () => ({ totalFeatures: 0, features: [] }) }
+    })
+  }
+
+  it('deja de prometer que las descargas funcionan', async () => {
+    sinGeometria()
+    await montar('?t=rad&c=999999999')
+    await vi.waitFor(() => expect($('#status').textContent).not.toBe(''))
+    expect($('#status').textContent).not.toMatch(/descargas siguen funcionando/i)
+  })
+
+  it('dice que el objeto no existe, con su código', async () => {
+    sinGeometria()
+    await montar('?t=rad&c=999999999')
+    await vi.waitFor(() => expect($('#status').textContent).toMatch(/no existe|no lo publica/i))
+    expect($('#status').textContent).toContain('999999999')
+  })
+
+  it('apaga la descarga y dice por qué, como DES-R8 con una fila sin código', async () => {
+    sinGeometria()
+    await montar('?t=rad&c=999999999')
+    await vi.waitFor(() => expect($('#detail-self a.btn')).toBeNull())
+    // `disabledButton` pone el motivo en un `<p class="note">` hermano, no en
+    // el elemento deshabilitado: se mira el panel entero, igual que el test
+    // de DES-R3 mira la fila entera.
+    expect($('#detail-self [aria-disabled="true"]')).not.toBeNull()
+    expect($('#detail-self').textContent).toMatch(/no existe|no publica/i)
+    expect($('#detail-self').textContent).toContain('999999999')
+  })
+
+  it('un mapa que falla de verdad sigue diciendo que las descargas funcionan', async () => {
+    // La regla cambia sólo el caso vacío. Si se cae la red o el GeoServer
+    // devuelve 500, las descargas **sí** siguen funcionando —van por otra
+    // URL— y apagarlas ahí sería el error contrario.
+    global.fetch = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+      return { ok: false, status: 500, json: async () => ({}) }
+    })
+    await montar('?t=rad&c=999999999')
+    await vi.waitFor(() => expect($('#status').textContent).toMatch(/No se pudo dibujar/))
+    expect($('#status').textContent).toMatch(/descargas siguen funcionando/i)
+    expect($('#detail-self a.btn')).not.toBeNull()
+  })
+})

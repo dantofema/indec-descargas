@@ -85,7 +85,13 @@ async function drawFromUrl(request, url) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const geojson = await res.json()
 
-    if (!geojson.features?.length) throw new Error('el servidor no devolvió geometría')
+    // Cero features **no** es un fallo del mapa: el servidor contestó bien y
+    // ese objeto no está. Tirar acá hacía que el caso cayera en el mismo
+    // `catch` que una red cortada, y la ficha avisaba «las descargas siguen
+    // funcionando» sobre un objeto que no existe (DES-R11). Quien llama
+    // distingue por `count`, y lo dibujado se deja como estaba: un mapa
+    // vacío parece un error, y acá el error no es del mapa.
+    if (!geojson.features?.length) return { props: null, count: 0 }
 
     // Recién acá: un dibujo que falla deja el mapa como estaba, y uno que
     // tarda lo deja como estaba mientras tanto, en vez de mostrar un mapa
