@@ -28,7 +28,9 @@ Toda pregunta ofrece **sacar la cosa** como una de sus salidas, y toda pregunta 
 presupuesto de más abajo — la que no entra no se contesta, se parte.
 
 <!-- bloque:abiertas -->
-Ninguna. Todo lo que se destapó está contestado.
+| Pregunta | Superficie | De qué se trata |
+|---|---|---|
+| **DES-Q2** | [descargas](descargas.md) | Quién decide qué tipos entran al catálogo, que hoy tres reglas describen y ninguna decide |
 <!-- /bloque:abiertas -->
 
 ## 🔨 Decididas, sin construir
@@ -63,10 +65,13 @@ para descubrirlo.
 | **NAV-R7** | [navegacion](navegacion.md) | **SITIO-R3** | ✅ **implementada 2026-09-08** |
 | **NAV-R9** | [navegacion](navegacion.md) | **DES-R3** | ✅ **implementada 2026-09-04** |
 | **NAV-R11** | [navegacion](navegacion.md) | **SITIO-R2** | ✅ **implementada 2026-09-08** |
+| **NOTA-R2** | [notas](notas.md) | **DES-R6** | ✅ **implementada 2026-09-04** |
 | **NOTA-R3** | [notas](notas.md) | **NAV-R6** | ☠️ **muerta 2026-09-06** |
 | **SITIO-R2** | [sitio](sitio.md) | **NAV-R11** | ✅ **implementada 2026-09-08** |
 | **SITIO-R3** | [sitio](sitio.md) | **NAV-R7** | ✅ **implementada 2026-09-06** |
 | **SITIO-R3** | [sitio](sitio.md) | **NAV-R8** | ✅ **implementada 2026-09-06** |
+| **SITIO-R6** | [sitio](sitio.md) | **DES-R6** | ✅ **implementada 2026-09-04** |
+| **SITIO-R7** | [sitio](sitio.md) | **DES-R6** | ✅ **implementada 2026-09-04** |
 | **SITIO-R8** | [sitio](sitio.md) | **APAR-R5** | ✅ **implementada 2026-09-09** |
 <!-- /bloque:cruces -->
 
@@ -77,5 +82,9 @@ Una pregunta que no entra en el presupuesto no se contesta: se parte.
 <!-- bloque:complejidad -->
 Presupuesto por pregunta: **≤ 250 palabras**, **≤ 3 opciones**, **0 fichas**, **≤ 3 IDs de reglas**.
 
-Sin preguntas abiertas que medir.
+| Dónde | # | Palabras | Opciones | Fichas | Cruces | |
+| --- | --- | --- | --- | --- | --- | --- |
+| [descargas](descargas.md) | DES-Q2 | 250 | 3 | 0 | 3 | ✅ |
+
+**Ninguna se pasa.**
 <!-- /bloque:complejidad -->

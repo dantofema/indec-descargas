@@ -5,9 +5,28 @@ Decisiones de producto sobre qué se puede descargar y con qué límite.
 ## ⏳ Abiertas
 
 <!-- abiertas -->
+| **DES-Q2** | Quién decide qué tipos entran al catálogo, que hoy tres reglas describen y ninguna decide |
 <!-- /abiertas -->
 
-**Ninguna.** Lo que se contestó está más abajo, en ✅ Contestadas, con tu respuesta.
+### DES-Q2 · Quién decide qué tipos entran al catálogo
+
+Cinco de los ocho tipos del Marco están en `catalog.json` y tres no. `BUS-R5` lo describe
+—«los cinco tipos que están ahí»— y `DES-R10` también —«los tres tipos que no están»—, pero
+**ninguna regla lo decide**: la membresía vive en un `catalogo: true` de `TYPES`, en el código.
+`DES-R6` sólo dice cómo se regenera el archivo y que se versiona.
+
+Apareció al buscarle dueño al concepto *catálogo*. Tres reglas de otras superficies dependen de
+la membresía y no tienen a quién citar: si mañana entra una fracción, las tres quedan mintiendo
+y nada avisa.
+
+| | Qué se hace | Qué se paga |
+|---|---|---|
+| **(a)** | `DES-R6` absorbe la membresía: la misma regla dice cómo se regenera **y** qué tipos lleva | Una regla que decide dos cosas distintas; cambiar la membresía obliga a tocar la que habla del build |
+| **(b)** | Una regla propia en `descargas.md` para qué entra al catálogo; `DES-R6` se queda con el build | Una regla más, y hay que decidir si también fija qué campos lleva cada objeto o sólo qué tipos |
+| **(c)** | **Sacar la cosa:** la membresía deja de ser decisión de producto. El catálogo lleva lo que tenga nombre buscable, y las reglas dejan de decir «cinco» y «tres» | Se pierde el único lugar donde hoy se puede leer por qué una fracción no se busca por nombre; queda sólo en el código |
+
+> **Tu respuesta:** 
+
 
 ## ✅ Contestadas
 
