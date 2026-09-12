@@ -63,6 +63,7 @@ describe('los dos vocabularios llegan a una nota', () => {
   })
 })
 
+/** Cierra NOTA-R2 de `docs/reglas/notas.md`: una nota afirma sólo lo verificable contra el catálogo o el GeoServer. */
 describe('los números que afirma una nota (regla:notas:NOTA-R2)', () => {
   it('coinciden con el catálogo commiteado', () => {
     for (const n of NOTES) {

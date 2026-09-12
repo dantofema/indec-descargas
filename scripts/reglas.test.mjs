@@ -47,40 +47,13 @@ const vivas = () => todasLasReglas().filter((r) => !r.muerta)
  */
 
 /**
- * Citadas por su ID pero sin nombrar el documento. Ficha #4.
- *
- * Son las citas anteriores al 2026-09-11: nombran `SITIO-R5` en un comentario
- * y nunca dicen de qué archivo sale. Las quince de la ficha #1 nacieron ya con
- * el documento adentro, así que no están acá.
+ * Citadas por su ID pero sin nombrar el documento. **Vacío desde el
+ * 2026-09-12** (ficha #4): las 43 citas dicen `<ID> de docs/reglas/<doc>.md`,
+ * y el chequeo lo exige por cercanía —dentro de los 200 caracteres del ID— y
+ * no por archivo, porque dos reglas del mismo documento en el mismo archivo se
+ * cubrían con una sola mención.
  */
-const REGLAS_CITADAS_SIN_DOCUMENTO = [
-  'apariencia.md APAR-R2 se cita sin nombrar su documento',
-  'apariencia.md APAR-R3 se cita sin nombrar su documento',
-  'apariencia.md APAR-R4 se cita sin nombrar su documento',
-  'apariencia.md APAR-R5 se cita sin nombrar su documento',
-  'apariencia.md APAR-R6 se cita sin nombrar su documento',
-  'apariencia.md APAR-R7 se cita sin nombrar su documento',
-  'buscador.md BUS-R1 se cita sin nombrar su documento',
-  'buscador.md BUS-R2 se cita sin nombrar su documento',
-  'buscador.md BUS-R3 se cita sin nombrar su documento',
-  'buscador.md BUS-R4 se cita sin nombrar su documento',
-  'buscador.md BUS-R5 se cita sin nombrar su documento',
-  'descargas.md DES-R8 se cita sin nombrar su documento',
-  'navegacion.md NAV-R1 se cita sin nombrar su documento',
-  'navegacion.md NAV-R11 se cita sin nombrar su documento',
-  'navegacion.md NAV-R4 se cita sin nombrar su documento',
-  'navegacion.md NAV-R8 se cita sin nombrar su documento',
-  'navegacion.md NAV-R9 se cita sin nombrar su documento',
-  'notas.md NOTA-R2 se cita sin nombrar su documento',
-  'notas.md NOTA-R3 se cita sin nombrar su documento',
-  'sitio.md SITIO-R1 se cita sin nombrar su documento',
-  'sitio.md SITIO-R2 se cita sin nombrar su documento',
-  'sitio.md SITIO-R3 se cita sin nombrar su documento',
-  'sitio.md SITIO-R4 se cita sin nombrar su documento',
-  'sitio.md SITIO-R5 se cita sin nombrar su documento',
-  'sitio.md SITIO-R6 se cita sin nombrar su documento',
-  'sitio.md SITIO-R9 se cita sin nombrar su documento',
-]
+const REGLAS_CITADAS_SIN_DOCUMENTO = []
 
 /**
  * Implementadas cuyo test no las nombra. **Vacío desde el 2026-09-11** (ficha

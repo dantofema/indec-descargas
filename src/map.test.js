@@ -118,6 +118,7 @@ describe('showObject: la selección más nueva manda', () => {
 // El basemap del IGN es claro en las dos paletas y el color de la geometría
 // tiene que leerse encima en las dos (APAR-R5): por eso sale de --accent, el
 // token del sitio, y no de un azul fijo que ninguna paleta declaró.
+/** Cierra APAR-R5 de `docs/reglas/apariencia.md`: el basemap claro es una superficie encendida, no se disimula. */
 describe('showObject: la geometría toma su color de --accent, no de un literal (regla:apariencia:APAR-R5)', () => {
   it('no hardcodea el azul de GitHub como color de la geometría', () => {
     const codigo = readFileSync(new NodeURL('./map.js', import.meta.url), 'utf8')

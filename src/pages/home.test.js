@@ -188,6 +188,7 @@ describe('elegir un objeto', () => {
   })
 
   // BUS-R1: el filtro por tipo también vive en el home.
+  /** Cierra BUS-R1 de `docs/reglas/buscador.md`: el filtro de tipo acota la búsqueda y arranca en todos. */
   it('el filtro por tipo arranca en todos y ofrece los cinco (regla:buscador:BUS-R1)', async () => {
     await montarConTotales()
     expect($('#type').value).toBe('')
@@ -196,6 +197,7 @@ describe('elegir un objeto', () => {
   })
 })
 
+/** Cierra APAR-R4 de `docs/reglas/apariencia.md`: una entrada orquestada, y `prefers-reduced-motion` la apaga entera. */
 describe('los contadores corren (regla:apariencia:APAR-R4)', () => {
   // El único `vi.spyOn` del describe: sin restaurarlo, queda pegado a
   // `window.requestAnimationFrame` para los tests que corran después. Hoy

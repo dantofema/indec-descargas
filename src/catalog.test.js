@@ -73,6 +73,7 @@ describe('nonEmptyChildrenOf (regla:descargas:DES-R3)', () => {
 // BUS-R3: la búsqueda mira también la provincia, y la compara normalizada.
 // La clave se deriva al cargar y no en el build: `p` ya viaja en el JSON, y
 // precalcularla ahí le sumaría mas de 100 KB al catalogo commiteado.
+/** Cierra BUS-R3 de `docs/reglas/buscador.md`: la provincia refina la búsqueda; no busca sola. */
 describe('loadCatalog (regla:buscador:BUS-R3)', () => {
   const responder = (objects) => vi.fn(async () => ({ ok: true, json: async () => ({ objects }) }))
 

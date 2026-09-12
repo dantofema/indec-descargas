@@ -130,6 +130,7 @@ describe('los ocho tipos direccionables', () => {
   })
 })
 
+/** Cierra SITIO-R2 de `docs/reglas/sitio.md`: el permalink es el estado. */
 describe('la página de la tabla en el permalink (regla:sitio:SITIO-R2)', () => {
   it('pag es 1-based en la URL y 0-based adentro', () => {
     expect(parse('?t=dep&c=06469&capa=radios&pag=4')).toMatchObject({ page: 3 })

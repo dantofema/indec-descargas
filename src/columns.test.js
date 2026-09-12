@@ -61,6 +61,7 @@ describe('LAYER_SPECS', () => {
     }
   })
 
+  /** Cierra NAV-R4 de `docs/reglas/navegacion.md`: fracciones y radios se listan sin nombre. */
   it('sólo declaran título las capas que tienen nombre publicado (regla:navegacion:NAV-R4)', () => {
     const con = Object.entries(LAYER_SPECS).filter(([, s]) => s.titleField).map(([k]) => k)
     expect(con.sort()).toEqual(['departamentos', 'localidades', 'vias'])
@@ -92,6 +93,7 @@ describe('specOf', () => {
 
   // Un valor que el INDEC no documentó se muestra tal cual: no se inventa
   // un rótulo (DES-R8).
+  /** Cierra DES-R8 de `docs/reglas/descargas.md`: las inconsistencias del INDEC se reportan, no se corrigen. */
   it('un tipo desconocido pasa sin traducir (regla:descargas:DES-R8)', () => {
     expect(specOf('radios').columns.find((c) => c.field === 'tro').map('X')).toBe('X')
   })
