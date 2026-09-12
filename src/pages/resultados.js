@@ -279,6 +279,13 @@ function showMissing(obj) {
   const motivo = `El INDEC no publica ${TYPES[obj.t].det} ${label} con código ${obj.c}: el objeto no existe.`
   setStatus(el.status, motivo, true)
   el.self.replaceChildren(disabledButton('Descargar', motivo))
+
+  // Los padres también se van (DES-R12, de DES-Q3). La cadena de un objeto
+  // sin catálogo se arma cortando su código, así que la de uno que no existe
+  // apunta a objetos que tampoco: decir «no existe» y abajo ofrecer su
+  // fracción con el botón activo es contradecirse en la misma pantalla.
+  el.rowParents.hidden = true
+  el.parents.replaceChildren()
 }
 
 /**

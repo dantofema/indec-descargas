@@ -733,3 +733,37 @@ describe('el objeto que no existe (regla:descargas:DES-R11)', () => {
     expect($('#detail-self a.btn')).not.toBeNull()
   })
 })
+
+/**
+ * Cierra DES-R12 de `docs/reglas/descargas.md`: si el objeto de la ficha no
+ * existe, la fila de padres no se dibuja.
+ *
+ * Sale de DES-Q3, contestada con la opción (a). Construyendo DES-R11 quedó a
+ * la vista que la ficha decía «el objeto no existe» y más abajo ofrecía
+ * «Fracción censal · 9999999» con su botón activo: se contradecía sola.
+ */
+describe('los padres de un objeto que no existe (regla:descargas:DES-R12)', () => {
+  const sinGeometria = () => {
+    global.fetch = vi.fn(async (url) => {
+      const u = String(url)
+      if (u.includes('catalog.json')) return { ok: true, json: async () => catalogo }
+      return { ok: true, status: 200, json: async () => ({ totalFeatures: 0, features: [] }) }
+    })
+  }
+
+  it('no ofrece descargar el padre sintético de un código que no existe', async () => {
+    sinGeometria()
+    await montar('?t=rad&c=999999999')
+    await vi.waitFor(() => expect($('#detail-self [aria-disabled="true"]')).not.toBeNull())
+    expect($('#row-parents').hidden).toBe(true)
+    expect($('#parents').querySelector('a.btn')).toBeNull()
+  })
+
+  it('el objeto que sí existe sigue mostrando su cadena de padres', async () => {
+    // La regla apaga los padres sólo cuando el objeto no está. Sin este caso,
+    // esconderlos siempre pasaría en verde y se caería la mitad de DES-R10.
+    await montar('?t=dep&c=06840')
+    await vi.waitFor(() => expect($('#parents').querySelector('a.btn')).not.toBeNull())
+    expect($('#row-parents').hidden).toBe(false)
+  })
+})
