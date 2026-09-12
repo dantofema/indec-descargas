@@ -107,7 +107,13 @@ describe('los ocho tipos direccionables', () => {
     expect(largos.sort((a, b) => a - b)).toEqual([2, 4, 5, 6, 7, 8, 9, 13])
   })
 
-  it('los tres nuevos no están en el catálogo y los cinco viejos sí', () => {
+  /**
+   * Cierra la mitad nueva de DES-R6 de `docs/reglas/descargas.md`: el catálogo
+   * lleva los cinco tipos que se buscan por nombre. Sale de DES-Q2, contestada
+   * con la opción (a): la membresía la decide la misma regla que decide cómo
+   * se regenera el archivo.
+   */
+  it('los tres nuevos no están en el catálogo y los cinco viejos sí (regla:descargas:DES-R6)', () => {
     expect(Object.entries(TYPES).filter(([, v]) => !v.catalogo).map(([t]) => t).sort())
       .toEqual(['frac', 'rad', 'via'])
   })

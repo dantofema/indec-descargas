@@ -95,16 +95,12 @@ const USOS_SIN_DECIDIR = {
 
 /**
  * Reglas que deciden algo apoyadas en un concepto de otro documento sin citar
- * a su dueño. Las tres que quedan dependen de **qué tipos entran al
- * catálogo**, y eso no lo decide ninguna regla todavía: está abierto en
- * DES-Q2. Citar a DES-R6 —que sólo habla del build— sería citar un precedente
- * que no dice lo que se necesita.
+ * a su dueño. **Vacío desde el 2026-09-12**: las tres que quedaban —BUS-R5,
+ * NAV-R1 y SITIO-R4— dependían de qué tipos entran al catálogo, y desde que
+ * DES-Q2 se contestó con la opción (a) eso lo decide DES-R6, así que ya hay a
+ * quién citar.
  */
-const REGLAS_SIN_CITAR_AL_DUENO = [
-  'buscador.md BUS-R5 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'navegacion.md NAV-R1 usa "catálogo" (dueño: descargas.md) sin citarlo',
-  'sitio.md SITIO-R4 usa "catálogo" (dueño: descargas.md) sin citarlo',
-]
+const REGLAS_SIN_CITAR_AL_DUENO = []
 
 const clave = (r) => `${r.doc}.md ${r.id}`
 const ordenado = (xs) => [...xs].sort()
