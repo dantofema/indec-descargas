@@ -139,6 +139,7 @@ describe('de dónde salen las paletas que se auditan (regla:apariencia:APAR-R1)'
     expect(() => palettes()).not.toThrow()
   })
 
+  /** Cierra APAR-R7 de `docs/reglas/apariencia.md`: la consola oscura es la de por defecto; la clara la elige la persona. */
   it('la que manda sin que nadie elija nada es la oscura (regla:apariencia:APAR-R7)', () => {
     // El `:root` pelado es lo que ve quien entra por primera vez. Si la
     // clara volviera ahí, la consola dejaría de ser la cara del sitio y la
@@ -321,6 +322,7 @@ describe('la conversión de color del gate', () => {
   })
 })
 
+/** Cierra APAR-R6 de `docs/reglas/apariencia.md`: el contraste de texto se verifica en la suite, en las dos paletas. */
 describe('la paleta de la consola (regla:apariencia:APAR-R6)', () => {
   const { light, dark } = palettes()
   const pares = [
@@ -351,6 +353,7 @@ describe('la paleta de la consola (regla:apariencia:APAR-R6)', () => {
     }
   })
 
+  /** Cierra APAR-R2 de `docs/reglas/apariencia.md`: todo el color se declara en oklch, y los dos acentos comparten croma y luminosidad. */
   it('todo token de color se declara en oklch (regla:apariencia:APAR-R2)', () => {
     for (const tokens of [light, dark]) {
       for (const t of ['--ground', '--panel', '--raise', '--line', '--fg', '--muted', '--accent', '--amber']) {
@@ -415,6 +418,7 @@ describe('el mensaje de error se lee en las dos paletas', () => {
   })
 })
 
+/** Cierra APAR-R3 de `docs/reglas/apariencia.md`: las fuentes se auto-hospedan. */
 describe('las fuentes se sirven desde acá (regla:apariencia:APAR-R3)', () => {
   it('no hay ningún origen de terceros en la hoja', () => {
     expect(css).not.toMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/)

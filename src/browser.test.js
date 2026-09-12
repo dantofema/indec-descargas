@@ -46,6 +46,8 @@ describe('createBrowser', () => {
    * Cierra NAV-R2 de `docs/reglas/navegacion.md`: una pestaña carga su primera
    * página al abrirse. La excepción —vías— vive en el bloque de más abajo, que
    * cierra NAV-R7.
+   *
+   * Cierra NAV-R1 de `docs/reglas/navegacion.md`: las capas hijas se recorren paginadas contra el GeoServer, 20 por página, sin geometría.
    */
   it('cada pestaña se recorre paginada, 20 por página, y carga la primera al abrirse (regla:navegacion:NAV-R1) (regla:navegacion:NAV-R2)', async () => {
     global.fetch = vi.fn(async () => paginaOk())
@@ -410,6 +412,7 @@ describe('createBrowser', () => {
     // no se cortaba al pasar a vías: sobrevivía hasta que venciera su propio
     // timeout, contradiciendo a NAV-R8 ("todo pedido que se abandona... se
     // aborta").
+    /** Cierra NAV-R8 de `docs/reglas/navegacion.md`: un pedido que no vuelve se corta solo, y el abandonado se aborta. */
     it('cambiar a la pestaña de vías sin confirmar aborta el pedido de la anterior (regla:navegacion:NAV-R8)', () => {
       global.fetch = fetchColgado()
       const b = createBrowser({ container, onView: () => {}, onError: () => {} })
@@ -521,6 +524,7 @@ describe('createBrowser', () => {
 
     // Una capa en cero no es pestaña (NAV-R9): pedirla por URL tiene que
     // caer en la primera, no dejar la fila con una pestaña que no existe.
+    /** Cierra NAV-R9 de `docs/reglas/navegacion.md`: una capa hija en cero no se recorre. */
     it('una capa en cero tampoco se abre: cae en la primera (regla:navegacion:NAV-R9)', () => {
       const b = crearBrowserDePrueba()
       b.show({ t: 'dep', c: '94028', n: 'Antártida Argentina', ch: { fracciones: 3, vias: 0 } }, 'vias')
@@ -577,6 +581,7 @@ describe('createBrowser', () => {
   // recorriendo, así que el enlace a su nota vive acá y no en la página que
   // cablea. Va como hermano de `body`, no adentro: ningún reemplazo de
   // `body` —"Cargando…", el errorBox o el panel de costo— se lo lleva puesto.
+  /** Cierra NOTA-R3 de `docs/reglas/notas.md`: las notas viven en `/notas/`; la ficha enlaza, no repite. */
   describe('el enlace a la nota de la pestaña activa (regla:notas:NOTA-R3)', () => {
     const enlaceNota = () => container.querySelector('a[href*="/notas/#"]')
 
@@ -653,6 +658,7 @@ describe('createBrowser', () => {
     })
 
     // SITIO-R3: recordar la página no es motivo para pedirla.
+    /** Cierra SITIO-R3 de `docs/reglas/sitio.md`: nada de vías se pide sin un acto explícito del usuario. */
     it('una página inicial de vías no dispara ningún pedido (regla:sitio:SITIO-R3)', async () => {
       const browser = createBrowser({ container, onView: () => {}, onError: () => {}, onPage: () => {} })
       browser.show(depVias, 'vias', 3)
